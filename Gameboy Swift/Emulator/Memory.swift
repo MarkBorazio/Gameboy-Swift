@@ -32,8 +32,12 @@ class Memory {
         }
     }
     
-    func readOpcode(address: UInt16) -> UInt8 {
+    func readValue(address: UInt16) -> UInt8 {
         return memoryMap[address]
+    }
+    
+    func writeValue(_ value: UInt8, address: UInt16) {
+        memoryMap[address] = value
     }
 }
 

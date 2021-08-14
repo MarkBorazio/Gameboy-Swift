@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605AFB9D26C7CA760040E608 /* ByteConvertible.swift */; };
+		605AFBA626C810680040E608 /* BinaryInteger+Rotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605AFBA526C810680040E608 /* BinaryInteger+Rotation.swift */; };
 		6070722D26BFA814002E7119 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6070722C26BFA814002E7119 /* AppDelegate.swift */; };
 		6070722F26BFA814002E7119 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6070722E26BFA814002E7119 /* ViewController.swift */; };
 		6070723126BFA814002E7119 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6070723026BFA814002E7119 /* Assets.xcassets */; };
@@ -37,6 +39,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		605AFB9D26C7CA760040E608 /* ByteConvertible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteConvertible.swift; sourceTree = "<group>"; };
+		605AFBA526C810680040E608 /* BinaryInteger+Rotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BinaryInteger+Rotation.swift"; sourceTree = "<group>"; };
 		6070722926BFA814002E7119 /* Gameboy Swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Gameboy Swift.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6070722C26BFA814002E7119 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		6070722E26BFA814002E7119 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -81,6 +85,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		605AFB9C26C7CA690040E608 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				605AFB9D26C7CA760040E608 /* ByteConvertible.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
 		6070722026BFA814002E7119 = {
 			isa = PBXGroup;
 			children = (
@@ -107,10 +119,11 @@
 				6070725826BFB63C002E7119 /* Emulator */,
 				6070722C26BFA814002E7119 /* AppDelegate.swift */,
 				6070722E26BFA814002E7119 /* ViewController.swift */,
-				6070725F26BFCF8E002E7119 /* Extensions */,
-				6070723026BFA814002E7119 /* Assets.xcassets */,
 				6070723226BFA814002E7119 /* Main.storyboard */,
 				6070723526BFA814002E7119 /* Info.plist */,
+				605AFB9C26C7CA690040E608 /* Utilities */,
+				6070725F26BFCF8E002E7119 /* Extensions */,
+				6070723026BFA814002E7119 /* Assets.xcassets */,
 				6070723626BFA815002E7119 /* Gameboy_Swift.entitlements */,
 			);
 			path = "Gameboy Swift";
@@ -148,6 +161,7 @@
 			isa = PBXGroup;
 			children = (
 				6070726026BFCFA5002E7119 /* Array+UIntSubscript.swift */,
+				605AFBA526C810680040E608 /* BinaryInteger+Rotation.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -281,10 +295,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */,
 				6070725C26BFC47E002E7119 /* Memory.swift in Sources */,
 				6070726126BFCFA5002E7119 /* Array+UIntSubscript.swift in Sources */,
 				6070722F26BFA814002E7119 /* ViewController.swift in Sources */,
 				6070722D26BFA814002E7119 /* AppDelegate.swift in Sources */,
+				605AFBA626C810680040E608 /* BinaryInteger+Rotation.swift in Sources */,
 				6070725A26BFB650002E7119 /* CPU.swift in Sources */,
 				6070725E26BFCDCC002E7119 /* ROM.swift in Sources */,
 			);
