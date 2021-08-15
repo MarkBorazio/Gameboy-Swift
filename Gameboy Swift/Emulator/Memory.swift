@@ -26,7 +26,7 @@ class Memory {
         }
         
         // Second 16kB of memory map can be set and swapped between ROM banks.
-        // We simply initialise it with the second 16kB of ROM data.
+        // The default is simply the second 16kB of ROM data.
         Self.switchableRomBankAddressRange.forEach { index in
             memoryMap[index] = rom.data[index]
         }

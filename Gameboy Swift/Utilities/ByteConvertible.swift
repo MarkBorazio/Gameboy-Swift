@@ -35,6 +35,13 @@ extension UnsignedInteger {
     }
 }
 
+extension Int8 {
+    public init(byte: UInt8) {
+        // Endianness is irrelevant for a 1 byte array.
+        self.init(bytes: [byte], endianness: .littleEndian)! // Can't be nil because array is guaranteed to have only element
+    }
+}
+
 public enum Endianness {
     case bigEndian
     case littleEndian
