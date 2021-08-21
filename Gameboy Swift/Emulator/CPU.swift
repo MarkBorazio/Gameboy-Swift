@@ -82,6 +82,7 @@ class CPU {
         let opcode = fetchNextByte()
         
         switch opcode {
+        
         case 0x00: noOp()
         case 0x01: loadShortIntoBC()
         case 0x02: loadAIntoAbsoluteBC()
@@ -107,7 +108,7 @@ class CPU {
         case 0x15: decrementD()
         case 0x16: loadByteIntoD()
         case 0x17: rotateALeftThroughCarry()
-        case 0x18: relativeJump()
+        case 0x18: unconditionalJump()
         case 0x19: addDEtoHL()
         case 0x1A: loadAbsoluteDEIntoA()
         case 0x1B: decrementDE()
@@ -115,6 +116,23 @@ class CPU {
         case 0x1D: decrementE()
         case 0x1E: loadByteIntoE()
         case 0x1F: rotateARightThroughCarry()
+            
+        case 0x20: jumpIfZFlagCleared()
+        case 0x21: loadShortIntoHL()
+        case 0x22: loadAIntoAbsoluteHLAndIncrementHL()
+        case 0x23: incrementHL()
+        case 0x24: incrementH()
+        case 0x25: decrementH()
+        case 0x26: loadByteIntoH()
+        case 0x27: decimalAdjustAfterAddition()
+        case 0x28: jumpIfZFlagSet()
+        case 0x29: addHLtoHL()
+        case 0x2A: loadAbsoluteHLIntoAAndIncrementHL()
+        case 0x2B: decrementHL()
+        case 0x2C: incrementL()
+        case 0x2D: decrementL()
+        case 0x2E: loadByteIntoL()
+        case 0x2F: flipBitsInA()
             
         default: fatalError("Encountered unknown opcode.")
         }
@@ -131,43 +149,43 @@ class CPU {
 
 extension CPU {
     
-    // 0x00
+    /// 0x00
     private func noOp() {
         // No Operation
     }
     
-    // 0x01
+    /// 0x01
     private func loadShortIntoBC() {
         let value = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
         bc = value
     }
     
-    // 0x02
+    /// 0x02
     private func loadAIntoAbsoluteBC() {
         memory.writeValue(a, address: bc)
     }
     
-    // 0x03
+    /// 0x03
     private func incrementBC() {
         bc &+= 1
     }
     
-    // 0x04
+    /// 0x04
     private func incrementB() {
         incrementRegister(&b)
     }
     
-    // 0x05
+    /// 0x05
     private func decrementB() {
         decrementRegister(&b)
     }
     
-    // 0x06
+    /// 0x06
     private func loadByteIntoB() {
         b = fetchNextByte()
     }
     
-    // 0x07
+    /// 0x07
     private func rotateALeftWithCarry() {
         cFlag = a.checkBit(7)
         a = a.bitwiseLeftRotation(amount: 1)
@@ -176,14 +194,14 @@ extension CPU {
         hFlag = false
     }
     
-    // 0x08
+    /// 0x08
     private func loadSPIntoAddress() {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
         memory.writeValue(sp.asBytes()[0], address: address)
         memory.writeValue(sp.asBytes()[1], address: address+1)
     }
     
-    // 0x09
+    /// 0x09
     private func addBCtoHL() {
         // Ref: https://stackoverflow.com/a/57981912
         addToRegister(&l, valueOf: c)
@@ -192,32 +210,32 @@ extension CPU {
         addToRegister(&h, valueOf: operand)
     }
     
-    // 0x0A
+    /// 0x0A
     private func loadAbsoluteBCIntoA() {
         a = memory.readValue(address: bc)
     }
     
-    // 0x0B
+    /// 0x0B
     private func decrementBC() {
         bc &-= 1
     }
     
-    // 0x0C
+    /// 0x0C
     private func incrementC() {
         incrementRegister(&c)
     }
     
-    // 0x0D
+    /// 0x0D
     private func decrementC() {
         decrementRegister(&c)
     }
     
-    // 0x0E
+    /// 0x0E
     private func loadByteIntoC() {
         c = fetchNextByte()
     }
     
-    // 0x0F
+    /// 0x0F
     private func rotateARightWithCarry() {
         cFlag = a.checkBit(0)
         a = a.bitwiseRightRotation(amount: 1)
@@ -226,44 +244,44 @@ extension CPU {
         hFlag = false
     }
     
-    // 0x10
+    /// 0x10
     private func stop() {
         // TODO: This
         // Also, figure out if this is a 2 byte operation.
     }
     
-    // 0x11
+    /// 0x11
     private func loadShortIntoDE() {
         let value = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
         de = value
     }
     
-    // 0x12
+    /// 0x12
     private func loadAIntoAbsoluteDE() {
         memory.writeValue(a, address: de)
     }
     
-    // 0x13
+    /// 0x13
     private func incrementDE() {
         de &+= 1
     }
     
-    // 0x14
+    /// 0x14
     private func incrementD() {
         incrementRegister(&d)
     }
     
-    // 0x15
+    /// 0x15
     private func decrementD() {
         decrementRegister(&d)
     }
     
-    // 0x16
+    /// 0x16
     private func loadByteIntoD() {
         d = fetchNextByte()
     }
     
-    // 0x17
+    /// 0x17
     private func rotateALeftThroughCarry() {
         let previousCarry = cFlag
         cFlag = a.checkBit(7)
@@ -274,19 +292,12 @@ extension CPU {
         hFlag = false
     }
     
-    // 0x18
-    private func relativeJump() {
-        let operand = Int8(byte: fetchNextByte())
-        let isPositive = operand >= 0
-        
-        if isPositive {
-            pc &+= UInt16(operand)
-        } else {
-            pc &-= UInt16(operand.magnitude)
-        }
+    /// 0x18
+    private func unconditionalJump() {
+        relativeJump(byte: fetchNextByte())
     }
     
-    // 0x19
+    /// 0x19
     private func addDEtoHL() {
         // Ref: https://stackoverflow.com/a/57981912
         addToRegister(&l, valueOf: e)
@@ -295,32 +306,32 @@ extension CPU {
         addToRegister(&h, valueOf: operand)
     }
     
-    // 0x1A
+    /// 0x1A
     private func loadAbsoluteDEIntoA() {
         a = memory.readValue(address: de)
     }
     
-    // 0x1B
+    /// 0x1B
     private func decrementDE() {
         de &-= 1
     }
     
-    // 0x1C
+    /// 0x1C
     private func incrementE() {
         incrementRegister(&e)
     }
     
-    // 0x1D
+    /// 0x1D
     private func decrementE() {
         decrementRegister(&e)
     }
     
-    // 0x1E
+    /// 0x1E
     private func loadByteIntoE() {
         e = fetchNextByte()
     }
     
-    // 0x1F
+    /// 0x1F
     private func rotateARightThroughCarry() {
         let previousCarry = cFlag
         cFlag = a.checkBit(0)
@@ -329,6 +340,122 @@ extension CPU {
         zFlag = false
         nFlag = false
         hFlag = false
+    }
+    
+    /// 0x20
+    private func jumpIfZFlagCleared() {
+        let operand = fetchNextByte()
+        if !zFlag {
+            relativeJump(byte: operand)
+        }
+    }
+    
+    /// 0x21
+    private func loadShortIntoHL() {
+        let value = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
+        hl = value
+    }
+    
+    /// 0x22
+    private func loadAIntoAbsoluteHLAndIncrementHL() {
+        memory.writeValue(a, address: hl)
+        hl += 1
+    }
+    
+    /// 0x23
+    private func incrementHL() {
+        hl &+= 1
+    }
+    
+    /// 0x24
+    private func incrementH() {
+        incrementRegister(&h)
+    }
+    
+    /// 0x25
+    private func decrementH() {
+        decrementRegister(&h)
+    }
+    
+    /// 0x26
+    private func loadByteIntoH() {
+        h = fetchNextByte()
+    }
+
+    /// 0x27
+    private func decimalAdjustAfterAddition() {
+        // Refs:
+        // https://ehaskins.com/2018-01-30%20Z80%20DAA/
+        // https://binji.github.io/posts/pokegb/
+        
+        var bcdCorrection: UInt8 = 0
+        var carry = false
+        if (hFlag || (!nFlag && a.lowNibble > 0x9)) {
+            bcdCorrection |= 0x6
+        }
+        if (cFlag || (!nFlag && a > 0x99)) {
+            bcdCorrection |= 0x60
+            carry = true
+        }
+        
+        if nFlag {
+            a &-= bcdCorrection
+        } else {
+            a &+= bcdCorrection
+        }
+        
+        zFlag = a == 0
+        hFlag = false
+        cFlag = carry
+    }
+    
+    /// 0x28
+    private func jumpIfZFlagSet() {
+        let operand = fetchNextByte()
+        if zFlag {
+            relativeJump(byte: operand)
+        }
+    }
+    
+    /// 0x29
+    private func addHLtoHL() {
+        addToRegister(&l, valueOf: l)
+        let carryBit: UInt8 = cFlag ? 1 : 0
+        let operand = h &+ carryBit
+        addToRegister(&h, valueOf: operand)
+    }
+    
+    /// 0x2A
+    private func loadAbsoluteHLIntoAAndIncrementHL() {
+        a = memory.readValue(address: hl)
+        hl += 1
+    }
+    
+    /// 0x2B
+    private func decrementHL() {
+        hl &-= 1
+    }
+    
+    /// 0x2C
+    private func incrementL() {
+        incrementRegister(&l)
+    }
+    
+    /// 0x2D
+    private func decrementL() {
+        decrementRegister(&l)
+    }
+    
+    /// 0x2E
+    private func loadByteIntoL() {
+        l = fetchNextByte()
+    }
+    
+    /// 0x2F
+    private func flipBitsInA() {
+        a = ~a
+        nFlag = true
+        hFlag = true
     }
 }
 
@@ -364,5 +491,16 @@ extension CPU {
         nFlag = false
         hFlag = halfCarry
         cFlag = carry
+    }
+    
+    private func relativeJump(byte: UInt8) {
+        let isPositive = Int8(bitPattern: byte) >= 0
+        
+        let offsetMagnitude = UInt16(byte)
+        if isPositive {
+            pc &+= offsetMagnitude
+        } else {
+            pc &-= offsetMagnitude
+        }
     }
 }
