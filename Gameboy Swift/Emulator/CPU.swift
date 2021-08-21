@@ -21,39 +21,39 @@ class CPU {
     
     // Individual Registers
     private var a: UInt8 {
-        get { af.asBytes()[0] }
-        set { af = UInt16(bytes: [newValue, f])! }
+        get { af.asBytes()[1] }
+        set { af = UInt16(bytes: [f, newValue])! }
     }
     private var f: UInt8 {
-        get { af.asBytes()[1] }
-        set { af = UInt16(bytes: [a, newValue])! }
+        get { af.asBytes()[0] }
+        set { af = UInt16(bytes: [newValue, a])! }
     }
     
     private var b: UInt8 {
-        get { bc.asBytes()[0] }
-        set { bc = UInt16(bytes: [newValue, c])! }
+        get { bc.asBytes()[1] }
+        set { bc = UInt16(bytes: [c, newValue])! }
     }
     private var c: UInt8 {
-        get { bc.asBytes()[1] }
-        set { bc = UInt16(bytes: [b, newValue])! }
+        get { bc.asBytes()[0] }
+        set { bc = UInt16(bytes: [newValue, b])! }
     }
     
     private var d: UInt8 {
-        get { de.asBytes()[0] }
-        set { de = UInt16(bytes: [newValue, e])! }
+        get { de.asBytes()[1] }
+        set { de = UInt16(bytes: [e, newValue])! }
     }
     private var e: UInt8 {
-        get { de.asBytes()[1] }
-        set { de = UInt16(bytes: [d, newValue])! }
+        get { de.asBytes()[0] }
+        set { de = UInt16(bytes: [newValue, d])! }
     }
     
     private var h: UInt8 {
-        get { hl.asBytes()[0] }
-        set { hl = UInt16(bytes: [newValue, l])! }
+        get { hl.asBytes()[1] }
+        set { hl = UInt16(bytes: [l, newValue])! }
     }
     private var l: UInt8 {
-        get { hl.asBytes()[1] }
-        set { hl = UInt16(bytes: [h, newValue])! }
+        get { hl.asBytes()[0] }
+        set { hl = UInt16(bytes: [newValue, h])! }
     }
     
     // Register Flags
