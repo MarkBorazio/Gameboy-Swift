@@ -134,6 +134,23 @@ class CPU {
         case 0x2E: loadByteIntoL()
         case 0x2F: flipBitsInA()
             
+        case 0x30: jumpIfCFlagCleared()
+        case 0x31: loadShortIntoSP()
+        case 0x32: loadAIntoAbsoluteHLAndDecrementHL()
+        case 0x33: incrementSP()
+        case 0x34: incrementAbsoluteHL()
+        case 0x35: decrementAbsoluteHL()
+        case 0x36: loadByteIntoAbsoluteHL()
+        case 0x37: setCFlag()
+        case 0x38: jumpIfCFlagSet()
+        case 0x39: addSPtoHL()
+        case 0x3A: loadAbsoluteHLIntoAAndDecrementHL()
+        case 0x3B: decrementSP()
+        case 0x3C: incrementA()
+        case 0x3D: decrementA()
+        case 0x3E: loadByteIntoA()
+        case 0x3F: flipCFlag()
+            
         default: fatalError("Encountered unknown opcode.")
         }
     }
@@ -445,6 +462,106 @@ extension CPU {
         a = ~a
         nFlag = true
         hFlag = true
+    }
+    
+    /// 0x30
+    private func jumpIfCFlagCleared() {
+        let operand = fetchNextByte()
+        if !cFlag {
+            relativeJump(byte: operand)
+        }
+    }
+    
+    /// 0x31
+    private func loadShortIntoSP() {
+        let value = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
+        sp = value
+    }
+    
+    /// 0x32
+    private func loadAIntoAbsoluteHLAndDecrementHL() {
+        memory.writeValue(a, address: hl)
+        hl -= 1
+    }
+    
+    /// 0x33
+    private func incrementSP() {
+        sp &+= 1
+    }
+    
+    /// 0x34
+    private func incrementAbsoluteHL() {
+        let value = memory.readValue(address: hl)
+        let incrementedValue = incrementOperation(value)
+        memory.writeValue(incrementedValue, address: hl)
+    }
+    
+    /// 0x35
+    private func decrementAbsoluteHL() {
+        let value = memory.readValue(address: hl)
+        let decrementedValue = decrementOperation(value)
+        memory.writeValue(decrementedValue, address: hl)
+    }
+    
+    /// 0x36
+    private func loadByteIntoAbsoluteHL() {
+        let byte = fetchNextByte()
+        memory.writeValue(byte, address: hl)
+    }
+    
+    /// 0x37
+    private func setCFlag() {
+        cFlag = true
+        // Also need to clear n and h flags
+        nFlag = false
+        hFlag = false
+    }
+    
+    /// 0x38
+    private func jumpIfCFlagSet() {
+        let operand = fetchNextByte()
+        if cFlag {
+            relativeJump(byte: operand)
+        }
+    }
+    
+    /// 0x39
+    private func addSPtoHL() {
+        hl = addOperation(lhs: hl, rhs: sp)
+    }
+    
+    /// 0x3A
+    private func loadAbsoluteHLIntoAAndDecrementHL() {
+        a = memory.readValue(address: hl)
+        hl -= 1
+    }
+    
+    /// 0x3B
+    private func decrementSP() {
+        sp &-= 1
+    }
+    
+    /// 0x3C
+    private func incrementA() {
+        a = incrementOperation(a)
+    }
+    
+    /// 0x3D
+    private func decrementA() {
+        a = decrementOperation(a)
+    }
+    
+    /// 0x3E
+    private func loadByteIntoA() {
+        a = fetchNextByte()
+    }
+    
+    /// 0x3F
+    private func flipCFlag() {
+        cFlag.toggle()
+        // Also need to clear n and h flags
+        nFlag = false
+        hFlag = false
     }
 }
 
