@@ -151,6 +151,74 @@ class CPU {
         case 0x3E: loadByteIntoA()
         case 0x3F: flipCFlag()
             
+        case 0x40: loadBIntoB()
+        case 0x41: loadCIntoB()
+        case 0x42: loadDIntoB()
+        case 0x43: loadEIntoB()
+        case 0x44: loadHIntoB()
+        case 0x45: loadLIntoB()
+        case 0x46: loadAbsoluteHLIntoB()
+        case 0x47: loadAIntoB()
+        case 0x48: loadBIntoC()
+        case 0x49: loadCIntoC()
+        case 0x4A: loadDIntoC()
+        case 0x4B: loadEIntoC()
+        case 0x4C: loadHIntoC()
+        case 0x4D: loadLIntoC()
+        case 0x4E: loadAbsoluteHLIntoC()
+        case 0x4F: loadAIntoC()
+            
+        case 0x50: loadBIntoD()
+        case 0x51: loadCIntoD()
+        case 0x52: loadDIntoD()
+        case 0x53: loadEIntoD()
+        case 0x54: loadHIntoD()
+        case 0x55: loadLIntoD()
+        case 0x56: loadAbsoluteHLIntoD()
+        case 0x57: loadAIntoD()
+        case 0x58: loadBIntoE()
+        case 0x59: loadCIntoE()
+        case 0x5A: loadDIntoE()
+        case 0x5B: loadEIntoE()
+        case 0x5C: loadHIntoE()
+        case 0x5D: loadLIntoE()
+        case 0x5E: loadAbsoluteHLIntoE()
+        case 0x5F: loadAIntoE()
+            
+        case 0x60: loadBIntoH()
+        case 0x61: loadCIntoH()
+        case 0x62: loadDIntoH()
+        case 0x63: loadEIntoH()
+        case 0x64: loadHIntoH()
+        case 0x65: loadLIntoH()
+        case 0x66: loadAbsoluteHLIntoH()
+        case 0x67: loadAIntoH()
+        case 0x68: loadBIntoL()
+        case 0x69: loadCIntoL()
+        case 0x6A: loadDIntoL()
+        case 0x6B: loadEIntoL()
+        case 0x6C: loadHIntoL()
+        case 0x6D: loadLIntoL()
+        case 0x6E: loadAbsoluteHLIntoL()
+        case 0x6F: loadAIntoL()
+            
+        case 0x70: loadBIntoAbsoluteHL()
+        case 0x71: loadCIntoAbsoluteHL()
+        case 0x72: loadDIntoAbsoluteHL()
+        case 0x73: loadEIntoAbsoluteHL()
+        case 0x74: loadHIntoAbsoluteHL()
+        case 0x75: loadLIntoAbsoluteHL()
+        case 0x76: halt()
+        case 0x77: loadAIntoAbsoluteHL()
+        case 0x78: loadBIntoA()
+        case 0x79: loadCIntoA()
+        case 0x7A: loadDIntoA()
+        case 0x7B: loadEIntoA()
+        case 0x7C: loadHIntoA()
+        case 0x7D: loadLIntoA()
+        case 0x7E: loadAbsoluteHLIntoA()
+        case 0x7F: loadAIntoA()
+            
         default: fatalError("Encountered unknown opcode.")
         }
     }
@@ -259,6 +327,7 @@ extension CPU {
     
     /// 0x10
     private func stop() {
+        fatalError("TODO: Implement STOP instruction.")
         // TODO: This
         // Also, figure out if this is a 2 byte operation.
     }
@@ -562,6 +631,326 @@ extension CPU {
         // Also need to clear n and h flags
         nFlag = false
         hFlag = false
+    }
+    
+    /// 0x40
+    private func loadBIntoB() {
+//        b = b
+    }
+    
+    /// 0x41
+    private func loadCIntoB() {
+        b = c
+    }
+    
+    /// 0x42
+    private func loadDIntoB() {
+        b = d
+    }
+    
+    /// 0x43
+    private func loadEIntoB() {
+        b = e
+    }
+    
+    /// 0x44
+    private func loadHIntoB() {
+        b = h
+    }
+    
+    /// 0x45
+    private func loadLIntoB() {
+        b = l
+    }
+    
+    /// 0x46
+    private func loadAbsoluteHLIntoB() {
+        b = memory.readValue(address: hl)
+    }
+    
+    /// 0x47
+    private func loadAIntoB() {
+        b = a
+    }
+    
+    /// 0x48
+    private func loadBIntoC() {
+        c = b
+    }
+    
+    /// 0x49
+    private func loadCIntoC() {
+//        c = c
+    }
+    
+    /// 0x4A
+    private func loadDIntoC() {
+        c = d
+    }
+    
+    /// 0x4B
+    private func loadEIntoC() {
+        c = e
+    }
+    
+    /// 0x4C
+    private func loadHIntoC() {
+        c = h
+    }
+    
+    /// 0x4D
+    private func loadLIntoC() {
+        c = l
+    }
+    
+    /// 0x4E
+    private func loadAbsoluteHLIntoC() {
+        c = memory.readValue(address: hl)
+    }
+    
+    /// 0x4F
+    private func loadAIntoC() {
+        c = a
+    }
+    
+    /// 0x50
+    private func loadBIntoD() {
+        d = b
+    }
+    
+    /// 0x51
+    private func loadCIntoD() {
+        d = c
+    }
+    
+    /// 0x52
+    private func loadDIntoD() {
+//        d = d
+    }
+    
+    /// 0x53
+    private func loadEIntoD() {
+        d = e
+    }
+    
+    /// 0x54
+    private func loadHIntoD() {
+        d = h
+    }
+    
+    /// 0x55
+    private func loadLIntoD() {
+        d = l
+    }
+    
+    /// 0x56
+    private func loadAbsoluteHLIntoD() {
+        d = memory.readValue(address: hl)
+    }
+    
+    /// 0x57
+    private func loadAIntoD() {
+        d = a
+    }
+    
+    /// 0x58
+    private func loadBIntoE() {
+        e = b
+    }
+    
+    /// 0x59
+    private func loadCIntoE() {
+        e = c
+    }
+    
+    /// 0x5A
+    private func loadDIntoE() {
+        e = d
+    }
+    
+    /// 0x5B
+    private func loadEIntoE() {
+//        e = e
+    }
+    
+    /// 0x5C
+    private func loadHIntoE() {
+        e = h
+    }
+    
+    /// 0x5D
+    private func loadLIntoE() {
+        e = l
+    }
+    
+    /// 0x5E
+    private func loadAbsoluteHLIntoE() {
+        e = memory.readValue(address: hl)
+    }
+    
+    /// 0x5F
+    private func loadAIntoE() {
+        e = a
+    }
+    
+    /// 0x60
+    private func loadBIntoH() {
+        h = b
+    }
+    
+    /// 0x61
+    private func loadCIntoH() {
+        h = c
+    }
+    
+    /// 0x62
+    private func loadDIntoH() {
+        h = d
+    }
+    
+    /// 0x63
+    private func loadEIntoH() {
+        h = e
+    }
+    
+    /// 0x64
+    private func loadHIntoH() {
+//        h = h
+    }
+    
+    /// 0x65
+    private func loadLIntoH() {
+        h = l
+    }
+    
+    /// 0x66
+    private func loadAbsoluteHLIntoH() {
+        h = memory.readValue(address: hl)
+    }
+    
+    /// 0x67
+    private func loadAIntoH() {
+        h = a
+    }
+    
+    /// 0x68
+    private func loadBIntoL() {
+        l = b
+    }
+    
+    /// 0x69
+    private func loadCIntoL() {
+        l = c
+    }
+    
+    /// 0x6A
+    private func loadDIntoL() {
+        l = d
+    }
+    
+    /// 0x6B
+    private func loadEIntoL() {
+        l = e
+    }
+    
+    /// 0x6C
+    private func loadHIntoL() {
+        l = h
+    }
+    
+    /// 0x6D
+    private func loadLIntoL() {
+//        l = l
+    }
+    
+    /// 0x6E
+    private func loadAbsoluteHLIntoL() {
+        l = memory.readValue(address: hl)
+    }
+    
+    /// 0x6F
+    private func loadAIntoL() {
+        l = a
+    }
+    
+    /// 0x70
+    private func loadBIntoAbsoluteHL() {
+        memory.writeValue(b, address: hl)
+    }
+    
+    /// 0x71
+    private func loadCIntoAbsoluteHL() {
+        memory.writeValue(c, address: hl)
+    }
+    
+    /// 0x72
+    private func loadDIntoAbsoluteHL() {
+        memory.writeValue(d, address: hl)
+    }
+    
+    /// 0x73
+    private func loadEIntoAbsoluteHL() {
+        memory.writeValue(e, address: hl)
+    }
+    
+    /// 0x74
+    private func loadHIntoAbsoluteHL() {
+        memory.writeValue(h, address: hl)
+    }
+    
+    /// 0x75
+    private func loadLIntoAbsoluteHL() {
+        memory.writeValue(l, address: hl)
+    }
+    
+    /// 0x76
+    private func halt() {
+        fatalError("TODO: Implement HALT instruction.")
+    }
+    
+    /// 0x77
+    private func loadAIntoAbsoluteHL() {
+        memory.writeValue(a, address: hl)
+    }
+    
+    /// 0x78
+    private func loadBIntoA() {
+        a = b
+    }
+    
+    /// 0x79
+    private func loadCIntoA() {
+        a = c
+    }
+    
+    /// 0x7A
+    private func loadDIntoA() {
+        a = d
+    }
+    
+    /// 0x7B
+    private func loadEIntoA() {
+        a = e
+    }
+    
+    /// 0x7C
+    private func loadHIntoA() {
+        a = h
+    }
+    
+    /// 0x7D
+    private func loadLIntoA() {
+        a = l
+    }
+    
+    /// 0x7E
+    private func loadAbsoluteHLIntoA() {
+        a = memory.readValue(address: hl)
+    }
+    
+    /// 0x7F
+    private func loadAIntoA() {
+//        a = a
     }
 }
 
