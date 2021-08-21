@@ -219,6 +219,23 @@ class CPU {
         case 0x7E: loadAbsoluteHLIntoA()
         case 0x7F: loadAIntoA()
             
+        case 0x80: addBToA()
+        case 0x81: addCToA()
+        case 0x82: addDToA()
+        case 0x83: addEToA()
+        case 0x84: addHToA()
+        case 0x85: addLToA()
+        case 0x86: addAbsoluteHLToA()
+        case 0x87: addAToA()
+        case 0x88: addBWithCarryToA()
+        case 0x89: addCWithCarryToA()
+        case 0x8A: addDWithCarryToA()
+        case 0x8B: addEWithCarryToA()
+        case 0x8C: addHWithCarryToA()
+        case 0x8D: addLWithCarryToA()
+        case 0x8E: addAbsoluteHLWithCarryToA()
+        case 0x8F: addAWithCarryToA()
+            
         default: fatalError("Encountered unknown opcode.")
         }
     }
@@ -952,6 +969,88 @@ extension CPU {
     private func loadAIntoA() {
 //        a = a
     }
+    
+    /// 0x80
+    private func addBToA() {
+        a = addOperation(lhs: a, rhs: b)
+    }
+    
+    /// 0x81
+    private func addCToA() {
+        a = addOperation(lhs: a, rhs: c)
+    }
+    
+    /// 0x82
+    private func addDToA() {
+        a = addOperation(lhs: a, rhs: d)
+    }
+    
+    /// 0x83
+    private func addEToA() {
+        a = addOperation(lhs: a, rhs: e)
+    }
+    
+    /// 0x84
+    private func addHToA() {
+        a = addOperation(lhs: a, rhs: h)
+    }
+    
+    /// 0x85
+    private func addLToA() {
+        a = addOperation(lhs: a, rhs: l)
+    }
+    
+    /// 0x86
+    private func addAbsoluteHLToA() {
+        let value = memory.readValue(address: hl)
+        a = addOperation(lhs: a, rhs: value)
+    }
+    
+    /// 0x87
+    private func addAToA() {
+        a = addOperation(lhs: a, rhs: a)
+    }
+    
+    /// 0x88
+    private func addBWithCarryToA() {
+        a = addWithCarryOperation(lhs: a, rhs: b)
+    }
+    
+    /// 0x89
+    private func addCWithCarryToA() {
+        a = addWithCarryOperation(lhs: a, rhs: c)
+    }
+    
+    /// 0x8A
+    private func addDWithCarryToA() {
+        a = addWithCarryOperation(lhs: a, rhs: d)
+    }
+    
+    /// 0x8B
+    private func addEWithCarryToA() {
+        a = addWithCarryOperation(lhs: a, rhs: e)
+    }
+    
+    /// 0x8C
+    private func addHWithCarryToA() {
+        a = addWithCarryOperation(lhs: a, rhs: h)
+    }
+    
+    /// 0x8D
+    private func addLWithCarryToA() {
+        a = addWithCarryOperation(lhs: a, rhs: l)
+    }
+    
+    /// 0x8E
+    private func addAbsoluteHLWithCarryToA() {
+        let value = memory.readValue(address: hl)
+        a = addWithCarryOperation(lhs: a, rhs: value)
+    }
+    
+    /// 0x8F
+    private func addAWithCarryToA() {
+        a = addWithCarryOperation(lhs: a, rhs: a)
+    }
 }
 
 
@@ -991,14 +1090,18 @@ extension CPU {
         return summation
     }
     
+    private func addWithCarryOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
+        let carryBit: UInt8 = cFlag ? 1 : 0
+        return addOperation(lhs: lhs, rhs: rhs &+ carryBit)
+    }
+    
     private func addOperation(lhs: UInt16, rhs: UInt16) -> UInt16 {
         // Ref: https://stackoverflow.com/a/57981912
         let lhsBytes = lhs.asBytes()
         let rhsBytes = rhs.asBytes()
         
         let lowerByte = addOperation(lhs: lhsBytes[0], rhs: rhsBytes[0])
-        let carryBit: UInt8 = cFlag ? 1 : 0
-        let upperByte = addOperation(lhs: lhsBytes[1], rhs: rhsBytes[1] &+ carryBit)
+        let upperByte = addWithCarryOperation(lhs: lhsBytes[1], rhs: rhsBytes[1])
         
         return UInt16(bytes: [lowerByte, upperByte])!
     }
