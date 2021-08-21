@@ -203,11 +203,7 @@ extension CPU {
     
     /// 0x09
     private func addBCtoHL() {
-        // Ref: https://stackoverflow.com/a/57981912
-        l = addOperation(lhs: l, rhs: c)
-        let carryBit: UInt8 = cFlag ? 1 : 0
-        let operand = b &+ carryBit
-        h = addOperation(lhs: h, rhs: operand)
+        hl = addOperation(lhs: hl, rhs: bc)
     }
     
     /// 0x0A
@@ -299,11 +295,7 @@ extension CPU {
     
     /// 0x19
     private func addDEtoHL() {
-        // Ref: https://stackoverflow.com/a/57981912
-        l = addOperation(lhs: l, rhs: e)
-        let carryBit: UInt8 = cFlag ? 1 : 0
-        let operand = d &+ carryBit
-        h = addOperation(lhs: h, rhs: operand)
+        hl = addOperation(lhs: hl, rhs: de)
     }
     
     /// 0x1A
@@ -419,10 +411,7 @@ extension CPU {
     
     /// 0x29
     private func addHLtoHL() {
-        l = addOperation(lhs: l, rhs: l)
-        let carryBit: UInt8 = cFlag ? 1 : 0
-        let operand = h &+ carryBit
-        h = addOperation(lhs: h, rhs: operand)
+        hl = addOperation(lhs: hl, rhs: hl)
     }
     
     /// 0x2A
@@ -494,6 +483,18 @@ extension CPU {
         cFlag = carry
         
         return summation
+    }
+    
+    private func addOperation(lhs: UInt16, rhs: UInt16) -> UInt16 {
+        // Ref: https://stackoverflow.com/a/57981912
+        let lhsBytes = lhs.asBytes()
+        let rhsBytes = rhs.asBytes()
+        
+        let lowerByte = addOperation(lhs: lhsBytes[0], rhs: rhsBytes[0])
+        let carryBit: UInt8 = cFlag ? 1 : 0
+        let upperByte = addOperation(lhs: lhsBytes[1], rhs: rhsBytes[1] &+ carryBit)
+        
+        return UInt16(bytes: [lowerByte, upperByte])!
     }
     
     private func relativeJump(byte: UInt8) {
