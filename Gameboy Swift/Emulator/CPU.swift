@@ -172,12 +172,12 @@ extension CPU {
     
     /// 0x04
     private func incrementB() {
-        incrementRegister(&b)
+        b = incrementOperation(b)
     }
     
     /// 0x05
     private func decrementB() {
-        decrementRegister(&b)
+        b = decrementOperation(b)
     }
     
     /// 0x06
@@ -204,10 +204,10 @@ extension CPU {
     /// 0x09
     private func addBCtoHL() {
         // Ref: https://stackoverflow.com/a/57981912
-        addToRegister(&l, valueOf: c)
+        l = addOperation(lhs: l, rhs: c)
         let carryBit: UInt8 = cFlag ? 1 : 0
         let operand = b &+ carryBit
-        addToRegister(&h, valueOf: operand)
+        h = addOperation(lhs: h, rhs: operand)
     }
     
     /// 0x0A
@@ -222,12 +222,12 @@ extension CPU {
     
     /// 0x0C
     private func incrementC() {
-        incrementRegister(&c)
+        c = incrementOperation(c)
     }
     
     /// 0x0D
     private func decrementC() {
-        decrementRegister(&c)
+        c = decrementOperation(c)
     }
     
     /// 0x0E
@@ -268,12 +268,12 @@ extension CPU {
     
     /// 0x14
     private func incrementD() {
-        incrementRegister(&d)
+        d = incrementOperation(d)
     }
     
     /// 0x15
     private func decrementD() {
-        decrementRegister(&d)
+        d = decrementOperation(d)
     }
     
     /// 0x16
@@ -300,10 +300,10 @@ extension CPU {
     /// 0x19
     private func addDEtoHL() {
         // Ref: https://stackoverflow.com/a/57981912
-        addToRegister(&l, valueOf: e)
+        l = addOperation(lhs: l, rhs: e)
         let carryBit: UInt8 = cFlag ? 1 : 0
         let operand = d &+ carryBit
-        addToRegister(&h, valueOf: operand)
+        h = addOperation(lhs: h, rhs: operand)
     }
     
     /// 0x1A
@@ -318,12 +318,12 @@ extension CPU {
     
     /// 0x1C
     private func incrementE() {
-        incrementRegister(&e)
+        e = incrementOperation(e)
     }
     
     /// 0x1D
     private func decrementE() {
-        decrementRegister(&e)
+        e = decrementOperation(e)
     }
     
     /// 0x1E
@@ -369,12 +369,12 @@ extension CPU {
     
     /// 0x24
     private func incrementH() {
-        incrementRegister(&h)
+        h = incrementOperation(h)
     }
     
     /// 0x25
     private func decrementH() {
-        decrementRegister(&h)
+        h = decrementOperation(h)
     }
     
     /// 0x26
@@ -419,10 +419,10 @@ extension CPU {
     
     /// 0x29
     private func addHLtoHL() {
-        addToRegister(&l, valueOf: l)
+        l = addOperation(lhs: l, rhs: l)
         let carryBit: UInt8 = cFlag ? 1 : 0
         let operand = h &+ carryBit
-        addToRegister(&h, valueOf: operand)
+        h = addOperation(lhs: h, rhs: operand)
     }
     
     /// 0x2A
@@ -438,12 +438,12 @@ extension CPU {
     
     /// 0x2C
     private func incrementL() {
-        incrementRegister(&l)
+        l = incrementOperation(l)
     }
     
     /// 0x2D
     private func decrementL() {
-        decrementRegister(&l)
+        l = decrementOperation(l)
     }
     
     /// 0x2E
@@ -463,34 +463,37 @@ extension CPU {
 // MARK: - Convenience
 
 extension CPU {
-
-    private func incrementRegister(_ register: inout UInt8) {
-        let (incrementedValue, halfCarry) = register.addingReportingHalfCarry(1)
-        register = incrementedValue
+    
+    private func incrementOperation(_ value: UInt8) -> UInt8 {
+        let (incrementedValue, halfCarry) = value.addingReportingHalfCarry(1)
         
-        zFlag = register == 0
+        zFlag = incrementedValue == 0
         nFlag = false
         hFlag = halfCarry
+        
+        return incrementedValue
     }
     
-    private func decrementRegister(_ register: inout UInt8) {
-        let (decrementedValue, halfCarry) = register.subtractingReportingHalfCarry(1)
-        register = decrementedValue
-        
-        zFlag = register == 0
+    private func decrementOperation(_ value: UInt8) -> UInt8 {
+        let (decrementedValue, halfCarry) = value.subtractingReportingHalfCarry(1)
+
+        zFlag = decrementedValue == 0
         nFlag = true
         hFlag = halfCarry
+        
+        return decrementedValue
     }
     
-    private func addToRegister(_ register: inout UInt8, valueOf operand: UInt8) {
-        let (newValue, carry) = register.addingReportingOverflow(operand)
-        let (_, halfCarry) = register.addingReportingHalfCarry(operand)
+    private func addOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
+        let (summation, carry) = lhs.addingReportingOverflow(rhs)
+        let (_, halfCarry) = lhs.addingReportingHalfCarry(rhs)
         
-        register = newValue
-        zFlag = newValue == 0
+        zFlag = summation == 0
         nFlag = false
         hFlag = halfCarry
         cFlag = carry
+        
+        return summation
     }
     
     private func relativeJump(byte: UInt8) {
