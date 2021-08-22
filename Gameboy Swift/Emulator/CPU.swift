@@ -1791,6 +1791,47 @@ extension CPU {
             hFlag = false
             cFlag = oldRegisterValue.checkBit(0)
             
+        case 0x20...0x27: // Shift left arithmetic
+            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let newRegisterValue = oldRegisterValue << 1
+            
+            setRegisterValueForOpcode(opcode, value: newRegisterValue)
+            zFlag = newRegisterValue == 0
+            nFlag = false
+            hFlag = false
+            cFlag = oldRegisterValue.checkBit(7)
+            
+        case 0x28...0x2F: // Shift right arithmetic
+            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            var newRegisterValue = oldRegisterValue >> 1
+            oldRegisterValue.checkBit(7) ? newRegisterValue.setBit(7) : newRegisterValue.clearBit(0)
+            
+            setRegisterValueForOpcode(opcode, value: newRegisterValue)
+            zFlag = newRegisterValue == 0
+            nFlag = false
+            hFlag = false
+            cFlag = oldRegisterValue.checkBit(0)
+            
+        case 0x30...0x37: // Swap nibbles
+            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let newRegisterValue = (oldRegisterValue.lowNibble << 4) | oldRegisterValue.highNibble
+            
+            setRegisterValueForOpcode(opcode, value: newRegisterValue)
+            zFlag = newRegisterValue == 0
+            nFlag = false
+            hFlag = false
+            cFlag = false
+            
+        case 0x38...0x3F: // Shift right logical
+            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let newRegisterValue = oldRegisterValue >> 1
+            
+            setRegisterValueForOpcode(opcode, value: newRegisterValue)
+            zFlag = newRegisterValue == 0
+            nFlag = false
+            hFlag = false
+            cFlag = oldRegisterValue.checkBit(0)
+            
         default: fatalError("Encountered unknown 16-bit opcode.")
         }
     }
