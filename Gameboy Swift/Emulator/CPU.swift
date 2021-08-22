@@ -236,6 +236,57 @@ class CPU {
         case 0x8E: addAbsoluteHLWithCarryToA()
         case 0x8F: addAWithCarryToA()
             
+        case 0x90: subtractBFromA()
+        case 0x91: subtractCFromA()
+        case 0x92: subtractDFromA()
+        case 0x93: subtractEFromA()
+        case 0x94: subtractHFromA()
+        case 0x95: subtractLFromA()
+        case 0x96: subtractAbsoluteHLFromA()
+        case 0x97: subtractAFromA()
+        case 0x98: subtractBWithCarryFromA()
+        case 0x99: subtractCWithCarryFromA()
+        case 0x9A: subtractDWithCarryFromA()
+        case 0x9B: subtractEWithCarryFromA()
+        case 0x9C: subtractHWithCarryFromA()
+        case 0x9D: subtractLWithCarryFromA()
+        case 0x9E: subtractAbsoluteHLWithCarryFromA()
+        case 0x9F: subtractAWithCarryFromA()
+            
+        case 0xA0: logicalAndBToA()
+        case 0xA1: logicalAndCToA()
+        case 0xA2: logicalAndDToA()
+        case 0xA3: logicalAndEToA()
+        case 0xA4: logicalAndHToA()
+        case 0xA5: logicalAndLToA()
+        case 0xA6: logicalAndAbsoluteHLToA()
+        case 0xA7: logicalAndAToA()
+        case 0xA8: logicalXorBToA()
+        case 0xA9: logicalXorCToA()
+        case 0xAA: logicalXorDToA()
+        case 0xAB: logicalXorEToA()
+        case 0xAC: logicalXorHToA()
+        case 0xAD: logicalXorLToA()
+        case 0xAE: logicalXorAbsoluteHLToA()
+        case 0xAF: logicalXorAToA()
+            
+        case 0xB0: logicalOrBToA()
+        case 0xB1: logicalOrCToA()
+        case 0xB2: logicalOrDToA()
+        case 0xB3: logicalOrEToA()
+        case 0xB4: logicalOrHToA()
+        case 0xB5: logicalOrLToA()
+        case 0xB6: logicalOrAbsoluteHLToA()
+        case 0xB7: logicalOrAToA()
+        case 0xB8: compareBToA()
+        case 0xB9: compareCToA()
+        case 0xBA: compareDToA()
+        case 0xBB: compareEToA()
+        case 0xBC: compareHToA()
+        case 0xBD: compareLToA()
+        case 0xBE: compareAbsoluteHLToA()
+        case 0xBF: compareAToA()
+            
         default: fatalError("Encountered unknown opcode.")
         }
     }
@@ -1051,8 +1102,253 @@ extension CPU {
     private func addAWithCarryToA() {
         a = addWithCarryOperation(lhs: a, rhs: a)
     }
-}
+    
+    /// 0x90
+    private func subtractBFromA() {
+        a = subtractOperation(lhs: a, rhs: b)
+    }
+    
+    /// 0x91
+    private func subtractCFromA() {
+        a = subtractOperation(lhs: a, rhs: c)
+    }
+    
+    /// 0x92
+    private func subtractDFromA() {
+        a = subtractOperation(lhs: a, rhs: d)
+    }
+    
+    /// 0x93
+    private func subtractEFromA() {
+        a = subtractOperation(lhs: a, rhs: e)
+    }
+    
+    /// 0x94
+    private func subtractHFromA() {
+        a = subtractOperation(lhs: a, rhs: h)
+    }
+    
+    /// 0x95
+    private func subtractLFromA() {
+        a = subtractOperation(lhs: a, rhs: l)
+    }
+    
+    /// 0x96
+    private func subtractAbsoluteHLFromA() {
+        let value = memory.readValue(address: hl)
+        a = subtractOperation(lhs: a, rhs: value)
+    }
+    
+    /// 0x97
+    private func subtractAFromA() {
+        a = subtractOperation(lhs: a, rhs: a)
+    }
+    
+    /// 0x98
+    private func subtractBWithCarryFromA() {
+        a = subtractWithCarryOperation(lhs: a, rhs: b)
+    }
+    
+    /// 0x99
+    private func subtractCWithCarryFromA() {
+        a = subtractWithCarryOperation(lhs: a, rhs: c)
+    }
+    
+    /// 0x9A
+    private func subtractDWithCarryFromA() {
+        a = subtractWithCarryOperation(lhs: a, rhs: d)
+    }
+    
+    /// 0x9B
+    private func subtractEWithCarryFromA() {
+        a = subtractWithCarryOperation(lhs: a, rhs: e)
+    }
+    
+    /// 0x9C
+    private func subtractHWithCarryFromA() {
+        a = subtractWithCarryOperation(lhs: a, rhs: h)
+    }
+    
+    /// 0x9D
+    private func subtractLWithCarryFromA() {
+        a = subtractWithCarryOperation(lhs: a, rhs: l)
+    }
+    
+    /// 0x9E
+    private func subtractAbsoluteHLWithCarryFromA() {
+        let value = memory.readValue(address: hl)
+        a = subtractWithCarryOperation(lhs: a, rhs: value)
+    }
+    
+    /// 0x9F
+    private func subtractAWithCarryFromA() {
+        a = subtractWithCarryOperation(lhs: a, rhs: a)
+    }
+    
+    /// 0xA0
+    private func logicalAndBToA() {
+        a = logicalAndOperation(lhs: a, rhs: b)
+    }
+    
+    /// 0xA1
+    private func logicalAndCToA() {
+        a = logicalAndOperation(lhs: a, rhs: c)
+    }
+    
+    /// 0xA2
+    private func logicalAndDToA() {
+        a = logicalAndOperation(lhs: a, rhs: d)
+    }
+    
+    /// 0xA3
+    private func logicalAndEToA() {
+        a = logicalAndOperation(lhs: a, rhs: e)
+    }
+    
+    /// 0xA4
+    private func logicalAndHToA() {
+        a = logicalAndOperation(lhs: a, rhs: h)
+    }
+    
+    /// 0xA5
+    private func logicalAndLToA() {
+        a = logicalAndOperation(lhs: a, rhs: l)
+    }
+    
+    /// 0xA6
+    private func logicalAndAbsoluteHLToA() {
+        let value = memory.readValue(address: hl)
+        a = logicalAndOperation(lhs: a, rhs: value)
+    }
+    
+    /// 0xA7
+    private func logicalAndAToA() {
+        a = logicalAndOperation(lhs: a, rhs: a)
+    }
+    
+    /// 0xA8
+    private func logicalXorBToA() {
+        a = logicalXorOperation(lhs: a, rhs: b)
+    }
+    
+    /// 0xA9
+    private func logicalXorCToA() {
+        a = logicalXorOperation(lhs: a, rhs: c)
+    }
+    
+    /// 0xAA
+    private func logicalXorDToA() {
+        a = logicalXorOperation(lhs: a, rhs: d)
+    }
+    
+    /// 0xAB
+    private func logicalXorEToA() {
+        a = logicalXorOperation(lhs: a, rhs: e)
+    }
+    
+    /// 0xAC
+    private func logicalXorHToA() {
+        a = logicalXorOperation(lhs: a, rhs: h)
+    }
+    
+    /// 0xAD
+    private func logicalXorLToA() {
+        a = logicalXorOperation(lhs: a, rhs: l)
+    }
+    
+    /// 0xAE
+    private func logicalXorAbsoluteHLToA() {
+        let value = memory.readValue(address: hl)
+        a = logicalXorOperation(lhs: a, rhs: value)
+    }
 
+    /// 0xAF
+    private func logicalXorAToA() {
+        a = logicalXorOperation(lhs: a, rhs: a)
+    }
+    
+    /// 0xB0
+    private func logicalOrBToA() {
+        a = logicalOrOperation(lhs: a, rhs: b)
+    }
+    
+    /// 0xB1
+    private func logicalOrCToA() {
+        a = logicalOrOperation(lhs: a, rhs: c)
+    }
+    
+    /// 0xB2
+    private func logicalOrDToA() {
+        a = logicalOrOperation(lhs: a, rhs: d)
+    }
+    
+    /// 0xB3
+    private func logicalOrEToA() {
+        a = logicalOrOperation(lhs: a, rhs: e)
+    }
+    
+    /// 0xB4
+    private func logicalOrHToA() {
+        a = logicalOrOperation(lhs: a, rhs: h)
+    }
+    
+    /// 0xB5
+    private func logicalOrLToA() {
+        a = logicalOrOperation(lhs: a, rhs: l)
+    }
+    
+    /// 0xB6
+    private func logicalOrAbsoluteHLToA() {
+        let value = memory.readValue(address: hl)
+        a = logicalOrOperation(lhs: a, rhs: value)
+    }
+    
+    /// 0xB7
+    private func logicalOrAToA() {
+        a = logicalOrOperation(lhs: a, rhs: a)
+    }
+    
+    /// 0xB8
+    private func compareBToA() {
+        compare(a, to: b)
+    }
+    
+    /// 0xB9
+    private func compareCToA() {
+        compare(a, to: c)
+    }
+    
+    /// 0xBA
+    private func compareDToA() {
+        compare(a, to: d)
+    }
+    
+    /// 0xBB
+    private func compareEToA() {
+        compare(a, to: e)
+    }
+    
+    /// 0xBC
+    private func compareHToA() {
+        compare(a, to: h)
+    }
+    
+    /// 0xBD
+    private func compareLToA() {
+        compare(a, to: l)
+    }
+    
+    /// 0xBE
+    private func compareAbsoluteHLToA() {
+        let value = memory.readValue(address: hl)
+        compare(a, to: value)
+    }
+
+    /// 0xBF
+    private func compareAToA() {
+        compare(a, to: a)
+    }
+}
 
 // MARK: - Convenience
 
@@ -1079,15 +1375,15 @@ extension CPU {
     }
     
     private func addOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
-        let (summation, carry) = lhs.addingReportingOverflow(rhs)
+        let (value, carry) = lhs.addingReportingOverflow(rhs)
         let (_, halfCarry) = lhs.addingReportingHalfCarry(rhs)
         
-        zFlag = summation == 0
+        zFlag = value == 0
         nFlag = false
         hFlag = halfCarry
         cFlag = carry
         
-        return summation
+        return value
     }
     
     private func addWithCarryOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
@@ -1104,6 +1400,66 @@ extension CPU {
         let upperByte = addWithCarryOperation(lhs: lhsBytes[1], rhs: rhsBytes[1])
         
         return UInt16(bytes: [lowerByte, upperByte])!
+    }
+    
+    private func subtractOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
+        let (value, carry) = lhs.subtractingReportingOverflow(rhs)
+        let (_, halfCarry) = lhs.subtractingReportingHalfCarry(rhs)
+        
+        zFlag = value == 0
+        nFlag = true
+        hFlag = halfCarry
+        cFlag = carry
+        
+        return value
+    }
+    
+    private func subtractWithCarryOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
+        let carryBit: UInt8 = cFlag ? 1 : 0
+        return subtractOperation(lhs: lhs, rhs: rhs &- carryBit)
+    }
+    
+    private func logicalAndOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
+        let value = lhs & rhs
+        
+        zFlag = value == 0
+        nFlag = false
+        hFlag = true
+        cFlag = false
+        
+        return value
+    }
+    
+    private func logicalXorOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
+        let value = lhs ^ rhs
+        
+        zFlag = value == 0
+        nFlag = false
+        hFlag = false
+        cFlag = false
+        
+        return value
+    }
+    
+    private func logicalOrOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
+        let value = lhs | rhs
+        
+        zFlag = value == 0
+        nFlag = false
+        hFlag = false
+        cFlag = false
+        
+        return value
+    }
+    
+    private func compare(_ lhs: UInt8, to rhs: UInt8) {
+        let (comparison, carry) = lhs.subtractingReportingOverflow(rhs)
+        let (_, halfCarry) = lhs.subtractingReportingHalfCarry(rhs)
+        
+        zFlag = comparison == 0
+        nFlag = true
+        hFlag = halfCarry
+        cFlag = carry
     }
     
     private func relativeJump(byte: UInt8) {
