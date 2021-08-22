@@ -1749,25 +1749,47 @@ extension CPU {
         
         switch opcode {
         
-        case 0x00...0x07:
-            let registerValue = getRegisterValueForOpcode(opcode)
-            let rotatedValue = registerValue.bitwiseLeftRotation(amount: 1)
-            setRegisterValueForOpcode(opcode, value: rotatedValue)
-            zFlag = rotatedValue == 0
+        case 0x00...0x07: // Rotate left with carry
+            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let newRegisterValue = oldRegisterValue.bitwiseLeftRotation(amount: 1)
+            
+            setRegisterValueForOpcode(opcode, value: newRegisterValue)
+            zFlag = newRegisterValue == 0
             nFlag = false
             hFlag = false
-            cFlag = registerValue.checkBit(7)
+            cFlag = oldRegisterValue.checkBit(7)
             
-        case 0x08...0x0F:
-            let registerValue = getRegisterValueForOpcode(opcode)
-            let rotatedValue = registerValue.bitwiseRightRotation(amount: 1)
-            setRegisterValueForOpcode(opcode, value: rotatedValue)
-            zFlag = rotatedValue == 0
+        case 0x08...0x0F: // Rotate right with carry
+            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let newRegisterValue = oldRegisterValue.bitwiseRightRotation(amount: 1)
+            
+            setRegisterValueForOpcode(opcode, value: newRegisterValue)
+            zFlag = newRegisterValue == 0
             nFlag = false
             hFlag = false
-            cFlag = registerValue.checkBit(0)
+            cFlag = oldRegisterValue.checkBit(0)
             
+        case 0x10...0x17: // Rotate left
+            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            var newRegisterValue = oldRegisterValue.bitwiseLeftRotation(amount: 1)
+            cFlag ? newRegisterValue.setBit(0) : newRegisterValue.clearBit(0)
             
+            setRegisterValueForOpcode(opcode, value: newRegisterValue)
+            zFlag = newRegisterValue == 0
+            nFlag = false
+            hFlag = false
+            cFlag = oldRegisterValue.checkBit(7)
+            
+        case 0x18...0x1F: // Rotate right
+            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            var newRegisterValue = oldRegisterValue.bitwiseRightRotation(amount: 1)
+            cFlag ? newRegisterValue.setBit(7) : newRegisterValue.clearBit(7)
+            
+            setRegisterValueForOpcode(opcode, value: newRegisterValue)
+            zFlag = newRegisterValue == 0
+            nFlag = false
+            hFlag = false
+            cFlag = oldRegisterValue.checkBit(0)
             
         default: fatalError("Encountered unknown 16-bit opcode.")
         }
