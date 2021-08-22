@@ -78,9 +78,21 @@ class CPU {
     }
     
     private func executeInstruction() {
-        
         let opcode = fetchNextByte()
-        
+        if opcode == 0xCB {
+            execute16BitInstruction()
+        } else {
+            execute8BitInstruction(opcode: opcode)
+        }
+    }
+}
+
+// MARK: - 8-bit Instructions
+
+extension CPU {
+    
+    private func execute8BitInstruction(opcode: UInt8) {
+    
         switch opcode {
         
         case 0x00: noOp()
@@ -355,39 +367,9 @@ class CPU {
         case 0xFE: compareByteToA()
         case 0xFF: resetToByte7()
             
-        default: fatalError("Encountered unknown opcode.")
+        default: fatalError("Encountered unknown 8-bit opcode.")
         }
     }
-    
-    private func fetchNextByte() -> UInt8 {
-        let opcode = memory.readValue(address: pc)
-        pc &+= 1
-        return opcode
-    }
-    
-    private func popStack() -> UInt16 {
-        let lowerByte = memory.readValue(address: sp)
-        sp &+= 1
-        let upperByte = memory.readValue(address: sp)
-        sp &+= 1
-        return UInt16(bytes: [lowerByte, upperByte])!
-    }
-    
-    private func pushOntoStack(address: UInt16) {
-        let bytes = address.asBytes()
-        let lowerByte = bytes[0]
-        let upperByte = bytes[1]
-        
-        sp &-= 1
-        memory.writeValue(upperByte, address: sp)
-        sp &-= 1
-        memory.writeValue(lowerByte, address: sp)
-    }
-}
-
-// MARK: - 8-bit Instructions
-
-extension CPU {
     
     /// 0x00
     private func noOp() {
@@ -1758,9 +1740,100 @@ extension CPU {
     }
 }
 
+// MARK: - 16-bit Instructions
+
+extension CPU {
+    
+    private func execute16BitInstruction() {
+        let opcode = fetchNextByte()
+        
+        switch opcode {
+        
+        case 0x00...0x07:
+            let registerValue = getRegisterValueForOpcode(opcode)
+            let rotatedValue = registerValue.bitwiseLeftRotation(amount: 1)
+            setRegisterValueForOpcode(opcode, value: rotatedValue)
+            zFlag = rotatedValue == 0
+            nFlag = false
+            hFlag = false
+            cFlag = registerValue.checkBit(7)
+            
+        case 0x08...0x0F:
+            let registerValue = getRegisterValueForOpcode(opcode)
+            let rotatedValue = registerValue.bitwiseRightRotation(amount: 1)
+            setRegisterValueForOpcode(opcode, value: rotatedValue)
+            zFlag = rotatedValue == 0
+            nFlag = false
+            hFlag = false
+            cFlag = registerValue.checkBit(0)
+            
+            
+            
+        default: fatalError("Encountered unknown 16-bit opcode.")
+        }
+    }
+}
+
 // MARK: - Convenience
 
 extension CPU {
+    
+    private func fetchNextByte() -> UInt8 {
+        let opcode = memory.readValue(address: pc)
+        pc &+= 1
+        return opcode
+    }
+    
+    private func popStack() -> UInt16 {
+        let lowerByte = memory.readValue(address: sp)
+        sp &+= 1
+        let upperByte = memory.readValue(address: sp)
+        sp &+= 1
+        return UInt16(bytes: [lowerByte, upperByte])!
+    }
+    
+    private func pushOntoStack(address: UInt16) {
+        let bytes = address.asBytes()
+        let lowerByte = bytes[0]
+        let upperByte = bytes[1]
+        
+        sp &-= 1
+        memory.writeValue(upperByte, address: sp)
+        sp &-= 1
+        memory.writeValue(lowerByte, address: sp)
+    }
+    
+    /// Parts of the opcode tables are organised in a way where the high nibble is the function
+    /// and the low nibble is the register parameter.
+    private func getRegisterValueForOpcode(_ opcode: UInt8) -> UInt8 {
+        switch opcode.lowNibble {
+        case 0x0, 0x8: return b
+        case 0x1, 0x9: return c
+        case 0x2, 0xA: return d
+        case 0x3, 0xB: return e
+        case 0x4, 0xC: return h
+        case 0x5, 0xD: return l
+        case 0x6, 0xE: return memory.readValue(address: hl)
+        case 0x7, 0xF: return a
+        default: fatalError()
+        }
+    }
+    
+    /// Parts of the opcode tables are organised in a way where the high nibble is the function
+    /// and the low nibble is the register parameter.
+    private func setRegisterValueForOpcode(_ opcode: UInt8, value: UInt8) {
+        switch opcode.lowNibble {
+        case 0x0, 0x8: b = value
+        case 0x1, 0x9: c = value
+        case 0x2, 0xA: d = value
+        case 0x3, 0xB: e = value
+        case 0x4, 0xC: h = value
+        case 0x5, 0xD: l = value
+        case 0x6, 0xE: memory.writeValue(value, address: hl)
+        case 0x7, 0xF: a = value
+        default: fatalError()
+        }
+    }
     
     private func incrementOperation(_ value: UInt8) -> UInt8 {
         let (incrementedValue, halfCarry) = value.addingReportingHalfCarry(1)
