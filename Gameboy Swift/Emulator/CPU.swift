@@ -77,6 +77,10 @@ class CPU {
         set { newValue ? f.setBit(4) : f.clearBit(4) }
     }
     
+    // Other Flags
+    private var imeFlag = false // Interrupt Master Enable
+    private var haltFlag = false
+    
     private func executeInstruction() {
         let opcode = fetchNextByte()
         if opcode == 0xCB {
@@ -464,9 +468,9 @@ extension CPU {
     
     /// 0x10
     private func stop() {
-        fatalError("TODO: Implement STOP instruction.")
-        // TODO: This
-        // Also, figure out if this is a 2 byte operation.
+        // Stop instruction is two bytes long, so we need to read the next byte as well.
+        // 0x10, 0x00
+        guard fetchNextByte() == 0x00 else { fatalError("Second byte of STOP instruction was not 0x00.") }
     }
     
     /// 0x11
@@ -1042,7 +1046,7 @@ extension CPU {
     
     /// 0x76
     private func halt() {
-        fatalError("TODO: Implement HALT instruction.")
+        haltFlag = true
     }
     
     /// 0x77
@@ -1571,7 +1575,8 @@ extension CPU {
     
     /// 0xD9
     private func unconditionalReturnWithInterrupt() {
-        fatalError("TODO: Unconditional return with interrupt.")
+        pc = popStack()
+        imeFlag = true
     }
     
     /// 0xDA
@@ -1686,7 +1691,7 @@ extension CPU {
     
     /// 0xF3
     private func disableInterruptHandling() {
-        fatalError("TODO: Disable interrupt handling.")
+        imeFlag = false
     }
     
     /// 0xF5
@@ -1725,7 +1730,8 @@ extension CPU {
     
     /// 0xFB
     private func scheduleInterruptHandling() {
-        fatalError("TODO: Schedule interrupt handling.")
+        imeFlag = true
+        // TODO: Should this use a imeScheduledFlag instead?
     }
     
     /// 0xFE
@@ -1740,7 +1746,7 @@ extension CPU {
     }
 }
 
-// MARK: - 16-bit Instructions
+// MARK: - 16-bit Instructions (Opcodes with 0xCB prefix)
 
 extension CPU {
     
