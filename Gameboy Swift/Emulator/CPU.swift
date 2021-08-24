@@ -1832,7 +1832,30 @@ extension CPU {
             hFlag = false
             cFlag = oldRegisterValue.checkBit(0)
             
-        default: fatalError("Encountered unknown 16-bit opcode.")
+        case 0x40...0x7F: // Check bit
+            let relativeOpcode = opcode - 0x40
+            let bitIndex = Int(relativeOpcode / 8)
+            let registerValue = getRegisterValueForOpcode(opcode)
+            let isBitSet = registerValue.checkBit(bitIndex)
+            zFlag = !isBitSet
+            nFlag = false
+            hFlag = false
+            
+        case 0x80...0xBF: // Reset bit
+            let relativeOpcode = opcode - 0x80
+            let bitIndex = Int(relativeOpcode / 8)
+            var registerValue = getRegisterValueForOpcode(opcode)
+            registerValue.clearBit(bitIndex)
+            setRegisterValueForOpcode(opcode, value: registerValue)
+            
+        case 0xC0...0xFF: // Set bit
+            let relativeOpcode = opcode - 0xC0
+            let bitIndex = Int(relativeOpcode / 8)
+            var registerValue = getRegisterValueForOpcode(opcode)
+            registerValue.setBit(bitIndex)
+            setRegisterValueForOpcode(opcode, value: registerValue)
+            
+        default: fatalError("Unhandled opcode found. Got \(opcode).")
         }
     }
 }
