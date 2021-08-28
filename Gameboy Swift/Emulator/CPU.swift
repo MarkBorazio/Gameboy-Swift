@@ -9,7 +9,7 @@ import Foundation
 
 class CPU {
     
-    let memory = Memory()
+    let mmu = MMU()
     
     // Register Pairs
     private var af: UInt16 = 0
@@ -80,6 +80,35 @@ class CPU {
     // Other Flags
     private var imeFlag = false // Interrupt Master Enable
     private var haltFlag = false
+    private var stopFlag = false // TODO: Figure out when this should be reset.
+    
+    // Clock
+    private static let clockCycleHz: UInt32 = 4194304
+    private static let clockCyclesPerMachineCycle: UInt32 = 4
+    private static let machineCycleHz: UInt32 = clockCycleHz / clockCyclesPerMachineCycle
+    
+    private static let machineCyclesPerDivCycle = 256 / clockCyclesPerMachineCycle
+    private var divTimer = 0
+    private var timaTimer = 0 // Increments at configurable frequency
+    
+    func beginExecution() {
+        while(true) {
+            executeInstruction()
+            
+            // Handle interrupt if necessary
+            if imeFlag {
+                if let interruptAddress = mmu.checkForInterrupt() {
+                    imeFlag = false
+                    pushOntoStack(address: pc)
+                    pc = interruptAddress
+                }
+            }
+            
+            incrementTimers()
+            
+            sleep(Self.machineCycleHz)
+        }
+    }
     
     private func executeInstruction() {
         let opcode = fetchNextByte()
@@ -87,6 +116,21 @@ class CPU {
             execute16BitInstruction()
         } else {
             execute8BitInstruction(opcode: opcode)
+        }
+    }
+    
+    private func incrementTimers() {
+        divTimer += 1
+        if divTimer >= Self.machineCyclesPerDivCycle {
+            divTimer = 0
+            mmu.incrementDivRegister()
+        }
+        
+        timaTimer += 1
+        let machineCyclesPerTimaCycle = mmu.clockCyclesPerTimaCycle / Self.clockCyclesPerMachineCycle
+        if timaTimer >= machineCyclesPerTimaCycle {
+            timaTimer = 0
+            mmu.incrementTimaRegister()
         }
     }
 }
@@ -388,7 +432,7 @@ extension CPU {
     
     /// 0x02
     private func loadAIntoAbsoluteBC() {
-        memory.writeValue(a, address: bc)
+        mmu.writeValue(a, address: bc)
     }
     
     /// 0x03
@@ -423,8 +467,8 @@ extension CPU {
     /// 0x08
     private func loadSPIntoAddress() {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        memory.writeValue(sp.asBytes()[0], address: address)
-        memory.writeValue(sp.asBytes()[1], address: address+1)
+        mmu.writeValue(sp.asBytes()[0], address: address)
+        mmu.writeValue(sp.asBytes()[1], address: address+1)
     }
     
     /// 0x09
@@ -434,7 +478,7 @@ extension CPU {
     
     /// 0x0A
     private func loadAbsoluteBCIntoA() {
-        a = memory.readValue(address: bc)
+        a = mmu.readValue(address: bc)
     }
     
     /// 0x0B
@@ -470,6 +514,7 @@ extension CPU {
     private func stop() {
         // Stop instruction is two bytes long, so we need to read the next byte as well.
         // 0x10, 0x00
+        stop = true
         guard fetchNextByte() == 0x00 else { fatalError("Second byte of STOP instruction was not 0x00.") }
     }
     
@@ -481,7 +526,7 @@ extension CPU {
     
     /// 0x12
     private func loadAIntoAbsoluteDE() {
-        memory.writeValue(a, address: de)
+        mmu.writeValue(a, address: de)
     }
     
     /// 0x13
@@ -527,7 +572,7 @@ extension CPU {
     
     /// 0x1A
     private func loadAbsoluteDEIntoA() {
-        a = memory.readValue(address: de)
+        a = mmu.readValue(address: de)
     }
     
     /// 0x1B
@@ -577,7 +622,7 @@ extension CPU {
     
     /// 0x22
     private func loadAIntoAbsoluteHLAndIncrementHL() {
-        memory.writeValue(a, address: hl)
+        mmu.writeValue(a, address: hl)
         hl += 1
     }
     
@@ -643,7 +688,7 @@ extension CPU {
     
     /// 0x2A
     private func loadAbsoluteHLIntoAAndIncrementHL() {
-        a = memory.readValue(address: hl)
+        a = mmu.readValue(address: hl)
         hl += 1
     }
     
@@ -690,7 +735,7 @@ extension CPU {
     
     /// 0x32
     private func loadAIntoAbsoluteHLAndDecrementHL() {
-        memory.writeValue(a, address: hl)
+        mmu.writeValue(a, address: hl)
         hl -= 1
     }
     
@@ -701,22 +746,22 @@ extension CPU {
     
     /// 0x34
     private func incrementAbsoluteHL() {
-        let value = memory.readValue(address: hl)
+        let value = mmu.readValue(address: hl)
         let incrementedValue = incrementOperation(value)
-        memory.writeValue(incrementedValue, address: hl)
+        mmu.writeValue(incrementedValue, address: hl)
     }
     
     /// 0x35
     private func decrementAbsoluteHL() {
-        let value = memory.readValue(address: hl)
+        let value = mmu.readValue(address: hl)
         let decrementedValue = decrementOperation(value)
-        memory.writeValue(decrementedValue, address: hl)
+        mmu.writeValue(decrementedValue, address: hl)
     }
     
     /// 0x36
     private func loadByteIntoAbsoluteHL() {
         let byte = fetchNextByte()
-        memory.writeValue(byte, address: hl)
+        mmu.writeValue(byte, address: hl)
     }
     
     /// 0x37
@@ -742,7 +787,7 @@ extension CPU {
     
     /// 0x3A
     private func loadAbsoluteHLIntoAAndDecrementHL() {
-        a = memory.readValue(address: hl)
+        a = mmu.readValue(address: hl)
         hl -= 1
     }
     
@@ -806,7 +851,7 @@ extension CPU {
     
     /// 0x46
     private func loadAbsoluteHLIntoB() {
-        b = memory.readValue(address: hl)
+        b = mmu.readValue(address: hl)
     }
     
     /// 0x47
@@ -846,7 +891,7 @@ extension CPU {
     
     /// 0x4E
     private func loadAbsoluteHLIntoC() {
-        c = memory.readValue(address: hl)
+        c = mmu.readValue(address: hl)
     }
     
     /// 0x4F
@@ -886,7 +931,7 @@ extension CPU {
     
     /// 0x56
     private func loadAbsoluteHLIntoD() {
-        d = memory.readValue(address: hl)
+        d = mmu.readValue(address: hl)
     }
     
     /// 0x57
@@ -926,7 +971,7 @@ extension CPU {
     
     /// 0x5E
     private func loadAbsoluteHLIntoE() {
-        e = memory.readValue(address: hl)
+        e = mmu.readValue(address: hl)
     }
     
     /// 0x5F
@@ -966,7 +1011,7 @@ extension CPU {
     
     /// 0x66
     private func loadAbsoluteHLIntoH() {
-        h = memory.readValue(address: hl)
+        h = mmu.readValue(address: hl)
     }
     
     /// 0x67
@@ -1006,7 +1051,7 @@ extension CPU {
     
     /// 0x6E
     private func loadAbsoluteHLIntoL() {
-        l = memory.readValue(address: hl)
+        l = mmu.readValue(address: hl)
     }
     
     /// 0x6F
@@ -1016,32 +1061,32 @@ extension CPU {
     
     /// 0x70
     private func loadBIntoAbsoluteHL() {
-        memory.writeValue(b, address: hl)
+        mmu.writeValue(b, address: hl)
     }
     
     /// 0x71
     private func loadCIntoAbsoluteHL() {
-        memory.writeValue(c, address: hl)
+        mmu.writeValue(c, address: hl)
     }
     
     /// 0x72
     private func loadDIntoAbsoluteHL() {
-        memory.writeValue(d, address: hl)
+        mmu.writeValue(d, address: hl)
     }
     
     /// 0x73
     private func loadEIntoAbsoluteHL() {
-        memory.writeValue(e, address: hl)
+        mmu.writeValue(e, address: hl)
     }
     
     /// 0x74
     private func loadHIntoAbsoluteHL() {
-        memory.writeValue(h, address: hl)
+        mmu.writeValue(h, address: hl)
     }
     
     /// 0x75
     private func loadLIntoAbsoluteHL() {
-        memory.writeValue(l, address: hl)
+        mmu.writeValue(l, address: hl)
     }
     
     /// 0x76
@@ -1051,7 +1096,7 @@ extension CPU {
     
     /// 0x77
     private func loadAIntoAbsoluteHL() {
-        memory.writeValue(a, address: hl)
+        mmu.writeValue(a, address: hl)
     }
     
     /// 0x78
@@ -1086,7 +1131,7 @@ extension CPU {
     
     /// 0x7E
     private func loadAbsoluteHLIntoA() {
-        a = memory.readValue(address: hl)
+        a = mmu.readValue(address: hl)
     }
     
     /// 0x7F
@@ -1126,7 +1171,7 @@ extension CPU {
     
     /// 0x86
     private func addAbsoluteHLToA() {
-        let value = memory.readValue(address: hl)
+        let value = mmu.readValue(address: hl)
         a = addOperation(lhs: a, rhs: value)
     }
     
@@ -1167,7 +1212,7 @@ extension CPU {
     
     /// 0x8E
     private func addAbsoluteHLWithCarryToA() {
-        let value = memory.readValue(address: hl)
+        let value = mmu.readValue(address: hl)
         a = addWithCarryOperation(lhs: a, rhs: value)
     }
     
@@ -1208,7 +1253,7 @@ extension CPU {
     
     /// 0x96
     private func subtractAbsoluteHLFromA() {
-        let value = memory.readValue(address: hl)
+        let value = mmu.readValue(address: hl)
         a = subtractOperation(lhs: a, rhs: value)
     }
     
@@ -1249,7 +1294,7 @@ extension CPU {
     
     /// 0x9E
     private func subtractAbsoluteHLWithCarryFromA() {
-        let value = memory.readValue(address: hl)
+        let value = mmu.readValue(address: hl)
         a = subtractWithCarryOperation(lhs: a, rhs: value)
     }
     
@@ -1290,7 +1335,7 @@ extension CPU {
     
     /// 0xA6
     private func logicalAndAbsoluteHLToA() {
-        let value = memory.readValue(address: hl)
+        let value = mmu.readValue(address: hl)
         a = logicalAndOperation(lhs: a, rhs: value)
     }
     
@@ -1331,7 +1376,7 @@ extension CPU {
     
     /// 0xAE
     private func logicalXorAbsoluteHLToA() {
-        let value = memory.readValue(address: hl)
+        let value = mmu.readValue(address: hl)
         a = logicalXorOperation(lhs: a, rhs: value)
     }
 
@@ -1372,7 +1417,7 @@ extension CPU {
     
     /// 0xB6
     private func logicalOrAbsoluteHLToA() {
-        let value = memory.readValue(address: hl)
+        let value = mmu.readValue(address: hl)
         a = logicalOrOperation(lhs: a, rhs: value)
     }
     
@@ -1413,7 +1458,7 @@ extension CPU {
     
     /// 0xBE
     private func compareAbsoluteHLToA() {
-        let value = memory.readValue(address: hl)
+        let value = mmu.readValue(address: hl)
         compare(a, to: value)
     }
 
@@ -1612,7 +1657,7 @@ extension CPU {
     private func highPageLoadAIntoByteAddress() {
         let lowerByte = fetchNextByte()
         let address = UInt16(bytes: [lowerByte, 0xFF])!
-        memory.writeValue(a, address: address)
+        mmu.writeValue(a, address: address)
     }
     
     /// 0xE1
@@ -1623,7 +1668,7 @@ extension CPU {
     /// 0xE2
     private func highPageLoadAIntoAbsoluteC() {
         let address = UInt16(bytes: [c, 0xFF])!
-        memory.writeValue(a, address: address)
+        mmu.writeValue(a, address: address)
     }
     
     /// 0xE5
@@ -1657,7 +1702,7 @@ extension CPU {
     /// 0xEA
     private func loadAIntoShortAddress() {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        memory.writeValue(a, address: address)
+        mmu.writeValue(a, address: address)
     }
     
     /// 0xEE
@@ -1675,7 +1720,7 @@ extension CPU {
     private func highPageLoadAbsoluteByteAddressIntoA() {
         let lowerByte = fetchNextByte()
         let address = UInt16(bytes: [lowerByte, 0xFF])!
-        a = memory.readValue(address: address)
+        a = mmu.readValue(address: address)
     }
     
     /// 0xF1
@@ -1686,7 +1731,7 @@ extension CPU {
     /// 0xF2
     private func highPageLoadAbsoluteCIntoA() {
         let address = UInt16(bytes: [c, 0xFF])!
-        a = memory.readValue(address: address)
+        a = mmu.readValue(address: address)
     }
     
     /// 0xF3
@@ -1725,7 +1770,7 @@ extension CPU {
     /// 0xFA
     private func loadAbsoluteShortAddressIntoA() {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        a = memory.readValue(address: address)
+        a = mmu.readValue(address: address)
     }
     
     /// 0xFB
@@ -1871,15 +1916,15 @@ extension CPU {
 extension CPU {
     
     private func fetchNextByte() -> UInt8 {
-        let opcode = memory.readValue(address: pc)
+        let opcode = mmu.readValue(address: pc)
         pc &+= 1
         return opcode
     }
     
     private func popStack() -> UInt16 {
-        let lowerByte = memory.readValue(address: sp)
+        let lowerByte = mmu.readValue(address: sp)
         sp &+= 1
-        let upperByte = memory.readValue(address: sp)
+        let upperByte = mmu.readValue(address: sp)
         sp &+= 1
         return UInt16(bytes: [lowerByte, upperByte])!
     }
@@ -1890,9 +1935,9 @@ extension CPU {
         let upperByte = bytes[1]
         
         sp &-= 1
-        memory.writeValue(upperByte, address: sp)
+        mmu.writeValue(upperByte, address: sp)
         sp &-= 1
-        memory.writeValue(lowerByte, address: sp)
+        mmu.writeValue(lowerByte, address: sp)
     }
     
     /// Parts of the opcode tables are organised in a way where the high nibble is the function
@@ -1905,7 +1950,7 @@ extension CPU {
         case 0x3, 0xB: return e
         case 0x4, 0xC: return h
         case 0x5, 0xD: return l
-        case 0x6, 0xE: return memory.readValue(address: hl)
+        case 0x6, 0xE: return mmu.readValue(address: hl)
         case 0x7, 0xF: return a
         default: fatalError()
         }
@@ -1921,7 +1966,7 @@ extension CPU {
         case 0x3, 0xB: e = value
         case 0x4, 0xC: h = value
         case 0x5, 0xD: l = value
-        case 0x6, 0xE: memory.writeValue(value, address: hl)
+        case 0x6, 0xE: mmu.writeValue(value, address: hl)
         case 0x7, 0xF: a = value
         default: fatalError()
         }
