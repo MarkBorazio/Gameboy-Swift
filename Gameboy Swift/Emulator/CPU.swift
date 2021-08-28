@@ -9,7 +9,7 @@ import Foundation
 
 class CPU {
     
-    let mmu = MMU()
+    static let shared = CPU()
     
     // Register Pairs
     private var af: UInt16 = 0
@@ -97,7 +97,7 @@ class CPU {
             
             // Handle interrupt if necessary
             if imeFlag {
-                if let interruptAddress = mmu.checkForInterrupt() {
+                if let interruptAddress = MMU.shared.checkForInterrupt() {
                     imeFlag = false
                     pushOntoStack(address: pc)
                     pc = interruptAddress
@@ -123,14 +123,14 @@ class CPU {
         divTimer += 1
         if divTimer >= Self.machineCyclesPerDivCycle {
             divTimer = 0
-            mmu.incrementDivRegister()
+            MMU.shared.incrementDivRegister()
         }
         
         timaTimer += 1
-        let machineCyclesPerTimaCycle = mmu.clockCyclesPerTimaCycle / Self.clockCyclesPerMachineCycle
+        let machineCyclesPerTimaCycle = MMU.shared.clockCyclesPerTimaCycle / Self.clockCyclesPerMachineCycle
         if timaTimer >= machineCyclesPerTimaCycle {
             timaTimer = 0
-            mmu.incrementTimaRegister()
+            MMU.shared.incrementTimaRegister()
         }
     }
 }
@@ -432,7 +432,7 @@ extension CPU {
     
     /// 0x02
     private func loadAIntoAbsoluteBC() {
-        mmu.writeValue(a, address: bc)
+        MMU.shared.writeValue(a, address: bc)
     }
     
     /// 0x03
@@ -467,8 +467,8 @@ extension CPU {
     /// 0x08
     private func loadSPIntoAddress() {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        mmu.writeValue(sp.asBytes()[0], address: address)
-        mmu.writeValue(sp.asBytes()[1], address: address+1)
+        MMU.shared.writeValue(sp.asBytes()[0], address: address)
+        MMU.shared.writeValue(sp.asBytes()[1], address: address+1)
     }
     
     /// 0x09
@@ -478,7 +478,7 @@ extension CPU {
     
     /// 0x0A
     private func loadAbsoluteBCIntoA() {
-        a = mmu.readValue(address: bc)
+        a = MMU.shared.readValue(address: bc)
     }
     
     /// 0x0B
@@ -526,7 +526,7 @@ extension CPU {
     
     /// 0x12
     private func loadAIntoAbsoluteDE() {
-        mmu.writeValue(a, address: de)
+        MMU.shared.writeValue(a, address: de)
     }
     
     /// 0x13
@@ -572,7 +572,7 @@ extension CPU {
     
     /// 0x1A
     private func loadAbsoluteDEIntoA() {
-        a = mmu.readValue(address: de)
+        a = MMU.shared.readValue(address: de)
     }
     
     /// 0x1B
@@ -622,7 +622,7 @@ extension CPU {
     
     /// 0x22
     private func loadAIntoAbsoluteHLAndIncrementHL() {
-        mmu.writeValue(a, address: hl)
+        MMU.shared.writeValue(a, address: hl)
         hl += 1
     }
     
@@ -688,7 +688,7 @@ extension CPU {
     
     /// 0x2A
     private func loadAbsoluteHLIntoAAndIncrementHL() {
-        a = mmu.readValue(address: hl)
+        a = MMU.shared.readValue(address: hl)
         hl += 1
     }
     
@@ -735,7 +735,7 @@ extension CPU {
     
     /// 0x32
     private func loadAIntoAbsoluteHLAndDecrementHL() {
-        mmu.writeValue(a, address: hl)
+        MMU.shared.writeValue(a, address: hl)
         hl -= 1
     }
     
@@ -746,22 +746,22 @@ extension CPU {
     
     /// 0x34
     private func incrementAbsoluteHL() {
-        let value = mmu.readValue(address: hl)
+        let value = MMU.shared.readValue(address: hl)
         let incrementedValue = incrementOperation(value)
-        mmu.writeValue(incrementedValue, address: hl)
+        MMU.shared.writeValue(incrementedValue, address: hl)
     }
     
     /// 0x35
     private func decrementAbsoluteHL() {
-        let value = mmu.readValue(address: hl)
+        let value = MMU.shared.readValue(address: hl)
         let decrementedValue = decrementOperation(value)
-        mmu.writeValue(decrementedValue, address: hl)
+        MMU.shared.writeValue(decrementedValue, address: hl)
     }
     
     /// 0x36
     private func loadByteIntoAbsoluteHL() {
         let byte = fetchNextByte()
-        mmu.writeValue(byte, address: hl)
+        MMU.shared.writeValue(byte, address: hl)
     }
     
     /// 0x37
@@ -787,7 +787,7 @@ extension CPU {
     
     /// 0x3A
     private func loadAbsoluteHLIntoAAndDecrementHL() {
-        a = mmu.readValue(address: hl)
+        a = MMU.shared.readValue(address: hl)
         hl -= 1
     }
     
@@ -851,7 +851,7 @@ extension CPU {
     
     /// 0x46
     private func loadAbsoluteHLIntoB() {
-        b = mmu.readValue(address: hl)
+        b = MMU.shared.readValue(address: hl)
     }
     
     /// 0x47
@@ -891,7 +891,7 @@ extension CPU {
     
     /// 0x4E
     private func loadAbsoluteHLIntoC() {
-        c = mmu.readValue(address: hl)
+        c = MMU.shared.readValue(address: hl)
     }
     
     /// 0x4F
@@ -931,7 +931,7 @@ extension CPU {
     
     /// 0x56
     private func loadAbsoluteHLIntoD() {
-        d = mmu.readValue(address: hl)
+        d = MMU.shared.readValue(address: hl)
     }
     
     /// 0x57
@@ -971,7 +971,7 @@ extension CPU {
     
     /// 0x5E
     private func loadAbsoluteHLIntoE() {
-        e = mmu.readValue(address: hl)
+        e = MMU.shared.readValue(address: hl)
     }
     
     /// 0x5F
@@ -1011,7 +1011,7 @@ extension CPU {
     
     /// 0x66
     private func loadAbsoluteHLIntoH() {
-        h = mmu.readValue(address: hl)
+        h = MMU.shared.readValue(address: hl)
     }
     
     /// 0x67
@@ -1051,7 +1051,7 @@ extension CPU {
     
     /// 0x6E
     private func loadAbsoluteHLIntoL() {
-        l = mmu.readValue(address: hl)
+        l = MMU.shared.readValue(address: hl)
     }
     
     /// 0x6F
@@ -1061,32 +1061,32 @@ extension CPU {
     
     /// 0x70
     private func loadBIntoAbsoluteHL() {
-        mmu.writeValue(b, address: hl)
+        MMU.shared.writeValue(b, address: hl)
     }
     
     /// 0x71
     private func loadCIntoAbsoluteHL() {
-        mmu.writeValue(c, address: hl)
+        MMU.shared.writeValue(c, address: hl)
     }
     
     /// 0x72
     private func loadDIntoAbsoluteHL() {
-        mmu.writeValue(d, address: hl)
+        MMU.shared.writeValue(d, address: hl)
     }
     
     /// 0x73
     private func loadEIntoAbsoluteHL() {
-        mmu.writeValue(e, address: hl)
+        MMU.shared.writeValue(e, address: hl)
     }
     
     /// 0x74
     private func loadHIntoAbsoluteHL() {
-        mmu.writeValue(h, address: hl)
+        MMU.shared.writeValue(h, address: hl)
     }
     
     /// 0x75
     private func loadLIntoAbsoluteHL() {
-        mmu.writeValue(l, address: hl)
+        MMU.shared.writeValue(l, address: hl)
     }
     
     /// 0x76
@@ -1096,7 +1096,7 @@ extension CPU {
     
     /// 0x77
     private func loadAIntoAbsoluteHL() {
-        mmu.writeValue(a, address: hl)
+        MMU.shared.writeValue(a, address: hl)
     }
     
     /// 0x78
@@ -1131,7 +1131,7 @@ extension CPU {
     
     /// 0x7E
     private func loadAbsoluteHLIntoA() {
-        a = mmu.readValue(address: hl)
+        a = MMU.shared.readValue(address: hl)
     }
     
     /// 0x7F
@@ -1171,7 +1171,7 @@ extension CPU {
     
     /// 0x86
     private func addAbsoluteHLToA() {
-        let value = mmu.readValue(address: hl)
+        let value = MMU.shared.readValue(address: hl)
         a = addOperation(lhs: a, rhs: value)
     }
     
@@ -1212,7 +1212,7 @@ extension CPU {
     
     /// 0x8E
     private func addAbsoluteHLWithCarryToA() {
-        let value = mmu.readValue(address: hl)
+        let value = MMU.shared.readValue(address: hl)
         a = addWithCarryOperation(lhs: a, rhs: value)
     }
     
@@ -1253,7 +1253,7 @@ extension CPU {
     
     /// 0x96
     private func subtractAbsoluteHLFromA() {
-        let value = mmu.readValue(address: hl)
+        let value = MMU.shared.readValue(address: hl)
         a = subtractOperation(lhs: a, rhs: value)
     }
     
@@ -1294,7 +1294,7 @@ extension CPU {
     
     /// 0x9E
     private func subtractAbsoluteHLWithCarryFromA() {
-        let value = mmu.readValue(address: hl)
+        let value = MMU.shared.readValue(address: hl)
         a = subtractWithCarryOperation(lhs: a, rhs: value)
     }
     
@@ -1335,7 +1335,7 @@ extension CPU {
     
     /// 0xA6
     private func logicalAndAbsoluteHLToA() {
-        let value = mmu.readValue(address: hl)
+        let value = MMU.shared.readValue(address: hl)
         a = logicalAndOperation(lhs: a, rhs: value)
     }
     
@@ -1376,7 +1376,7 @@ extension CPU {
     
     /// 0xAE
     private func logicalXorAbsoluteHLToA() {
-        let value = mmu.readValue(address: hl)
+        let value = MMU.shared.readValue(address: hl)
         a = logicalXorOperation(lhs: a, rhs: value)
     }
 
@@ -1417,7 +1417,7 @@ extension CPU {
     
     /// 0xB6
     private func logicalOrAbsoluteHLToA() {
-        let value = mmu.readValue(address: hl)
+        let value = MMU.shared.readValue(address: hl)
         a = logicalOrOperation(lhs: a, rhs: value)
     }
     
@@ -1458,7 +1458,7 @@ extension CPU {
     
     /// 0xBE
     private func compareAbsoluteHLToA() {
-        let value = mmu.readValue(address: hl)
+        let value = MMU.shared.readValue(address: hl)
         compare(a, to: value)
     }
 
@@ -1657,7 +1657,7 @@ extension CPU {
     private func highPageLoadAIntoByteAddress() {
         let lowerByte = fetchNextByte()
         let address = UInt16(bytes: [lowerByte, 0xFF])!
-        mmu.writeValue(a, address: address)
+        MMU.shared.writeValue(a, address: address)
     }
     
     /// 0xE1
@@ -1668,7 +1668,7 @@ extension CPU {
     /// 0xE2
     private func highPageLoadAIntoAbsoluteC() {
         let address = UInt16(bytes: [c, 0xFF])!
-        mmu.writeValue(a, address: address)
+        MMU.shared.writeValue(a, address: address)
     }
     
     /// 0xE5
@@ -1702,7 +1702,7 @@ extension CPU {
     /// 0xEA
     private func loadAIntoShortAddress() {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        mmu.writeValue(a, address: address)
+        MMU.shared.writeValue(a, address: address)
     }
     
     /// 0xEE
@@ -1720,7 +1720,7 @@ extension CPU {
     private func highPageLoadAbsoluteByteAddressIntoA() {
         let lowerByte = fetchNextByte()
         let address = UInt16(bytes: [lowerByte, 0xFF])!
-        a = mmu.readValue(address: address)
+        a = MMU.shared.readValue(address: address)
     }
     
     /// 0xF1
@@ -1731,7 +1731,7 @@ extension CPU {
     /// 0xF2
     private func highPageLoadAbsoluteCIntoA() {
         let address = UInt16(bytes: [c, 0xFF])!
-        a = mmu.readValue(address: address)
+        a = MMU.shared.readValue(address: address)
     }
     
     /// 0xF3
@@ -1770,7 +1770,7 @@ extension CPU {
     /// 0xFA
     private func loadAbsoluteShortAddressIntoA() {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        a = mmu.readValue(address: address)
+        a = MMU.shared.readValue(address: address)
     }
     
     /// 0xFB
@@ -1916,15 +1916,15 @@ extension CPU {
 extension CPU {
     
     private func fetchNextByte() -> UInt8 {
-        let opcode = mmu.readValue(address: pc)
+        let opcode = MMU.shared.readValue(address: pc)
         pc &+= 1
         return opcode
     }
     
     private func popStack() -> UInt16 {
-        let lowerByte = mmu.readValue(address: sp)
+        let lowerByte = MMU.shared.readValue(address: sp)
         sp &+= 1
-        let upperByte = mmu.readValue(address: sp)
+        let upperByte = MMU.shared.readValue(address: sp)
         sp &+= 1
         return UInt16(bytes: [lowerByte, upperByte])!
     }
@@ -1935,9 +1935,9 @@ extension CPU {
         let upperByte = bytes[1]
         
         sp &-= 1
-        mmu.writeValue(upperByte, address: sp)
+        MMU.shared.writeValue(upperByte, address: sp)
         sp &-= 1
-        mmu.writeValue(lowerByte, address: sp)
+        MMU.shared.writeValue(lowerByte, address: sp)
     }
     
     /// Parts of the opcode tables are organised in a way where the high nibble is the function
@@ -1950,7 +1950,7 @@ extension CPU {
         case 0x3, 0xB: return e
         case 0x4, 0xC: return h
         case 0x5, 0xD: return l
-        case 0x6, 0xE: return mmu.readValue(address: hl)
+        case 0x6, 0xE: return MMU.shared.readValue(address: hl)
         case 0x7, 0xF: return a
         default: fatalError()
         }
@@ -1966,7 +1966,7 @@ extension CPU {
         case 0x3, 0xB: e = value
         case 0x4, 0xC: h = value
         case 0x5, 0xD: l = value
-        case 0x6, 0xE: mmu.writeValue(value, address: hl)
+        case 0x6, 0xE: MMU.shared.writeValue(value, address: hl)
         case 0x7, 0xF: a = value
         default: fatalError()
         }

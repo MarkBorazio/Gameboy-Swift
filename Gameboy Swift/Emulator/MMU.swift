@@ -9,6 +9,8 @@ import Foundation
 
 class MMU {
     
+    static let shared = MMU()
+    
     var memoryMap: [UInt8]
     var rom: ROM?
     
