@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6001DE2826DA4A3500D399A7 /* GPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6001DE2726DA4A3500D399A7 /* GPU.swift */; };
+		6001DE2826DA4A3500D399A7 /* PPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6001DE2726DA4A3500D399A7 /* PPU.swift */; };
 		605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605AFB9D26C7CA760040E608 /* ByteConvertible.swift */; };
 		605AFBA626C810680040E608 /* BinaryInteger+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605AFBA526C810680040E608 /* BinaryInteger+Extensions.swift */; };
 		605AFBAE26C8FE580040E608 /* UInt8+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605AFBAD26C8FE580040E608 /* UInt8+Extensions.swift */; };
@@ -41,7 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		6001DE2726DA4A3500D399A7 /* GPU.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPU.swift; sourceTree = "<group>"; };
+		6001DE2726DA4A3500D399A7 /* PPU.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PPU.swift; sourceTree = "<group>"; };
 		605AFB9D26C7CA760040E608 /* ByteConvertible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteConvertible.swift; sourceTree = "<group>"; };
 		605AFBA526C810680040E608 /* BinaryInteger+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BinaryInteger+Extensions.swift"; sourceTree = "<group>"; };
 		605AFBAD26C8FE580040E608 /* UInt8+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UInt8+Extensions.swift"; sourceTree = "<group>"; };
@@ -155,7 +155,7 @@
 			isa = PBXGroup;
 			children = (
 				6070725926BFB650002E7119 /* CPU.swift */,
-				6001DE2726DA4A3500D399A7 /* GPU.swift */,
+				6001DE2726DA4A3500D399A7 /* PPU.swift */,
 				6070725B26BFC47E002E7119 /* MMU.swift */,
 				6070725D26BFCDCC002E7119 /* ROM.swift */,
 			);
@@ -305,7 +305,7 @@
 				6070725C26BFC47E002E7119 /* MMU.swift in Sources */,
 				6070726126BFCFA5002E7119 /* Array+UIntSubscript.swift in Sources */,
 				6070722F26BFA814002E7119 /* ViewController.swift in Sources */,
-				6001DE2826DA4A3500D399A7 /* GPU.swift in Sources */,
+				6001DE2826DA4A3500D399A7 /* PPU.swift in Sources */,
 				605AFBAE26C8FE580040E608 /* UInt8+Extensions.swift in Sources */,
 				6070722D26BFA814002E7119 /* AppDelegate.swift in Sources */,
 				605AFBA626C810680040E608 /* BinaryInteger+Extensions.swift in Sources */,

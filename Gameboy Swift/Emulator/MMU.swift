@@ -42,7 +42,13 @@ class MMU {
         let addressIsReadOnly = (address < 0x8000) || (0xFEA0...0xFEFF ~= address)
         guard !addressIsReadOnly else { return }
         
-        memoryMap[address] = value
+        if address == Self.addressLY {
+            // If the current scanline is attempted to be manually changed, set it to zero instead.
+            memoryMap[address] = 0
+        } else {
+            // Standard write.
+            memoryMap[address] = value
+        }
         
         // TODO: "When writing to DIV, the whole counter is reseted, so the timer is also affected."
         // REF: https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour
@@ -100,6 +106,10 @@ extension MMU {
         
         return nil
     }
+    
+    func requestVBlankInterrupt() {
+        memoryMap[Self.addressIF].setBit(Self.vBlankInterruptBitIndex)
+    }
 }
 
 // MARK: - Timer Registers
@@ -141,6 +151,35 @@ extension MMU {
         case 0b11: return 256 // 16384 Hz
         default: fatalError("This should never be reached.")
         }
+    }
+}
+
+// MARK: - LCD Registers
+
+extension MMU {
+    
+    private static let addressLCDC: UInt16 = 0xFF40 // LCD Control
+    private static let addressLCDS: UInt16 = 0xFF41 // LCD Status
+    private static let addressLY: UInt16 = 0xFF44 // Current Scanline
+    
+    // LCDC Bit Indices
+    private static let bgAndWindowEnabledBitIndex = 0
+    private static let objectsEnabledBitIndex = 1
+    private static let objectSizeBitIndex = 2
+    private static let bgTileMapAreaBitIndex = 3
+    private static let bgAndWindowTileDataAreaBitIndex = 4
+    private static let windowEnabledBitIndex = 5
+    private static let windowTileMapAreaBitIndex = 6
+    private static let lcdAndPpuEnabledBitIndex = 7
+    
+    // LCDS Bit Indices
+    // TODO: This.
+    
+    // Use this instead of reading memory via writeValue(...) since that function
+    // deliberately sets the scanline to 0 when any value is written to it.
+    var currentScanline: UInt8 {
+        get { memoryMap[Self.addressLY] }
+        set { memoryMap[Self.addressLY] = newValue }
     }
 }
 
