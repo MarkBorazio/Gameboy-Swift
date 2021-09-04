@@ -105,6 +105,29 @@ class PPU {
     }
     
     private func drawScanline() {
+        let control = MMU.shared.readValue(address: MMU.addressLCDC)
+        
+        if control.checkBit(MMU.bgAndWindowEnabledBitIndex) {
+            renderTiles()
+        }
+        
+        if control.checkBit(MMU.objectsEnabledBitIndex) {
+            renderSprites()
+        }
+    }
+    
+    private func renderTiles() {
+        let control = MMU.shared.readValue(address: MMU.addressLCDC)
+        let bgAndWindowTileDataAreaFlag = control.checkBit(MMU.bgAndWindowTileDataAreaBitIndex)
+        
+        if bgAndWindowTileDataAreaFlag {
+            
+        } else {
+            
+        }
+    }
+    
+    private func renderSprites() {
         
     }
 }
@@ -128,4 +151,7 @@ extension PPU {
     private static let vBlankMode: UInt8 = 0b01
     private static let searchingOAMMode: UInt8 = 0b10
     private static let transferringDataToLCDMode: UInt8 = 0b11
+    
+    // Tiles
+    private static let 
 }

@@ -42,11 +42,14 @@ class MMU {
         let addressIsReadOnly = (address < 0x8000) || (0xFEA0...0xFEFF ~= address)
         guard !addressIsReadOnly else { return }
         
-        if address == Self.addressLY {
-            // If the current scanline is attempted to be manually changed, set it to zero instead.
+        switch address {
+        case Self.addressLY:
+            // If the current scanline is attempted to be manually changed, set it to zero instead
             memoryMap[address] = 0
-        } else {
-            // Standard write.
+        case Self.addressDMATransferTrigger:
+            dmaTransfer(byte: value)
+        default:
+            // Standard write
             memoryMap[address] = value
         }
         
@@ -162,20 +165,20 @@ extension MMU {
 
 extension MMU {
     
-    private static let addressLCDC: UInt16 = 0xFF40 // LCD Control
+    static let addressLCDC: UInt16 = 0xFF40 // LCD Control
     static let addressLCDS: UInt16 = 0xFF41 // LCD Status
     static let addressLY: UInt16 = 0xFF44 // Current Scanline
     static let addressLYC: UInt16 = 0xFF45
     
     // LCDC Bit Indices
-    private static let bgAndWindowEnabledBitIndex = 0
-    private static let objectsEnabledBitIndex = 1
-    private static let objectSizeBitIndex = 2
-    private static let bgTileMapAreaBitIndex = 3
-    private static let bgAndWindowTileDataAreaBitIndex = 4
-    private static let windowEnabledBitIndex = 5
-    private static let windowTileMapAreaBitIndex = 6
-    private static let lcdAndPpuEnabledBitIndex = 7
+    static let bgAndWindowEnabledBitIndex = 0
+    static let objectsEnabledBitIndex = 1
+    static let objectSizeBitIndex = 2
+    static let bgTileMapAreaBitIndex = 3
+    static let bgAndWindowTileDataAreaBitIndex = 4
+    static let windowEnabledBitIndex = 5
+    static let windowTileMapAreaBitIndex = 6
+    static let lcdAndPpuEnabledBitIndex = 7
     
     // LCDS Bit Indices
     static let coincidenceBitIndex = 2
@@ -193,6 +196,35 @@ extension MMU {
     
     var isLCDEnabled: Bool {
         memoryMap[Self.addressLCDC].checkBit(Self.lcdAndPpuEnabledBitIndex)
+    }
+}
+
+// MARK: - Tile And Sprite Data
+
+extension MMU {
+    
+    static let addressTileArea1: UInt16 = 0x8000
+    static let addressTileArea2: UInt16 = 0x8800
+    static let addressScrollY: UInt16 = 0xFF42
+    static let addressScrollX: UInt16 = 0xFF43
+    static let addressWindowY: UInt16 = 0xFF4A
+    static let addressWindowX: UInt16 = 0xFF4B
+}
+
+// MARK: - DMA Transfer
+
+extension MMU {
+    
+    private static let addressDMATransferTrigger: UInt16 = 0xFF46 // Writing to this address launches a DMA transfer
+    private static let dmaTransferSize: UInt16 = 0xA0
+    private static let addressDMADestination: UInt16 = 0xFE00
+    
+    private func dmaTransfer(byte: UInt8) {
+        let sourceAddress = UInt16(byte) << 8
+        (0..<Self.dmaTransferSize).forEach { addressOffset in
+            let value = readValue(address: sourceAddress + addressOffset)
+            writeValue(value, address: Self.addressDMADestination + addressOffset)
+        }
     }
 }
 
