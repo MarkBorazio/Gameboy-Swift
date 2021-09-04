@@ -110,6 +110,10 @@ extension MMU {
     func requestVBlankInterrupt() {
         memoryMap[Self.addressIF].setBit(Self.vBlankInterruptBitIndex)
     }
+    
+    func requestLCDInterrupt() {
+        memoryMap[Self.addressIF].setBit(Self.lcdInterruptBitIndex)
+    }
 }
 
 // MARK: - Timer Registers
@@ -159,8 +163,9 @@ extension MMU {
 extension MMU {
     
     private static let addressLCDC: UInt16 = 0xFF40 // LCD Control
-    private static let addressLCDS: UInt16 = 0xFF41 // LCD Status
-    private static let addressLY: UInt16 = 0xFF44 // Current Scanline
+    static let addressLCDS: UInt16 = 0xFF41 // LCD Status
+    static let addressLY: UInt16 = 0xFF44 // Current Scanline
+    static let addressLYC: UInt16 = 0xFF45
     
     // LCDC Bit Indices
     private static let bgAndWindowEnabledBitIndex = 0
@@ -173,13 +178,21 @@ extension MMU {
     private static let lcdAndPpuEnabledBitIndex = 7
     
     // LCDS Bit Indices
-    // TODO: This.
+    static let coincidenceBitIndex = 2
+    static let hBlankInterruptEnabledBitIndex = 3
+    static let vBlankInterruptEnabledBitIndex = 4
+    static let searchingOAMBitIndex = 5
+    static let coincidenceInterruptEnabledBitIndex = 6
     
-    // Use this instead of reading memory via writeValue(...) since that function
+    // Use this instead of writing memory via writeValue(...) since that function
     // deliberately sets the scanline to 0 when any value is written to it.
     var currentScanline: UInt8 {
         get { memoryMap[Self.addressLY] }
         set { memoryMap[Self.addressLY] = newValue }
+    }
+    
+    var isLCDEnabled: Bool {
+        memoryMap[Self.addressLCDC].checkBit(Self.lcdAndPpuEnabledBitIndex)
     }
 }
 
