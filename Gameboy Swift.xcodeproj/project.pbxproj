@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		6001DE2826DA4A3500D399A7 /* PPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6001DE2726DA4A3500D399A7 /* PPU.swift */; };
+		6055A78126E48E5400987457 /* ColourPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6055A78026E48E5400987457 /* ColourPalette.swift */; };
 		605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605AFB9D26C7CA760040E608 /* ByteConvertible.swift */; };
 		605AFBA626C810680040E608 /* BinaryInteger+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605AFBA526C810680040E608 /* BinaryInteger+Extensions.swift */; };
 		605AFBAE26C8FE580040E608 /* UInt8+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605AFBAD26C8FE580040E608 /* UInt8+Extensions.swift */; };
@@ -42,6 +43,7 @@
 
 /* Begin PBXFileReference section */
 		6001DE2726DA4A3500D399A7 /* PPU.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PPU.swift; sourceTree = "<group>"; };
+		6055A78026E48E5400987457 /* ColourPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColourPalette.swift; sourceTree = "<group>"; };
 		605AFB9D26C7CA760040E608 /* ByteConvertible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteConvertible.swift; sourceTree = "<group>"; };
 		605AFBA526C810680040E608 /* BinaryInteger+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BinaryInteger+Extensions.swift"; sourceTree = "<group>"; };
 		605AFBAD26C8FE580040E608 /* UInt8+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UInt8+Extensions.swift"; sourceTree = "<group>"; };
@@ -158,6 +160,7 @@
 				6001DE2726DA4A3500D399A7 /* PPU.swift */,
 				6070725B26BFC47E002E7119 /* MMU.swift */,
 				6070725D26BFCDCC002E7119 /* ROM.swift */,
+				6055A78026E48E5400987457 /* ColourPalette.swift */,
 			);
 			path = Emulator;
 			sourceTree = "<group>";
@@ -310,6 +313,7 @@
 				6070722D26BFA814002E7119 /* AppDelegate.swift in Sources */,
 				605AFBA626C810680040E608 /* BinaryInteger+Extensions.swift in Sources */,
 				6070725A26BFB650002E7119 /* CPU.swift in Sources */,
+				6055A78126E48E5400987457 /* ColourPalette.swift in Sources */,
 				6070725E26BFCDCC002E7119 /* ROM.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

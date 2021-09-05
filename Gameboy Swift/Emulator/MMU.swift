@@ -168,6 +168,9 @@ extension MMU {
     static let addressLCDC: UInt16 = 0xFF40 // LCD Control
     static let addressLCDS: UInt16 = 0xFF41 // LCD Status
     static let addressLY: UInt16 = 0xFF44 // Current Scanline
+    static let addressBgPalette: UInt16 = 0xFF47 // Background Colour Palette
+    static let addressObjPalette1: UInt16 = 0xFF48 // Object Colour Palette 1
+    static let addressObjPalette2: UInt16 = 0xFF49 // Object Colour Palette 2
     static let addressLYC: UInt16 = 0xFF45
     
     // LCDC Bit Indices
@@ -205,6 +208,8 @@ extension MMU {
     
     static let addressTileArea1: UInt16 = 0x8000
     static let addressTileArea2: UInt16 = 0x8800
+    static let addressBgAndWindowArea1: UInt16 = 0x9C00
+    static let addressBgAndWindowArea2: UInt16 = 0x9800
     static let addressScrollY: UInt16 = 0xFF42
     static let addressScrollX: UInt16 = 0xFF43
     static let addressWindowY: UInt16 = 0xFF4A

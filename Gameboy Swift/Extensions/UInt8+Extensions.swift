@@ -16,6 +16,10 @@ extension UInt8 {
         return (self >> n) == 0b1
     }
     
+    func getBitValue(_ n: Int) -> Int {
+        checkBit(n) ? 1 : 0
+    }
+    
     mutating func setBit(_ n: Int) {
         guard n < bitWidth else { return }
         self |= (0b1 << n)
