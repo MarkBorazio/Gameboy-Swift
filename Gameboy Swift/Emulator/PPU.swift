@@ -17,9 +17,9 @@ class PPU {
     private var screenData: [[NSColor]] = Array(
         repeating: Array(
             repeating: ColourPalette.black,
-            count: Int(pixelsPerColumn)
+            count: Int(pixelHeight)
         ),
-        count: Int(pixelsPerRow)
+        count: Int(pixelWidth)
     )
     
     func update(machineCycles: Int) {
@@ -116,6 +116,7 @@ class PPU {
     private func drawScanline() {
         let control = MMU.shared.readValue(address: MMU.addressLCDC)
         
+        // TODO: Consider rendering background layer, and then window layer separately over the top
         if control.checkBit(MMU.bgAndWindowEnabledBitIndex) {
             renderTiles()
         }
@@ -125,124 +126,96 @@ class PPU {
         }
     }
     
+    // Ref: http://www.codeslinger.co.uk/pages/projects/gameboy/graphics.html
     private func renderTiles() {
-        var tileData: UInt16 = 0
-        var backgroundMemory: UInt16 = 0
-        var unsigned = true
+        
+        let currentScanline = MMU.shared.currentScanline
+        
+        // Don't bother rendering if scanline is off screen
+        guard (0..<Self.pixelHeight ~= currentScanline) else {
+            return
+        }
         
         let scrollY = MMU.shared.readValue(address: MMU.addressScrollY)
         let scrollX = MMU.shared.readValue(address: MMU.addressScrollX)
         let windowY = MMU.shared.readValue(address: MMU.addressWindowY)
         let windowX = MMU.shared.readValue(address: MMU.addressWindowX) - Self.windowXOffset
-        
-        var usingWindow = false
-        
         let control = MMU.shared.readValue(address: MMU.addressLCDC)
         
-        // Check if window is enabled
-        if control.checkBit(MMU.windowEnabledBitIndex) {
-            // Check if scanline is within windows position
-            if windowY <= MMU.shared.currentScanline {
-                usingWindow = true
-            }
-        }
+        // Check if we are rendering the window
+        let windowEnabled = control.checkBit(MMU.windowEnabledBitIndex)
+        let isScanlineWithinWindowBounds = windowY <= currentScanline
+        let isRenderingWindow = windowEnabled && isScanlineWithinWindowBounds
         
-        // Figure out which area of tile data we want to use
-        if control.checkBit(MMU.bgAndWindowTileDataAreaBitIndex) {
-            tileData = MMU.addressTileArea1
-        } else {
-            tileData = MMU.addressTileArea2
-            unsigned = false
-        }
+        // Check which area of tile data we are using
+        let isUsingTileDataAddress1 = control.checkBit(MMU.bgAndWindowTileDataAreaBitIndex)
         
-        // Figure out which are of background memory to use
-        if !usingWindow {
-            if control.checkBit(MMU.bgTileMapAreaBitIndex) {
-                backgroundMemory = MMU.addressBgAndWindowArea1
-            } else {
-                backgroundMemory = MMU.addressBgAndWindowArea2
-            }
-        } else {
-            if control.checkBit(MMU.windowTileMapAreaBitIndex) {
-                backgroundMemory = MMU.addressBgAndWindowArea1
-            } else {
-                backgroundMemory = MMU.addressBgAndWindowArea2
-            }
-        }
+        // Check which area of background data we are using
+        let addressBgAndWindowBitIndex = isRenderingWindow ? MMU.windowTileMapAreaBitIndex : MMU.bgTileMapAreaBitIndex
+        let addressBgAndWindowArea = control.checkBit(addressBgAndWindowBitIndex) ? MMU.addressBgAndWindowArea1 : MMU.addressBgAndWindowArea2
         
-        var yPos: UInt8 = 0
-        // Calculate y position of scanline
-        if !usingWindow {
-            yPos = scrollY + MMU.shared.currentScanline
-        } else {
-            yPos = MMU.shared.currentScanline - windowY
-        }
+        // Get Y coordinate relative to window or background space
+        let relativeYCo = isRenderingWindow ? (currentScanline - windowY) : (currentScanline + scrollY)
         
-        // Figure out which of the 8 pixel rows of current tile the scanline is on
-        let tileRow: UInt8 = (yPos/8) * 32 // ???
+        // Get row index of tile from row of 32 tiles
+        let tileRowIndex = relativeYCo/8
         
         // Draw 160 horizontal pixels for scanline
-        for pixelIndex in 0..<Self.pixelsPerRow {
-            var xPos = pixelIndex + scrollX
+        for pixelIndex in 0..<Self.pixelWidth {
             
-            // Translate x position to window space if required
-            if usingWindow {
-                if pixelIndex >= windowX {
-                    xPos = pixelIndex - windowX
-                }
-            }
+            // Get X coordinate relative to window or background space
+            // TODO: Confirm if this is correct. It seems that we can have a y-coordinate relative to the window
+            // space, but an x-coordinate relative to the background space. That seems wrong.
+            let isPixelIndexWithinWindowXBounds = pixelIndex >= windowX
+            let shouldUseWindowSpaceForXCo = isRenderingWindow && isPixelIndexWithinWindowXBounds
+            let relativeXCo = shouldUseWindowSpaceForXCo ? (pixelIndex - windowX) : (pixelIndex + scrollX)
             
-            // Figure out which of 32 horizontal tiles in row the x position is within
-            let tileCol: UInt16 = UInt16(xPos)/8
-            let tileNum: Int16
+            // Get column index of tile from column of 32 tiles
+            let tileColumnIndex = relativeXCo/8
             
-            // Get tile ID (can be signed or unsigned)
-            let tileAddress = backgroundMemory + UInt16(tileRow) + tileCol
-            if unsigned {
-                let rawTileNum = UInt16(MMU.shared.readValue(address: tileAddress))
-                tileNum = Int16(bitPattern: rawTileNum)
+            // Get memory index of tile
+            let tileIndexAddress: UInt16 = addressBgAndWindowArea
+                + (UInt16(tileRowIndex) * Self.tilesPerRow)
+                + UInt16(tileColumnIndex)
+            let tileIndex = MMU.shared.readValue(address: tileIndexAddress)
+            
+            // Get memory address of tile
+            let tileAddress: UInt16
+            if isUsingTileDataAddress1 {
+                // Tile Data Address 1 indexes using unsigned integer
+                let tileAddressOffset = UInt16(tileIndex) * Self.bytesPerTile
+                tileAddress = MMU.addressTileArea1 + tileAddressOffset
             } else {
-                let rawTileNum = Int8(bitPattern: MMU.shared.readValue(address: tileAddress))
-                tileNum = Int16(rawTileNum)
+                // Tile Data Address 2 indexes using signed integer
+                let signedTileIndex = Int8(bitPattern: tileIndex)
+                // Originates from UInt8 so guaranteed to be positive after adding 128
+                let convertedTileIndex = Int16(signedTileIndex) + 128
+                let tileAddressOffset = convertedTileIndex.magnitude * Self.bytesPerTile
+                tileAddress = MMU.addressTileArea2 + tileAddressOffset
             }
             
-            // Figure out where the tile identifier is in memory
-            var tileLocation = tileData
-            if unsigned {
-                tileLocation += tileNum.magnitude * Self.bytesPerTile
-            } else {
-                tileLocation += UInt16((tileNum + 128) * Int16(Self.bytesPerTile))
-            }
-            
-            // Find which of the tile's pixel rows we are on to get pixel row data from memory
-            let rawLine = (yPos % 8) * Self.bytesPerTileRow
-            let line = UInt16(rawLine)
-            let rowData1 = MMU.shared.readValue(address: tileLocation + line)
-            let rowData2 = MMU.shared.readValue(address: tileLocation + line + 1)
-            
+            // Find which of the tile's pixel rows we are on and get the pixel row data from memory
+            let pixelRowIndex = (relativeYCo % 8) * Self.bytesPerPixelRow
+            let pixelRowAddress = tileAddress + UInt16(pixelRowIndex)
+            let rowData1 = MMU.shared.readValue(address: pixelRowAddress)
+            let rowData2 = MMU.shared.readValue(address: pixelRowAddress + 1)
+
+            // Reverse pixel row data to align bit indices with pixel indices.
             // Pixel 0 corresponds to bit 7 of rowData1 and rowData2,
             // pixel 1 corresponds to bit 6 of rowData1 and rowData2,
             // etc.
-            var colourBit = Int(xPos % 8)
-            colourBit -= 7
-            colourBit *= -1
+            let reversedRowData1 = rowData1.reversedBits
+            let reversedRowData2 = rowData2.reversedBits
             
-            // Get two bit colour ID
-            var colourNum = rowData2.getBitValue(colourBit)
-            colourNum <<= 1
-            colourNum |= rowData1.getBitValue(colourBit)
+            // Get the colour ID of the pixel
+            let bitIndex = Int(relativeXCo % 8)
+            let colourID = (reversedRowData2.getBitValue(bitIndex) << 1) | reversedRowData1.getBitValue(bitIndex)
             
             // Use colour ID to get colour from palette
             let palette = MMU.shared.readValue(address: MMU.addressBgPalette)
-            let colour = ColourPalette.getColour(id: colourNum, byte: palette)
+            let colour = ColourPalette.getColour(id: colourID, palette: palette)
             
-            // Safety check to make sure we are within bounds
-            let finally = MMU.shared.currentScanline
-            if finally < 0 || finally > 143 || pixelIndex < 0 || pixelIndex > 159 {
-                continue
-            }
-            
-            screenData[pixelIndex][finally] = colour
+            screenData[pixelIndex][currentScanline] = colour
         }
     }
     
@@ -256,8 +229,8 @@ class PPU {
 extension PPU {
     
     // Resolution
-    private static let pixelsPerRow: UInt8 = 160
-    private static let pixelsPerColumn: UInt8 = 144
+    private static let pixelWidth: UInt8 = 160
+    private static let pixelHeight: UInt8 = 144
     
     // Scanlines
     private static let lastVisibleScanlineIndex: UInt8 = 143
@@ -277,8 +250,9 @@ extension PPU {
     
     // Tiles
     private static let bytesPerTile: UInt16 = 16
-    private static let bytesPerTileRow: UInt8 = 2
+    private static let bytesPerPixelRow: UInt8 = 2
     
     // Miscellaneous
+    private static let tilesPerRow: UInt16 = 32
     private static let windowXOffset: UInt8 = 7
 }
