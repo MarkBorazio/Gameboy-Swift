@@ -220,7 +220,70 @@ class PPU {
     }
     
     private func renderSprites() {
+        let scanline = MMU.shared.currentScanline
+        let control = MMU.shared.readValue(address: MMU.addressLCDC)
+        let areLargeSprites = control.checkBit(MMU.objectSizeBitIndex)
         
+        for spriteIndex in 0..<Self.maxNumberOfSprites {
+            let spriteIndexOffset = spriteIndex * Self.bytesPerSprite
+            let spriteDataAddress = MMU.addressOAM + UInt16(spriteIndexOffset)
+            let yCo = MMU.shared.readValue(address: spriteDataAddress) - Self.spriteYOffset
+            let xCo = MMU.shared.readValue(address: spriteDataAddress + 1) - Self.spriteXOffset
+            let tileIndex = MMU.shared.readValue(address: spriteDataAddress + 2)
+            let attributes = MMU.shared.readValue(address: spriteDataAddress + 3)
+            
+            let flipY = attributes.checkBit(MMU.yFlipBitIndex)
+            let flipX = attributes.checkBit(MMU.xFlipBitIndex)
+            
+            let spriteHeight: UInt8 = areLargeSprites ? Self.largeSpriteHeight : Self.smallSpriteHeight
+            
+            // Check if sprite intercepts with scanline
+            let spriteBounds = yCo..<(yCo + spriteHeight)
+            if spriteBounds ~= scanline {
+                var signedLine = Int8(scanline - yCo)
+                
+                if flipY {
+                    signedLine -= Int8(ySize)
+                    signedLine *= -1
+                }
+                
+                var line = UInt16(signedLine.magnitude)
+
+                line *= 2
+                let dataAddress = MMU.addressTileArea1 + (UInt16(tileIndex) * Self.bytesPerTile) + line
+                let data1 = MMU.shared.readValue(address: dataAddress)
+                let data2 = MMU.shared.readValue(address: dataAddress + 1)
+                
+                for pixelIndex in 7...0 {
+                    var colourBit = pixelIndex
+                    
+                    if flipX {
+                        colourBit -= 7
+                        colourBit *= -1
+                    }
+                    
+                    var colourNum = data2.getBitValue(colourBit)
+                    colourNum <<= 1
+                    colourNum |= data1.getBitValue(colourBit)
+                    
+                    let colourAddress = attributes.checkBit(MMU.paletteNumberBitIndex) ? MMU.addressObjPalette2 : MMU.addressObjPalette1
+                    let palette = MMU.shared.readValue(address: colourAddress)
+                    let colour = ColourPalette.getColour(id: colourNum, palette: palette)
+                    
+                    if colour == ColourPalette.white {
+                        continue
+                    }
+                    
+                    let xPix = 0 - pixelIndex + 7
+                    
+                    let pixel = Int(xCo) + xPix
+                    
+                    // Sanity check... cbf
+                    
+                    screenData[pixel][scanline] = colour
+                }
+            }
+        }
     }
 }
 
@@ -251,6 +314,14 @@ extension PPU {
     // Tiles
     private static let bytesPerTile: UInt16 = 16
     private static let bytesPerPixelRow: UInt8 = 2
+    
+    // Sprites
+    private static let maxNumberOfSprites = 40
+    private static let bytesPerSprite = 4
+    private static let spriteXOffset: UInt8 = 8
+    private static let spriteYOffset: UInt8 = 16
+    private static let smallSpriteHeight: UInt8 = 8
+    private static let largeSpriteHeight: UInt8 = 16
     
     // Miscellaneous
     private static let tilesPerRow: UInt16 = 32

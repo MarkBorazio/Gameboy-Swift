@@ -214,6 +214,14 @@ extension MMU {
     static let addressScrollX: UInt16 = 0xFF43
     static let addressWindowY: UInt16 = 0xFF4A
     static let addressWindowX: UInt16 = 0xFF4B
+    static let addressOAM: UInt16 = 0xFE00
+    
+    // Sprite Attributes Bit Indices
+    // Bits 0-3 are used in CGB mode only
+    static let paletteNumberBitIndex = 4
+    static let xFlipBitIndex = 5
+    static let yFlipBitIndex = 6
+    static let bgAndWindowOverObjBitIndex = 7
 }
 
 // MARK: - DMA Transfer
