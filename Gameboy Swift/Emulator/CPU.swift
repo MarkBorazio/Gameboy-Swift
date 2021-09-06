@@ -514,7 +514,7 @@ extension CPU {
     private func stop() {
         // Stop instruction is two bytes long, so we need to read the next byte as well.
         // 0x10, 0x00
-        stop = true
+        stopFlag = true
         guard fetchNextByte() == 0x00 else { fatalError("Second byte of STOP instruction was not 0x00.") }
     }
     
