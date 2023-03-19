@@ -91,6 +91,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4D73306C29C73BD900E4E5E6 /* Presentation */ = {
+			isa = PBXGroup;
+			children = (
+				6070722E26BFA814002E7119 /* ViewController.swift */,
+				6070723226BFA814002E7119 /* Main.storyboard */,
+			);
+			path = Presentation;
+			sourceTree = "<group>";
+		};
+		4D73306D29C73BF200E4E5E6 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				6070723526BFA814002E7119 /* Info.plist */,
+			);
+			path = Configuration;
+			sourceTree = "<group>";
+		};
 		605AFB9C26C7CA690040E608 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
@@ -122,13 +139,12 @@
 		6070722B26BFA814002E7119 /* Gameboy Swift */ = {
 			isa = PBXGroup;
 			children = (
-				6070725826BFB63C002E7119 /* Emulator */,
 				6070722C26BFA814002E7119 /* AppDelegate.swift */,
-				6070722E26BFA814002E7119 /* ViewController.swift */,
-				6070723226BFA814002E7119 /* Main.storyboard */,
-				6070723526BFA814002E7119 /* Info.plist */,
+				4D73306C29C73BD900E4E5E6 /* Presentation */,
+				6070725826BFB63C002E7119 /* Emulator */,
 				605AFB9C26C7CA690040E608 /* Utilities */,
 				6070725F26BFCF8E002E7119 /* Extensions */,
+				4D73306D29C73BF200E4E5E6 /* Configuration */,
 				6070723026BFA814002E7119 /* Assets.xcassets */,
 				6070723626BFA815002E7119 /* Gameboy_Swift.entitlements */,
 			);
