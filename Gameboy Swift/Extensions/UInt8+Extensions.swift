@@ -13,13 +13,13 @@ extension UInt8 {
     
     func addingReportingHalfCarry(_ rhs: Self) -> (newValue: Self, halfCarry: Bool) {
         let newValue = self &+ rhs
-        let halfCarryFlag = (((self & 0xF) &+ (rhs & 0xF)) & 0x10) == 0x10
+        let halfCarryFlag = ((lowNibble &+ rhs.lowNibble) & 0x10) == 0x10
         return (newValue, halfCarryFlag)
     }
     
     func subtractingReportingHalfCarry(_ rhs: Self) -> (newValue: Self, halfCarry: Bool) {
         let newValue = self &- rhs
-        let halfCarryFlag = (((self & 0xF) &- (rhs & 0xF)) & 0x10) == 0x10
+        let halfCarryFlag = ((lowNibble &- rhs.lowNibble) & 0x10) == 0x10
         return (newValue, halfCarryFlag)
     }
 }

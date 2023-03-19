@@ -139,6 +139,73 @@ class CPU {
 
 extension CPU {
     
+    private func execute8BitInstruction2(opcode: UInt8) {
+        switch opcode {
+        case 0x40...0x75: loadOperation(opcode: opcode)
+        case 0x76: halt()
+        case 0x77...0x7F: loadOperation(opcode: opcode)
+        case 0x80...0x87: a = addOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0x88...0x8F: a = addWithCarryOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0x90...0x97: a = subtractOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0x98...0x9F: a = subtractWithCarryOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0xA0...0xA7: a = logicalAndOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0xA8...0xAF: a = logicalXorOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0xB0...0xB7: a = logicalOrOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0xB8...0xBF: compare(a, to: getValueToSet(opcode: opcode))
+        }
+    }
+    
+    private func getValueToSet(opcode: UInt8) -> UInt8 {
+        switch opcode.lowNibble & 0x111 {
+        case 0x0: return b
+        case 0x1: return c
+        case 0x2: return d
+        case 0x3: return e
+        case 0x4: return h
+        case 0x5: return l
+        case 0x6: return MMU.shared.readValue(address: hl)
+        case 0x7: return a
+        default: fatalError("Failed to GET register value in operation using opcode: \(opcode)")
+        }
+    }
+    
+    private func loadOperation(opcode: UInt8) {
+        let valueToSet = getValueToSet(opcode: opcode)
+        
+        switch opcode {
+        case 0x40...0x47: b = valueToSet
+        case 0x48...0x4F: c = valueToSet
+        case 0x50...0x57: d = valueToSet
+        case 0x58...0x5F: e = valueToSet
+        case 0x60...0x67: h = valueToSet
+        case 0x68...0x6F: l = valueToSet
+        case 0x70...0x75, 0x77: MMU.shared.writeValue(valueToSet, address: hl)
+        case 0x78...0x7F: a = valueToSet
+        default: fatalError("Failed to SET value in load operation using opcode: \(opcode)")
+        }
+    }
+    
+    private func addOperation2(opcode: UInt8) {
+        var valueToSet = getValueToSet(opcode: opcode)
+        
+        let shouldAddCYFlag = opcode.lowNibble > 0x7
+        if shouldAddCYFlag {
+            let carryValue: UInt8 = cFlag ? 1 : 0
+            valueToSet = valueToSet &+ carryValue
+        }
+
+        
+    }
+    
+//    private func getDestinationRegisterForLoadOperation(nibble: UInt8) -> UInt8 {
+//        switch nibble {
+//        case 0x40...0x47:
+//        }
+//    }
+    
+    
+    
+    
     private func execute8BitInstruction(opcode: UInt8) {
     
         switch opcode {
