@@ -214,14 +214,14 @@ extension CPU {
         case 0x40...0x75: loadOperation(opcode: opcode)
         case 0x76: halt()
         case 0x77...0x7F: loadOperation(opcode: opcode)
-        case 0x80...0x87: a = addOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0x88...0x8F: a = addWithCarryOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0x90...0x97: a = subtractOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0x98...0x9F: a = subtractWithCarryOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0xA0...0xA7: a = logicalAndOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0xA8...0xAF: a = logicalXorOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0xB0...0xB7: a = logicalOrOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0xB8...0xBF: compare(a, to: getValueToSet(opcode: opcode))
+        case 0x80...0x87: a = addOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
+        case 0x88...0x8F: a = addWithCarryOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
+        case 0x90...0x97: a = subtractOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
+        case 0x98...0x9F: a = subtractWithCarryOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
+        case 0xA0...0xA7: a = logicalAndOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
+        case 0xA8...0xAF: a = logicalXorOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
+        case 0xB0...0xB7: a = logicalOrOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
+        case 0xB8...0xBF: compare(a, to: getRegisterValueForOpcode(opcode))
             
         case 0xC0: returnIfZFlagCleared()
         case 0xC1: popStackIntoBC()
@@ -1206,7 +1206,7 @@ extension CPU {
     }
     
     private func loadOperation(opcode: UInt8) {
-        let valueToSet = getValueToSet(opcode: opcode)
+        let valueToSet = getRegisterValueForOpcode(opcode)
         
         switch opcode {
         case 0x40...0x47: b = valueToSet
