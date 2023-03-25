@@ -169,6 +169,8 @@ class PPU {
             // Get X coordinate relative to window or background space
             // TODO: Confirm if this is correct. It seems that we can have a y-coordinate relative to the window
             // space, but an x-coordinate relative to the background space. That seems wrong.
+            // Update: It's probably correct, actually. The window is rendered on top of the background, so
+            // we could move from drawing a background pixel to drawing a window pixel in the same scanline.
             let isPixelIndexWithinWindowXBounds = pixelIndex >= windowX
             let shouldUseWindowSpaceForXCo = isRenderingWindow && isPixelIndexWithinWindowXBounds
             let relativeXCo = shouldUseWindowSpaceForXCo ? (pixelIndex - windowX) : (pixelIndex + scrollX)
@@ -243,47 +245,44 @@ class PPU {
             // Check if sprite intercepts with scanline
             let spriteBounds = yCo..<(yCo + spriteHeight)
             if spriteBounds ~= scanline {
-                var signedLine = Int8(scanline - yCo)
+                var spriteRowIndex = scanline - yCo
                 
                 if flipY {
-                    signedLine -= Int8(ySize)
-                    signedLine *= -1
+                    spriteRowIndex = 7 - spriteRowIndex
                 }
-                
-                var line = UInt16(signedLine.magnitude)
 
-                line *= 2
-                let dataAddress = MMU.addressTileArea1 + (UInt16(tileIndex) * Self.bytesPerTile) + line
+                spriteRowIndex *= Self.bytesPerPixelRow
+                let dataAddress = MMU.addressTileArea1
+                    + (UInt16(tileIndex) * Self.bytesPerTile)
+                    + UInt16(spriteRowIndex)
                 let data1 = MMU.shared.readValue(address: dataAddress)
                 let data2 = MMU.shared.readValue(address: dataAddress + 1)
                 
-                for pixelIndex in 7...0 {
-                    var colourBit = pixelIndex
+                // Reverse since it's easier to read from right to left due to colour data
+                let reversedPixelIndices = (0...UInt8.bitWidth-1).reversed()
+                for pixelIndex in reversedPixelIndices {
+                    var colourBitIndex = Int(pixelIndex)
                     
                     if flipX {
-                        colourBit -= 7
-                        colourBit *= -1
+                        colourBitIndex = 7 - colourBitIndex
                     }
                     
-                    var colourNum = data2.getBitValue(colourBit)
-                    colourNum <<= 1
-                    colourNum |= data1.getBitValue(colourBit)
-                    
+                    let colourID = (data2.getBitValue(colourBitIndex) << 1) | data1.getBitValue(colourBitIndex)
                     let colourAddress = attributes.checkBit(MMU.paletteNumberBitIndex) ? MMU.addressObjPalette2 : MMU.addressObjPalette1
                     let palette = MMU.shared.readValue(address: colourAddress)
-                    let colour = ColourPalette.getColour(id: colourNum, palette: palette)
+                    let colour = ColourPalette.getColour(id: colourID, palette: palette)
                     
+                    // White is transparent for sprites (supposedly...)
                     if colour == ColourPalette.white {
                         continue
                     }
                     
-                    let xPix = 0 - pixelIndex + 7
-                    
-                    let pixel = Int(xCo) + xPix
+                    let readjustedPixelIndex = 7 - pixelIndex // Since we looped in reverese order
+                    let globalXco = Int(xCo) + readjustedPixelIndex
                     
                     // Sanity check... cbf
                     
-                    screenData[pixel][scanline] = colour
+                    screenData[globalXco][scanline] = colour
                 }
             }
         }
