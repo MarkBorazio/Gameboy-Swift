@@ -139,77 +139,9 @@ class CPU {
 
 extension CPU {
     
-    private func execute8BitInstruction2(opcode: UInt8) {
-        switch opcode {
-        case 0x40...0x75: loadOperation(opcode: opcode)
-        case 0x76: halt()
-        case 0x77...0x7F: loadOperation(opcode: opcode)
-        case 0x80...0x87: a = addOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0x88...0x8F: a = addWithCarryOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0x90...0x97: a = subtractOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0x98...0x9F: a = subtractWithCarryOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0xA0...0xA7: a = logicalAndOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0xA8...0xAF: a = logicalXorOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0xB0...0xB7: a = logicalOrOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
-        case 0xB8...0xBF: compare(a, to: getValueToSet(opcode: opcode))
-        }
-    }
-    
-    private func getValueToSet(opcode: UInt8) -> UInt8 {
-        switch opcode.lowNibble & 0x111 {
-        case 0x0: return b
-        case 0x1: return c
-        case 0x2: return d
-        case 0x3: return e
-        case 0x4: return h
-        case 0x5: return l
-        case 0x6: return MMU.shared.readValue(address: hl)
-        case 0x7: return a
-        default: fatalError("Failed to GET register value in operation using opcode: \(opcode)")
-        }
-    }
-    
-    private func loadOperation(opcode: UInt8) {
-        let valueToSet = getValueToSet(opcode: opcode)
-        
-        switch opcode {
-        case 0x40...0x47: b = valueToSet
-        case 0x48...0x4F: c = valueToSet
-        case 0x50...0x57: d = valueToSet
-        case 0x58...0x5F: e = valueToSet
-        case 0x60...0x67: h = valueToSet
-        case 0x68...0x6F: l = valueToSet
-        case 0x70...0x75, 0x77: MMU.shared.writeValue(valueToSet, address: hl)
-        case 0x78...0x7F: a = valueToSet
-        default: fatalError("Failed to SET value in load operation using opcode: \(opcode)")
-        }
-    }
-    
-    private func addOperation2(opcode: UInt8) {
-        var valueToSet = getValueToSet(opcode: opcode)
-        
-        let shouldAddCYFlag = opcode.lowNibble > 0x7
-        if shouldAddCYFlag {
-            let carryValue: UInt8 = cFlag ? 1 : 0
-            valueToSet = valueToSet &+ carryValue
-        }
 
-        
-    }
-    
-//    private func getDestinationRegisterForLoadOperation(nibble: UInt8) -> UInt8 {
-//        switch nibble {
-//        case 0x40...0x47:
-//        }
-//    }
-    
-    
-    
-    
     private func execute8BitInstruction(opcode: UInt8) {
-    
         switch opcode {
-        
         case 0x00: noOp()
         case 0x01: loadShortIntoBC()
         case 0x02: loadAIntoAbsoluteBC()
@@ -278,148 +210,25 @@ extension CPU {
         case 0x3E: loadByteIntoA()
         case 0x3F: flipCFlag()
             
-        case 0x40: loadBIntoB()
-        case 0x41: loadCIntoB()
-        case 0x42: loadDIntoB()
-        case 0x43: loadEIntoB()
-        case 0x44: loadHIntoB()
-        case 0x45: loadLIntoB()
-        case 0x46: loadAbsoluteHLIntoB()
-        case 0x47: loadAIntoB()
-        case 0x48: loadBIntoC()
-        case 0x49: loadCIntoC()
-        case 0x4A: loadDIntoC()
-        case 0x4B: loadEIntoC()
-        case 0x4C: loadHIntoC()
-        case 0x4D: loadLIntoC()
-        case 0x4E: loadAbsoluteHLIntoC()
-        case 0x4F: loadAIntoC()
-            
-        case 0x50: loadBIntoD()
-        case 0x51: loadCIntoD()
-        case 0x52: loadDIntoD()
-        case 0x53: loadEIntoD()
-        case 0x54: loadHIntoD()
-        case 0x55: loadLIntoD()
-        case 0x56: loadAbsoluteHLIntoD()
-        case 0x57: loadAIntoD()
-        case 0x58: loadBIntoE()
-        case 0x59: loadCIntoE()
-        case 0x5A: loadDIntoE()
-        case 0x5B: loadEIntoE()
-        case 0x5C: loadHIntoE()
-        case 0x5D: loadLIntoE()
-        case 0x5E: loadAbsoluteHLIntoE()
-        case 0x5F: loadAIntoE()
-            
-        case 0x60: loadBIntoH()
-        case 0x61: loadCIntoH()
-        case 0x62: loadDIntoH()
-        case 0x63: loadEIntoH()
-        case 0x64: loadHIntoH()
-        case 0x65: loadLIntoH()
-        case 0x66: loadAbsoluteHLIntoH()
-        case 0x67: loadAIntoH()
-        case 0x68: loadBIntoL()
-        case 0x69: loadCIntoL()
-        case 0x6A: loadDIntoL()
-        case 0x6B: loadEIntoL()
-        case 0x6C: loadHIntoL()
-        case 0x6D: loadLIntoL()
-        case 0x6E: loadAbsoluteHLIntoL()
-        case 0x6F: loadAIntoL()
-            
-        case 0x70: loadBIntoAbsoluteHL()
-        case 0x71: loadCIntoAbsoluteHL()
-        case 0x72: loadDIntoAbsoluteHL()
-        case 0x73: loadEIntoAbsoluteHL()
-        case 0x74: loadHIntoAbsoluteHL()
-        case 0x75: loadLIntoAbsoluteHL()
+        // Middle Of Table
+        case 0x40...0x75: loadOperation(opcode: opcode)
         case 0x76: halt()
-        case 0x77: loadAIntoAbsoluteHL()
-        case 0x78: loadBIntoA()
-        case 0x79: loadCIntoA()
-        case 0x7A: loadDIntoA()
-        case 0x7B: loadEIntoA()
-        case 0x7C: loadHIntoA()
-        case 0x7D: loadLIntoA()
-        case 0x7E: loadAbsoluteHLIntoA()
-        case 0x7F: loadAIntoA()
-            
-        case 0x80: addBToA()
-        case 0x81: addCToA()
-        case 0x82: addDToA()
-        case 0x83: addEToA()
-        case 0x84: addHToA()
-        case 0x85: addLToA()
-        case 0x86: addAbsoluteHLToA()
-        case 0x87: addAToA()
-        case 0x88: addBWithCarryToA()
-        case 0x89: addCWithCarryToA()
-        case 0x8A: addDWithCarryToA()
-        case 0x8B: addEWithCarryToA()
-        case 0x8C: addHWithCarryToA()
-        case 0x8D: addLWithCarryToA()
-        case 0x8E: addAbsoluteHLWithCarryToA()
-        case 0x8F: addAWithCarryToA()
-            
-        case 0x90: subtractBFromA()
-        case 0x91: subtractCFromA()
-        case 0x92: subtractDFromA()
-        case 0x93: subtractEFromA()
-        case 0x94: subtractHFromA()
-        case 0x95: subtractLFromA()
-        case 0x96: subtractAbsoluteHLFromA()
-        case 0x97: subtractAFromA()
-        case 0x98: subtractBWithCarryFromA()
-        case 0x99: subtractCWithCarryFromA()
-        case 0x9A: subtractDWithCarryFromA()
-        case 0x9B: subtractEWithCarryFromA()
-        case 0x9C: subtractHWithCarryFromA()
-        case 0x9D: subtractLWithCarryFromA()
-        case 0x9E: subtractAbsoluteHLWithCarryFromA()
-        case 0x9F: subtractAWithCarryFromA()
-            
-        case 0xA0: logicalAndBToA()
-        case 0xA1: logicalAndCToA()
-        case 0xA2: logicalAndDToA()
-        case 0xA3: logicalAndEToA()
-        case 0xA4: logicalAndHToA()
-        case 0xA5: logicalAndLToA()
-        case 0xA6: logicalAndAbsoluteHLToA()
-        case 0xA7: logicalAndAToA()
-        case 0xA8: logicalXorBToA()
-        case 0xA9: logicalXorCToA()
-        case 0xAA: logicalXorDToA()
-        case 0xAB: logicalXorEToA()
-        case 0xAC: logicalXorHToA()
-        case 0xAD: logicalXorLToA()
-        case 0xAE: logicalXorAbsoluteHLToA()
-        case 0xAF: logicalXorAToA()
-            
-        case 0xB0: logicalOrBToA()
-        case 0xB1: logicalOrCToA()
-        case 0xB2: logicalOrDToA()
-        case 0xB3: logicalOrEToA()
-        case 0xB4: logicalOrHToA()
-        case 0xB5: logicalOrLToA()
-        case 0xB6: logicalOrAbsoluteHLToA()
-        case 0xB7: logicalOrAToA()
-        case 0xB8: compareBToA()
-        case 0xB9: compareCToA()
-        case 0xBA: compareDToA()
-        case 0xBB: compareEToA()
-        case 0xBC: compareHToA()
-        case 0xBD: compareLToA()
-        case 0xBE: compareAbsoluteHLToA()
-        case 0xBF: compareAToA()
+        case 0x77...0x7F: loadOperation(opcode: opcode)
+        case 0x80...0x87: a = addOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0x88...0x8F: a = addWithCarryOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0x90...0x97: a = subtractOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0x98...0x9F: a = subtractWithCarryOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0xA0...0xA7: a = logicalAndOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0xA8...0xAF: a = logicalXorOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0xB0...0xB7: a = logicalOrOperation(lhs: a, rhs: getValueToSet(opcode: opcode))
+        case 0xB8...0xBF: compare(a, to: getValueToSet(opcode: opcode))
             
         case 0xC0: returnIfZFlagCleared()
         case 0xC1: popStackIntoBC()
         case 0xC2: absoluteJumpIfZFlagCleared()
         case 0xC3: unconditionalAbsoluteJump()
         case 0xC4: callIfZFlagCleared()
-        case 0xC5: pushBCOntoStack()
+        case 0xC5: pushOntoStack(address: bc)
         case 0xC6: addByteToA()
         case 0xC7: resetToByte0()
         case 0xC8: returnIfZFlagSet()
@@ -436,7 +245,7 @@ extension CPU {
         case 0xD2: absoluteJumpIfCFlagCleared()
         case 0xD3: break
         case 0xD4: callIfCFlagCleared()
-        case 0xD5: pushDEOntoStack()
+        case 0xD5: pushOntoStack(address: de)
         case 0xD6: subtractByteFromA()
         case 0xD7: resetToByte2()
         case 0xD8: returnIfCFlagSet()
@@ -453,7 +262,7 @@ extension CPU {
         case 0xE2: highPageLoadAIntoAbsoluteC()
         case 0xE3: break
         case 0xE4: break
-        case 0xE5: pushHLOntoStack()
+        case 0xE5: pushOntoStack(address: hl)
         case 0xE6: logicalAndByteToA()
         case 0xE7: resetToByte4()
         case 0xE8: addByteToSP()
@@ -470,7 +279,7 @@ extension CPU {
         case 0xF2: highPageLoadAbsoluteCIntoA()
         case 0xF3: disableInterruptHandling()
         case 0xF4: break
-        case 0xF5: pushAFOntoStack()
+        case 0xF5: pushOntoStack(address: af)
         case 0xF6: logicalOrByteToA()
         case 0xF7: resetToByte6()
         case 0xF8: loadSPPlusByteIntoHL()
@@ -482,7 +291,7 @@ extension CPU {
         case 0xFE: compareByteToA()
         case 0xFF: resetToByte7()
             
-        default: fatalError("Encountered unknown 8-bit opcode.")
+        default: fatalError("Encountered unknown 8-bit opcode: \(opcode).")
         }
     }
     
@@ -886,652 +695,9 @@ extension CPU {
         hFlag = false
     }
     
-    /// 0x40
-    private func loadBIntoB() {
-//        b = b
-    }
-    
-    /// 0x41
-    private func loadCIntoB() {
-        b = c
-    }
-    
-    /// 0x42
-    private func loadDIntoB() {
-        b = d
-    }
-    
-    /// 0x43
-    private func loadEIntoB() {
-        b = e
-    }
-    
-    /// 0x44
-    private func loadHIntoB() {
-        b = h
-    }
-    
-    /// 0x45
-    private func loadLIntoB() {
-        b = l
-    }
-    
-    /// 0x46
-    private func loadAbsoluteHLIntoB() {
-        b = MMU.shared.readValue(address: hl)
-    }
-    
-    /// 0x47
-    private func loadAIntoB() {
-        b = a
-    }
-    
-    /// 0x48
-    private func loadBIntoC() {
-        c = b
-    }
-    
-    /// 0x49
-    private func loadCIntoC() {
-//        c = c
-    }
-    
-    /// 0x4A
-    private func loadDIntoC() {
-        c = d
-    }
-    
-    /// 0x4B
-    private func loadEIntoC() {
-        c = e
-    }
-    
-    /// 0x4C
-    private func loadHIntoC() {
-        c = h
-    }
-    
-    /// 0x4D
-    private func loadLIntoC() {
-        c = l
-    }
-    
-    /// 0x4E
-    private func loadAbsoluteHLIntoC() {
-        c = MMU.shared.readValue(address: hl)
-    }
-    
-    /// 0x4F
-    private func loadAIntoC() {
-        c = a
-    }
-    
-    /// 0x50
-    private func loadBIntoD() {
-        d = b
-    }
-    
-    /// 0x51
-    private func loadCIntoD() {
-        d = c
-    }
-    
-    /// 0x52
-    private func loadDIntoD() {
-//        d = d
-    }
-    
-    /// 0x53
-    private func loadEIntoD() {
-        d = e
-    }
-    
-    /// 0x54
-    private func loadHIntoD() {
-        d = h
-    }
-    
-    /// 0x55
-    private func loadLIntoD() {
-        d = l
-    }
-    
-    /// 0x56
-    private func loadAbsoluteHLIntoD() {
-        d = MMU.shared.readValue(address: hl)
-    }
-    
-    /// 0x57
-    private func loadAIntoD() {
-        d = a
-    }
-    
-    /// 0x58
-    private func loadBIntoE() {
-        e = b
-    }
-    
-    /// 0x59
-    private func loadCIntoE() {
-        e = c
-    }
-    
-    /// 0x5A
-    private func loadDIntoE() {
-        e = d
-    }
-    
-    /// 0x5B
-    private func loadEIntoE() {
-//        e = e
-    }
-    
-    /// 0x5C
-    private func loadHIntoE() {
-        e = h
-    }
-    
-    /// 0x5D
-    private func loadLIntoE() {
-        e = l
-    }
-    
-    /// 0x5E
-    private func loadAbsoluteHLIntoE() {
-        e = MMU.shared.readValue(address: hl)
-    }
-    
-    /// 0x5F
-    private func loadAIntoE() {
-        e = a
-    }
-    
-    /// 0x60
-    private func loadBIntoH() {
-        h = b
-    }
-    
-    /// 0x61
-    private func loadCIntoH() {
-        h = c
-    }
-    
-    /// 0x62
-    private func loadDIntoH() {
-        h = d
-    }
-    
-    /// 0x63
-    private func loadEIntoH() {
-        h = e
-    }
-    
-    /// 0x64
-    private func loadHIntoH() {
-//        h = h
-    }
-    
-    /// 0x65
-    private func loadLIntoH() {
-        h = l
-    }
-    
-    /// 0x66
-    private func loadAbsoluteHLIntoH() {
-        h = MMU.shared.readValue(address: hl)
-    }
-    
-    /// 0x67
-    private func loadAIntoH() {
-        h = a
-    }
-    
-    /// 0x68
-    private func loadBIntoL() {
-        l = b
-    }
-    
-    /// 0x69
-    private func loadCIntoL() {
-        l = c
-    }
-    
-    /// 0x6A
-    private func loadDIntoL() {
-        l = d
-    }
-    
-    /// 0x6B
-    private func loadEIntoL() {
-        l = e
-    }
-    
-    /// 0x6C
-    private func loadHIntoL() {
-        l = h
-    }
-    
-    /// 0x6D
-    private func loadLIntoL() {
-//        l = l
-    }
-    
-    /// 0x6E
-    private func loadAbsoluteHLIntoL() {
-        l = MMU.shared.readValue(address: hl)
-    }
-    
-    /// 0x6F
-    private func loadAIntoL() {
-        l = a
-    }
-    
-    /// 0x70
-    private func loadBIntoAbsoluteHL() {
-        MMU.shared.writeValue(b, address: hl)
-    }
-    
-    /// 0x71
-    private func loadCIntoAbsoluteHL() {
-        MMU.shared.writeValue(c, address: hl)
-    }
-    
-    /// 0x72
-    private func loadDIntoAbsoluteHL() {
-        MMU.shared.writeValue(d, address: hl)
-    }
-    
-    /// 0x73
-    private func loadEIntoAbsoluteHL() {
-        MMU.shared.writeValue(e, address: hl)
-    }
-    
-    /// 0x74
-    private func loadHIntoAbsoluteHL() {
-        MMU.shared.writeValue(h, address: hl)
-    }
-    
-    /// 0x75
-    private func loadLIntoAbsoluteHL() {
-        MMU.shared.writeValue(l, address: hl)
-    }
-    
     /// 0x76
     private func halt() {
         haltFlag = true
-    }
-    
-    /// 0x77
-    private func loadAIntoAbsoluteHL() {
-        MMU.shared.writeValue(a, address: hl)
-    }
-    
-    /// 0x78
-    private func loadBIntoA() {
-        a = b
-    }
-    
-    /// 0x79
-    private func loadCIntoA() {
-        a = c
-    }
-    
-    /// 0x7A
-    private func loadDIntoA() {
-        a = d
-    }
-    
-    /// 0x7B
-    private func loadEIntoA() {
-        a = e
-    }
-    
-    /// 0x7C
-    private func loadHIntoA() {
-        a = h
-    }
-    
-    /// 0x7D
-    private func loadLIntoA() {
-        a = l
-    }
-    
-    /// 0x7E
-    private func loadAbsoluteHLIntoA() {
-        a = MMU.shared.readValue(address: hl)
-    }
-    
-    /// 0x7F
-    private func loadAIntoA() {
-//        a = a
-    }
-    
-    /// 0x80
-    private func addBToA() {
-        a = addOperation(lhs: a, rhs: b)
-    }
-    
-    /// 0x81
-    private func addCToA() {
-        a = addOperation(lhs: a, rhs: c)
-    }
-    
-    /// 0x82
-    private func addDToA() {
-        a = addOperation(lhs: a, rhs: d)
-    }
-    
-    /// 0x83
-    private func addEToA() {
-        a = addOperation(lhs: a, rhs: e)
-    }
-    
-    /// 0x84
-    private func addHToA() {
-        a = addOperation(lhs: a, rhs: h)
-    }
-    
-    /// 0x85
-    private func addLToA() {
-        a = addOperation(lhs: a, rhs: l)
-    }
-    
-    /// 0x86
-    private func addAbsoluteHLToA() {
-        let value = MMU.shared.readValue(address: hl)
-        a = addOperation(lhs: a, rhs: value)
-    }
-    
-    /// 0x87
-    private func addAToA() {
-        a = addOperation(lhs: a, rhs: a)
-    }
-    
-    /// 0x88
-    private func addBWithCarryToA() {
-        a = addWithCarryOperation(lhs: a, rhs: b)
-    }
-    
-    /// 0x89
-    private func addCWithCarryToA() {
-        a = addWithCarryOperation(lhs: a, rhs: c)
-    }
-    
-    /// 0x8A
-    private func addDWithCarryToA() {
-        a = addWithCarryOperation(lhs: a, rhs: d)
-    }
-    
-    /// 0x8B
-    private func addEWithCarryToA() {
-        a = addWithCarryOperation(lhs: a, rhs: e)
-    }
-    
-    /// 0x8C
-    private func addHWithCarryToA() {
-        a = addWithCarryOperation(lhs: a, rhs: h)
-    }
-    
-    /// 0x8D
-    private func addLWithCarryToA() {
-        a = addWithCarryOperation(lhs: a, rhs: l)
-    }
-    
-    /// 0x8E
-    private func addAbsoluteHLWithCarryToA() {
-        let value = MMU.shared.readValue(address: hl)
-        a = addWithCarryOperation(lhs: a, rhs: value)
-    }
-    
-    /// 0x8F
-    private func addAWithCarryToA() {
-        a = addWithCarryOperation(lhs: a, rhs: a)
-    }
-    
-    /// 0x90
-    private func subtractBFromA() {
-        a = subtractOperation(lhs: a, rhs: b)
-    }
-    
-    /// 0x91
-    private func subtractCFromA() {
-        a = subtractOperation(lhs: a, rhs: c)
-    }
-    
-    /// 0x92
-    private func subtractDFromA() {
-        a = subtractOperation(lhs: a, rhs: d)
-    }
-    
-    /// 0x93
-    private func subtractEFromA() {
-        a = subtractOperation(lhs: a, rhs: e)
-    }
-    
-    /// 0x94
-    private func subtractHFromA() {
-        a = subtractOperation(lhs: a, rhs: h)
-    }
-    
-    /// 0x95
-    private func subtractLFromA() {
-        a = subtractOperation(lhs: a, rhs: l)
-    }
-    
-    /// 0x96
-    private func subtractAbsoluteHLFromA() {
-        let value = MMU.shared.readValue(address: hl)
-        a = subtractOperation(lhs: a, rhs: value)
-    }
-    
-    /// 0x97
-    private func subtractAFromA() {
-        a = subtractOperation(lhs: a, rhs: a)
-    }
-    
-    /// 0x98
-    private func subtractBWithCarryFromA() {
-        a = subtractWithCarryOperation(lhs: a, rhs: b)
-    }
-    
-    /// 0x99
-    private func subtractCWithCarryFromA() {
-        a = subtractWithCarryOperation(lhs: a, rhs: c)
-    }
-    
-    /// 0x9A
-    private func subtractDWithCarryFromA() {
-        a = subtractWithCarryOperation(lhs: a, rhs: d)
-    }
-    
-    /// 0x9B
-    private func subtractEWithCarryFromA() {
-        a = subtractWithCarryOperation(lhs: a, rhs: e)
-    }
-    
-    /// 0x9C
-    private func subtractHWithCarryFromA() {
-        a = subtractWithCarryOperation(lhs: a, rhs: h)
-    }
-    
-    /// 0x9D
-    private func subtractLWithCarryFromA() {
-        a = subtractWithCarryOperation(lhs: a, rhs: l)
-    }
-    
-    /// 0x9E
-    private func subtractAbsoluteHLWithCarryFromA() {
-        let value = MMU.shared.readValue(address: hl)
-        a = subtractWithCarryOperation(lhs: a, rhs: value)
-    }
-    
-    /// 0x9F
-    private func subtractAWithCarryFromA() {
-        a = subtractWithCarryOperation(lhs: a, rhs: a)
-    }
-    
-    /// 0xA0
-    private func logicalAndBToA() {
-        a = logicalAndOperation(lhs: a, rhs: b)
-    }
-    
-    /// 0xA1
-    private func logicalAndCToA() {
-        a = logicalAndOperation(lhs: a, rhs: c)
-    }
-    
-    /// 0xA2
-    private func logicalAndDToA() {
-        a = logicalAndOperation(lhs: a, rhs: d)
-    }
-    
-    /// 0xA3
-    private func logicalAndEToA() {
-        a = logicalAndOperation(lhs: a, rhs: e)
-    }
-    
-    /// 0xA4
-    private func logicalAndHToA() {
-        a = logicalAndOperation(lhs: a, rhs: h)
-    }
-    
-    /// 0xA5
-    private func logicalAndLToA() {
-        a = logicalAndOperation(lhs: a, rhs: l)
-    }
-    
-    /// 0xA6
-    private func logicalAndAbsoluteHLToA() {
-        let value = MMU.shared.readValue(address: hl)
-        a = logicalAndOperation(lhs: a, rhs: value)
-    }
-    
-    /// 0xA7
-    private func logicalAndAToA() {
-        a = logicalAndOperation(lhs: a, rhs: a)
-    }
-    
-    /// 0xA8
-    private func logicalXorBToA() {
-        a = logicalXorOperation(lhs: a, rhs: b)
-    }
-    
-    /// 0xA9
-    private func logicalXorCToA() {
-        a = logicalXorOperation(lhs: a, rhs: c)
-    }
-    
-    /// 0xAA
-    private func logicalXorDToA() {
-        a = logicalXorOperation(lhs: a, rhs: d)
-    }
-    
-    /// 0xAB
-    private func logicalXorEToA() {
-        a = logicalXorOperation(lhs: a, rhs: e)
-    }
-    
-    /// 0xAC
-    private func logicalXorHToA() {
-        a = logicalXorOperation(lhs: a, rhs: h)
-    }
-    
-    /// 0xAD
-    private func logicalXorLToA() {
-        a = logicalXorOperation(lhs: a, rhs: l)
-    }
-    
-    /// 0xAE
-    private func logicalXorAbsoluteHLToA() {
-        let value = MMU.shared.readValue(address: hl)
-        a = logicalXorOperation(lhs: a, rhs: value)
-    }
-
-    /// 0xAF
-    private func logicalXorAToA() {
-        a = logicalXorOperation(lhs: a, rhs: a)
-    }
-    
-    /// 0xB0
-    private func logicalOrBToA() {
-        a = logicalOrOperation(lhs: a, rhs: b)
-    }
-    
-    /// 0xB1
-    private func logicalOrCToA() {
-        a = logicalOrOperation(lhs: a, rhs: c)
-    }
-    
-    /// 0xB2
-    private func logicalOrDToA() {
-        a = logicalOrOperation(lhs: a, rhs: d)
-    }
-    
-    /// 0xB3
-    private func logicalOrEToA() {
-        a = logicalOrOperation(lhs: a, rhs: e)
-    }
-    
-    /// 0xB4
-    private func logicalOrHToA() {
-        a = logicalOrOperation(lhs: a, rhs: h)
-    }
-    
-    /// 0xB5
-    private func logicalOrLToA() {
-        a = logicalOrOperation(lhs: a, rhs: l)
-    }
-    
-    /// 0xB6
-    private func logicalOrAbsoluteHLToA() {
-        let value = MMU.shared.readValue(address: hl)
-        a = logicalOrOperation(lhs: a, rhs: value)
-    }
-    
-    /// 0xB7
-    private func logicalOrAToA() {
-        a = logicalOrOperation(lhs: a, rhs: a)
-    }
-    
-    /// 0xB8
-    private func compareBToA() {
-        compare(a, to: b)
-    }
-    
-    /// 0xB9
-    private func compareCToA() {
-        compare(a, to: c)
-    }
-    
-    /// 0xBA
-    private func compareDToA() {
-        compare(a, to: d)
-    }
-    
-    /// 0xBB
-    private func compareEToA() {
-        compare(a, to: e)
-    }
-    
-    /// 0xBC
-    private func compareHToA() {
-        compare(a, to: h)
-    }
-    
-    /// 0xBD
-    private func compareLToA() {
-        compare(a, to: l)
-    }
-    
-    /// 0xBE
-    private func compareAbsoluteHLToA() {
-        let value = MMU.shared.readValue(address: hl)
-        compare(a, to: value)
-    }
-
-    /// 0xBF
-    private func compareAToA() {
-        compare(a, to: a)
     }
     
     /// 0xC0
@@ -1567,11 +733,6 @@ extension CPU {
             pushOntoStack(address: pc)
             pc = address
         }
-    }
-    
-    /// 0xC5
-    private func pushBCOntoStack() {
-        pushOntoStack(address: bc)
     }
     
     /// 0xC6
@@ -1662,11 +823,6 @@ extension CPU {
         }
     }
     
-    /// 0xD5
-    private func pushDEOntoStack() {
-        pushOntoStack(address: de)
-    }
-    
     /// 0xD6
     private func subtractByteFromA() {
         a = subtractOperation(lhs: a, rhs: fetchNextByte())
@@ -1738,11 +894,6 @@ extension CPU {
         MMU.shared.writeValue(a, address: address)
     }
     
-    /// 0xE5
-    private func pushHLOntoStack() {
-        pushOntoStack(address: hl)
-    }
-    
     /// 0xE6
     private func logicalAndByteToA() {
         let byte = fetchNextByte()
@@ -1804,11 +955,6 @@ extension CPU {
     /// 0xF3
     private func disableInterruptHandling() {
         imeFlag = false
-    }
-    
-    /// 0xF5
-    private func pushAFOntoStack() {
-        pushOntoStack(address: af)
     }
     
     /// 0xF6
@@ -2019,7 +1165,7 @@ extension CPU {
         case 0x5, 0xD: return l
         case 0x6, 0xE: return MMU.shared.readValue(address: hl)
         case 0x7, 0xF: return a
-        default: fatalError()
+        default: fatalError("Failed to get register for opcode: \(opcode)")
         }
     }
     
@@ -2035,7 +1181,7 @@ extension CPU {
         case 0x5, 0xD: l = value
         case 0x6, 0xE: MMU.shared.writeValue(value, address: hl)
         case 0x7, 0xF: a = value
-        default: fatalError()
+        default: fatalError("Failed to set register for opcode: \(opcode)")
         }
     }
     
@@ -2057,6 +1203,22 @@ extension CPU {
         hFlag = halfCarry
         
         return decrementedValue
+    }
+    
+    private func loadOperation(opcode: UInt8) {
+        let valueToSet = getValueToSet(opcode: opcode)
+        
+        switch opcode {
+        case 0x40...0x47: b = valueToSet
+        case 0x48...0x4F: c = valueToSet
+        case 0x50...0x57: d = valueToSet
+        case 0x58...0x5F: e = valueToSet
+        case 0x60...0x67: h = valueToSet
+        case 0x68...0x6F: l = valueToSet
+        case 0x70...0x75, 0x77: MMU.shared.writeValue(valueToSet, address: hl)
+        case 0x78...0x7F: a = valueToSet
+        default: fatalError("Failed to SET value in load operation using opcode: \(opcode)")
+        }
     }
     
     private func addOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
