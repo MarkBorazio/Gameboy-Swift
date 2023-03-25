@@ -565,7 +565,7 @@ extension CPU {
     /// 0x2A
     private func loadAbsoluteHLIntoAAndIncrementHL() {
         a = MMU.shared.readValue(address: hl)
-        hl += 1
+        hl &+= 1
     }
     
     /// 0x2B
