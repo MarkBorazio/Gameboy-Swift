@@ -37,14 +37,18 @@ class PPU {
             MMU.shared.currentScanline += 1
             let currentScanlineIndex = MMU.shared.currentScanline
             
-            if currentScanlineIndex <= Self.lastVisibleScanlineIndex { // Draw visible scanline
+            switch currentScanlineIndex {
+            case ...Self.lastVisibleScanlineIndex:
                 drawScanline()
-            }
-            else if currentScanlineIndex == (Self.lastVisibleScanlineIndex + 1) { // Entered VBlank period
+                
+            case Self.lastVisibleScanlineIndex + 1:
                 MMU.shared.requestVBlankInterrupt()
-            }
-            else if currentScanlineIndex > Self.lastAbsoluteScanlineIndex { // Reset
+                
+            case Self.lastAbsoluteScanlineIndex...:
                 MMU.shared.currentScanline = 0
+                
+            default:
+                break
             }
         }
     }
@@ -69,26 +73,25 @@ class PPU {
         var newLCDMode: UInt8
         var interruptRequired: Bool
         
+        // Clear the current mode
+        status &= ~Self.lcdModeMask
+        
         if currentScanlineIndex > Self.lastVisibleScanlineIndex {
             newLCDMode = Self.vBlankMode
-            status &= ~Self.lcdModeMask
-            status |= Self.vBlankMode
+            status |= newLCDMode
             interruptRequired = status.checkBit(MMU.vBlankInterruptEnabledBitIndex)
         } else {
-            if Self.searchingOAMPeriod ~= scanlineTimer { // First 20 M-Cycles
+            if Self.searchingOAMPeriod ~= scanlineTimer { // First 20 M-Cycles / 80 Clock Cycles
                 newLCDMode = Self.searchingOAMMode
-                status &= ~Self.lcdModeMask
-                status |= Self.searchingOAMMode
+                status |= newLCDMode
                 interruptRequired = status.checkBit(MMU.searchingOAMBitIndex)
-            } else if Self.transferringDataToLCDPeriod ~= scanlineTimer { // Next 43 M-Cycles
+            } else if Self.transferringDataToLCDPeriod ~= scanlineTimer { // Next 43 M-Cycles / 172 Clock Cycles
                 newLCDMode = Self.transferringDataToLCDMode
-                status &= ~Self.lcdModeMask
-                status |= Self.transferringDataToLCDMode
+                status |= newLCDMode
                 interruptRequired = false
             } else { // Remaining M-Cycles
                 newLCDMode = Self.hBlankMode
-                status &= ~Self.lcdModeMask
-                status |= Self.hBlankMode
+                status |= newLCDMode
                 interruptRequired = status.checkBit(MMU.hBlankInterruptEnabledBitIndex)
             }
         }
