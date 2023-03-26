@@ -44,8 +44,7 @@ class MasterClock {
     
     private func incrementTimers() {
         incrementDivRegister()
-        
-
+        incrementTimaRegister()
     }
     
     private func incrementDivRegister() {
