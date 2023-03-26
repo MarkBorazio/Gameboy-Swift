@@ -12,12 +12,12 @@ class CPU {
     static let shared = CPU()
     
     // Register Pairs
-    private var af: UInt16 = 0
-    private var bc: UInt16 = 0
-    private var de: UInt16 = 0
-    private var hl: UInt16 = 0
-    private var sp: UInt16 = 0
-    private var pc: UInt16 = 0
+    private var af: UInt16 = 0x00
+    private var bc: UInt16 = 0x00
+    private var de: UInt16 = 0x00
+    private var hl: UInt16 = 0x00
+    private var sp: UInt16 = 0x00
+    private var pc: UInt16 = 0x00
     
     // Individual Registers
     private var a: UInt8 {
@@ -82,34 +82,6 @@ class CPU {
     private var haltFlag = false
     private var stopFlag = false // TODO: Figure out when this should be reset.
     
-    // Clock
-    private static let clockCycleHz: UInt32 = 4194304
-    private static let clockCyclesPerMachineCycle: UInt32 = 4
-    private static let machineCycleHz: UInt32 = clockCycleHz / clockCyclesPerMachineCycle
-    
-    private static let machineCyclesPerDivCycle = 256 / clockCyclesPerMachineCycle
-    private var divTimer = 0
-    private var timaTimer = 0 // Increments at configurable frequency
-    
-    func beginExecution() {
-        while(true) {
-            executeInstruction()
-            
-            // Handle interrupt if necessary
-            if imeFlag {
-                if let interruptAddress = MMU.shared.checkForInterrupt() {
-                    imeFlag = false
-                    pushOntoStack(address: pc)
-                    pc = interruptAddress
-                }
-            }
-            
-            incrementTimers()
-            
-            sleep(Self.machineCycleHz)
-        }
-    }
-    
     private func executeInstruction() {
         let opcode = fetchNextByte()
         if opcode == 0xCB {
@@ -119,19 +91,20 @@ class CPU {
         }
     }
     
-    private func incrementTimers() {
-        divTimer += 1
-        if divTimer >= Self.machineCyclesPerDivCycle {
-            divTimer = 0
-            MMU.shared.incrementDivRegister()
+    func handleInterrupts() {
+        if imeFlag { // Is master interrupt enable flag set?
+            if let interruptAddress = MMU.shared.checkForInterrupt() {
+                imeFlag = false
+                pushOntoStack(address: pc)
+                pc = interruptAddress
+            }
         }
-        
-        timaTimer += 1
-        let machineCyclesPerTimaCycle = MMU.shared.clockCyclesPerTimaCycle / Self.clockCyclesPerMachineCycle
-        if timaTimer >= machineCyclesPerTimaCycle {
-            timaTimer = 0
-            MMU.shared.incrementTimaRegister()
-        }
+    }
+    
+    private func fetchNextByte() -> UInt8 {
+        let opcode = MMU.shared.readValue(address: pc)
+        pc &+= 1
+        return opcode
     }
 }
 
@@ -1127,12 +1100,6 @@ extension CPU {
 // MARK: - Convenience
 
 extension CPU {
-    
-    private func fetchNextByte() -> UInt8 {
-        let opcode = MMU.shared.readValue(address: pc)
-        pc &+= 1
-        return opcode
-    }
     
     private func popStack() -> UInt16 {
         let lowerByte = MMU.shared.readValue(address: sp)

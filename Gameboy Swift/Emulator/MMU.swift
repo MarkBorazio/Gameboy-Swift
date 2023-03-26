@@ -32,6 +32,9 @@ class MMU {
         Self.switchableRomBankAddressRange.forEach { index in
             memoryMap[index] = rom.data[index]
         }
+        
+        // Overlay BIOS/Bootroom at beginning
+        memoryMap.replaceSubrange(0..<Self.bios.count, with: Self.bios)
     }
     
     func readValue(address: UInt16) -> UInt8 {
@@ -43,11 +46,28 @@ class MMU {
         guard !addressIsReadOnly else { return }
         
         switch address {
+        case Self.readOnlyAddressRange:
+            print("WARNING: Attempted to write to READ ONLY memory.")
+            
         case Self.addressLY:
             // If the current scanline is attempted to be manually changed, set it to zero instead
             memoryMap[address] = 0
+            
         case Self.addressDMATransferTrigger:
             dmaTransfer(byte: value)
+            
+        case Self.echoRamAddressRange:
+            // Anything writted to this range (0xE000 - 0xFDFF) is also written to 0xC000-0xDDFF.
+            memoryMap[address] = value
+            writeValue(value, address: address - Self.echoRamOffset)
+            
+        case Self.probitedAddressRange:
+            print("WARNING: Attempted to write to PROHIBITED memory.")
+            
+        case Self.addressDIV:
+            // If anything tried to write to this, then it should instead just be reset.
+            memoryMap[address] = 0
+            
         default:
             // Standard write
             memoryMap[address] = value
@@ -117,48 +137,30 @@ extension MMU {
     func requestLCDInterrupt() {
         memoryMap[Self.addressIF].setBit(Self.lcdInterruptBitIndex)
     }
+    
+    func requestTimerInterrupt() {
+        memoryMap[Self.addressIF].setBit(Self.timerInterruptBitIndex)
+    }
+    
+    func requestSerialInterrupt() {
+        memoryMap[Self.addressIF].setBit(Self.serialInterruptBitIndex)
+    }
+    
+    func requestJoypadInterrupt() {
+        memoryMap[Self.addressIF].setBit(Self.joypadInterruptBitIndex)
+    }
 }
 
 // MARK: - Timer Registers
 
 extension MMU {
     
-    private static let addressDIV: UInt16 = 0xFF04
-    private static let addressTIMA: UInt16 = 0xFF05
-    private static let addressTMA: UInt16 = 0xFF06
-    private static let addressTAC: UInt16 = 0xFF07
+    static let addressDIV: UInt16 = 0xFF04
+    static let addressTIMA: UInt16 = 0xFF05
+    static let addressTMA: UInt16 = 0xFF06
+    static let addressTAC: UInt16 = 0xFF07
     
-    func incrementDivRegister() {
-        memoryMap[Self.addressDIV] &+= 1
-    }
-    
-    // This thing is pretty complicated: https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour
-    // TODO: The rest of the complexity.
-    func incrementTimaRegister() {
-        // Make sure timer is enabled first
-        guard memoryMap[Self.addressTAC].checkBit(2) else { return }
-        
-        let oldValue = memoryMap[Self.addressTIMA]
-        let (newValue, overflow) = oldValue.addingReportingOverflow(1)
-        memoryMap[Self.addressTIMA] = newValue
-        
-        if overflow {
-            // TODO: The following actually needs to be done after 1 cycle from this point.
-            memoryMap[Self.addressTIMA] = memoryMap[Self.addressTMA]
-            memoryMap[Self.addressIF].setBit(Self.timerInterruptBitIndex) // Request Interrupt
-        }
-    }
-    
-    var clockCyclesPerTimaCycle: UInt32 {
-        let rawValue = memoryMap[Self.addressTAC] & 0b11
-        switch rawValue {
-        case 0b00: return 1024 // 4096 Hz
-        case 0b01: return 16 // 262144 Hz
-        case 0b10: return 64 // 65536 Hz
-        case 0b11: return 256 // 16384 Hz
-        default: fatalError("This should never be reached.")
-        }
-    }
+    static let timaEnabledBitIndex = 2
 }
 
 // MARK: - LCD Registers
@@ -247,15 +249,20 @@ extension MMU {
     
     private static let memorySizeBytes = 64 * 1024 // 64KB
     
-    private static let fixedRomBankAddressRange: ClosedRange<UInt16> = 0x0000...0x3FFF
-    private static let switchableRomBankAddressRange: ClosedRange<UInt16> = 0x4000...0x7FFF
+    private static let fixedRomBankAddressRange: ClosedRange<UInt16> = 0x0000...0x3FFF // Read-only
+    private static let switchableRomBankAddressRange: ClosedRange<UInt16> = 0x4000...0x7FFF // Read-only
     private static let videoRamAddressRange: ClosedRange<UInt16> = 0x8000...0x9FFF
     private static let switchableRamBankAddressRange: ClosedRange<UInt16> = 0xA000...0xBFFF
     private static let internalRamAddressRange: ClosedRange<UInt16> = 0xC000...0xDFFF
+    private static let echoRamAddressRange: ClosedRange<UInt16> = 0xE000...0xFDFF
     private static let spriteAttributesAddressRange: ClosedRange<UInt16> = 0xFE00...0xFE9F
-    private static let ioAddressRange: ClosedRange<UInt16> = 0xFF00...0xFF4B
+    private static let probitedAddressRange: ClosedRange<UInt16> = 0xFEA0...0xFEFF // Prohibited
+    private static let ioAddressRange: ClosedRange<UInt16> = 0xFF00...0xFF7F // or is the upper bound 0xFF4B?
     private static let highRamAddressRange: ClosedRange<UInt16> = 0xFF80...0xFFFE
     private static let interruptRegisterAddress: UInt16 = 0xFFFF // Duplicate, here for completeness.
+    
+    private static let readOnlyAddressRange: ClosedRange<UInt16> = 0x0000...0x7FFF
+    private static let echoRamOffset: UInt16 = 0x2000
 }
 
 // MARK: - BIOS
