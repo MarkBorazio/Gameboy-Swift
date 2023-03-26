@@ -82,7 +82,8 @@ class CPU {
     private var haltFlag = false
     private var stopFlag = false // TODO: Figure out when this should be reset.
     
-    private func executeInstruction() {
+    /// Execute the next instruction and returns the number of cycles it took.
+    private func executeInstruction() -> Int {
         let opcode = fetchNextByte()
         if opcode == 0xCB {
             execute16BitInstruction()
@@ -112,14 +113,14 @@ class CPU {
 
 extension CPU {
     
-
-    private func execute8BitInstruction(opcode: UInt8) {
+    /// Execute the instruction from the opcode and returns the number of cycles it took.
+    private func execute8BitInstruction(opcode: UInt8) -> Int {
         switch opcode {
-        case 0x00: noOp()
-        case 0x01: loadShortIntoBC()
-        case 0x02: loadAIntoAbsoluteBC()
-        case 0x03: incrementBC()
-        case 0x04: incrementB()
+        case 0x00: return noOp()
+        case 0x01: return loadImmediateShortIntoPair(opcode: opcode)
+        case 0x02: return loadAIntoAbsoluteBC()
+        case 0x03: return incrementBC()
+        case 0x04: return incrementB()
         case 0x05: decrementB()
         case 0x06: loadByteIntoB()
         case 0x07: rotateALeftWithCarry()
@@ -133,7 +134,7 @@ extension CPU {
         case 0x0F: rotateARightWithCarry()
             
         case 0x10: stop()
-        case 0x11: loadShortIntoDE()
+        case 0x11: loadImmediateShortIntoPair(opcode: opcode)
         case 0x12: loadAIntoAbsoluteDE()
         case 0x13: incrementDE()
         case 0x14: incrementD()
@@ -150,7 +151,7 @@ extension CPU {
         case 0x1F: rotateARightThroughCarry()
             
         case 0x20: relativeJumpIfZFlagCleared()
-        case 0x21: loadShortIntoHL()
+        case 0x21: loadImmediateShortIntoPair(opcode: opcode)
         case 0x22: loadAIntoAbsoluteHLAndIncrementHL()
         case 0x23: incrementHL()
         case 0x24: incrementH()
@@ -167,7 +168,7 @@ extension CPU {
         case 0x2F: flipBitsInA()
             
         case 0x30: relativeJumpIfCFlagCleared()
-        case 0x31: loadShortIntoSP()
+        case 0x31: loadImmediateShortIntoPair(opcode: opcode)
         case 0x32: loadAIntoAbsoluteHLAndDecrementHL()
         case 0x33: incrementSP()
         case 0x34: incrementAbsoluteHL()
@@ -187,14 +188,14 @@ extension CPU {
         case 0x40...0x75: loadOperation(opcode: opcode)
         case 0x76: halt()
         case 0x77...0x7F: loadOperation(opcode: opcode)
-        case 0x80...0x87: a = addOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
-        case 0x88...0x8F: a = addWithCarryOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
-        case 0x90...0x97: a = subtractOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
-        case 0x98...0x9F: a = subtractWithCarryOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
-        case 0xA0...0xA7: a = logicalAndOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
-        case 0xA8...0xAF: a = logicalXorOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
-        case 0xB0...0xB7: a = logicalOrOperation(lhs: a, rhs: getRegisterValueForOpcode(opcode))
-        case 0xB8...0xBF: compare(a, to: getRegisterValueForOpcode(opcode))
+        case 0x80...0x87: a = addOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
+        case 0x88...0x8F: a = addWithCarryOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
+        case 0x90...0x97: a = subtractOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
+        case 0x98...0x9F: a = subtractWithCarryOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
+        case 0xA0...0xA7: a = logicalAndOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
+        case 0xA8...0xAF: a = logicalXorOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
+        case 0xB0...0xB7: a = logicalOrOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
+        case 0xB8...0xBF: compare(a, to: getRegisterByte(opcode: opcode))
             
         case 0xC0: returnIfZFlagCleared()
         case 0xC1: popStackIntoBC()
@@ -269,108 +270,112 @@ extension CPU {
     }
     
     /// 0x00
-    private func noOp() {
+    private func noOp() -> Int {
         // No Operation
-    }
-    
-    /// 0x01
-    private func loadShortIntoBC() {
-        let value = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        bc = value
+        return 1
     }
     
     /// 0x02
-    private func loadAIntoAbsoluteBC() {
+    private func loadAIntoAbsoluteBC() -> Int {
         MMU.shared.writeValue(a, address: bc)
+        return 2
     }
     
     /// 0x03
-    private func incrementBC() {
+    private func incrementBC() -> Int {
         bc &+= 1
+        return 2
     }
     
     /// 0x04
-    private func incrementB() {
+    private func incrementB() -> Int {
         b = incrementOperation(b)
+        return 1
     }
     
     /// 0x05
-    private func decrementB() {
+    private func decrementB() -> Int {
         b = decrementOperation(b)
+        return 1
     }
     
     /// 0x06
-    private func loadByteIntoB() {
+    private func loadByteIntoB() -> Int {
         b = fetchNextByte()
+        return 2
     }
     
     /// 0x07
-    private func rotateALeftWithCarry() {
+    private func rotateALeftWithCarry() -> Int {
         cFlag = a.checkBit(7)
         a = a.bitwiseLeftRotation(amount: 1)
         zFlag = false
         nFlag = false
         hFlag = false
+        return 1
     }
     
     /// 0x08
-    private func loadSPIntoAddress() {
+    private func loadSPIntoAddress() -> Int {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
         MMU.shared.writeValue(sp.asBytes()[0], address: address)
         MMU.shared.writeValue(sp.asBytes()[1], address: address+1)
+        return 5
     }
     
     /// 0x09
-    private func addBCtoHL() {
+    private func addBCtoHL() -> Int {
         hl = addOperation(lhs: hl, rhs: bc)
+        return 2
     }
     
     /// 0x0A
-    private func loadAbsoluteBCIntoA() {
+    private func loadAbsoluteBCIntoA() -> Int {
         a = MMU.shared.readValue(address: bc)
+        return 2
     }
     
     /// 0x0B
-    private func decrementBC() {
+    private func decrementBC() -> Int {
         bc &-= 1
+        return 2
     }
     
     /// 0x0C
-    private func incrementC() {
+    private func incrementC() -> Int {
         c = incrementOperation(c)
+        return 1
     }
     
     /// 0x0D
-    private func decrementC() {
+    private func decrementC() -> Int {
         c = decrementOperation(c)
+        return 1
     }
     
     /// 0x0E
-    private func loadByteIntoC() {
+    private func loadByteIntoC() -> Int {
         c = fetchNextByte()
+        return 2
     }
     
     /// 0x0F
-    private func rotateARightWithCarry() {
+    private func rotateARightWithCarry() -> Int {
         cFlag = a.checkBit(0)
         a = a.bitwiseRightRotation(amount: 1)
         zFlag = false
         nFlag = false
         hFlag = false
+        return 1
     }
     
     /// 0x10
-    private func stop() {
+    private func stop() -> Int {
         // Stop instruction is two bytes long, so we need to read the next byte as well.
         // 0x10, 0x00
         stopFlag = true
         guard fetchNextByte() == 0x00 else { fatalError("Second byte of STOP instruction was not 0x00.") }
-    }
-    
-    /// 0x11
-    private func loadShortIntoDE() {
-        let value = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        de = value
+        return 1
     }
     
     /// 0x12
@@ -461,12 +466,6 @@ extension CPU {
         if !zFlag {
             relativeJump(byte: operand)
         }
-    }
-    
-    /// 0x21
-    private func loadShortIntoHL() {
-        let value = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        hl = value
     }
     
     /// 0x22
@@ -574,12 +573,6 @@ extension CPU {
         if !cFlag {
             relativeJump(byte: operand)
         }
-    }
-    
-    /// 0x31
-    private func loadShortIntoSP() {
-        let value = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        sp = value
     }
     
     /// 0x32
@@ -975,6 +968,33 @@ extension CPU {
         pushOntoStack(address: pc)
         pc = UInt16(bytes: [0x38, 0x00])!
     }
+    
+    
+    // 0x01, 0x11, 0x21, 0x31
+    private func loadImmediateShortIntoPair(_ pair: inout UInt16) -> Int {
+        let value = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
+        pair = value
+        return 3
+    }
+    
+    // 0x02, 0x12, 0x22
+    private func loadAccumulatorIntoPair(_ pair: inout UInt16) -> Int {
+        let value = UInt16(a)
+        pair = value
+        return 2
+    }
+    
+    // 0x03, 0x13, 0x23, 0x33
+    private func incrementPair(_ pair: inout UInt16) -> Int {
+        pair &+= 1
+        return 2
+    }
+    
+    // 0x04, 0x14, 0x24, 0x0C, 0x1C, 0x2C
+    private func incrementRegister(_ register: inout UInt8) -> Int {
+        register &+= 1
+        return 1
+    }
 }
 
 // MARK: - 16-bit Instructions (Opcodes with 0xCB prefix)
@@ -987,7 +1007,7 @@ extension CPU {
         switch opcode {
         
         case 0x00...0x07: // Rotate left with carry
-            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let oldRegisterValue = getRegisterByte(opcode: opcode)
             let newRegisterValue = oldRegisterValue.bitwiseLeftRotation(amount: 1)
             
             setRegisterValueForOpcode(opcode, value: newRegisterValue)
@@ -997,7 +1017,7 @@ extension CPU {
             cFlag = oldRegisterValue.checkBit(7)
             
         case 0x08...0x0F: // Rotate right with carry
-            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let oldRegisterValue = getRegisterByte(opcode: opcode)
             let newRegisterValue = oldRegisterValue.bitwiseRightRotation(amount: 1)
             
             setRegisterValueForOpcode(opcode, value: newRegisterValue)
@@ -1007,7 +1027,7 @@ extension CPU {
             cFlag = oldRegisterValue.checkBit(0)
             
         case 0x10...0x17: // Rotate left
-            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let oldRegisterValue = getRegisterByte(opcode: opcode)
             var newRegisterValue = oldRegisterValue.bitwiseLeftRotation(amount: 1)
             cFlag ? newRegisterValue.setBit(0) : newRegisterValue.clearBit(0)
             
@@ -1018,7 +1038,7 @@ extension CPU {
             cFlag = oldRegisterValue.checkBit(7)
             
         case 0x18...0x1F: // Rotate right
-            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let oldRegisterValue = getRegisterByte(opcode: opcode)
             var newRegisterValue = oldRegisterValue.bitwiseRightRotation(amount: 1)
             cFlag ? newRegisterValue.setBit(7) : newRegisterValue.clearBit(7)
             
@@ -1029,7 +1049,7 @@ extension CPU {
             cFlag = oldRegisterValue.checkBit(0)
             
         case 0x20...0x27: // Shift left arithmetic
-            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let oldRegisterValue = getRegisterByte(opcode: opcode)
             let newRegisterValue = oldRegisterValue << 1
             
             setRegisterValueForOpcode(opcode, value: newRegisterValue)
@@ -1039,7 +1059,7 @@ extension CPU {
             cFlag = oldRegisterValue.checkBit(7)
             
         case 0x28...0x2F: // Shift right arithmetic
-            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let oldRegisterValue = getRegisterByte(opcode: opcode)
             var newRegisterValue = oldRegisterValue >> 1
             oldRegisterValue.checkBit(7) ? newRegisterValue.setBit(7) : newRegisterValue.clearBit(0)
             
@@ -1050,7 +1070,7 @@ extension CPU {
             cFlag = oldRegisterValue.checkBit(0)
             
         case 0x30...0x37: // Swap nibbles
-            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let oldRegisterValue = getRegisterByte(opcode: opcode)
             let newRegisterValue = (oldRegisterValue.lowNibble << 4) | oldRegisterValue.highNibble
             
             setRegisterValueForOpcode(opcode, value: newRegisterValue)
@@ -1060,7 +1080,7 @@ extension CPU {
             cFlag = false
             
         case 0x38...0x3F: // Shift right logical
-            let oldRegisterValue = getRegisterValueForOpcode(opcode)
+            let oldRegisterValue = getRegisterByte(opcode: opcode)
             let newRegisterValue = oldRegisterValue >> 1
             
             setRegisterValueForOpcode(opcode, value: newRegisterValue)
@@ -1072,7 +1092,7 @@ extension CPU {
         case 0x40...0x7F: // Check bit
             let relativeOpcode = opcode - 0x40
             let bitIndex = Int(relativeOpcode / 8)
-            let registerValue = getRegisterValueForOpcode(opcode)
+            let registerValue = getRegisterByte(opcode: opcode)
             let isBitSet = registerValue.checkBit(bitIndex)
             zFlag = !isBitSet
             nFlag = false
@@ -1081,14 +1101,14 @@ extension CPU {
         case 0x80...0xBF: // Reset bit
             let relativeOpcode = opcode - 0x80
             let bitIndex = Int(relativeOpcode / 8)
-            var registerValue = getRegisterValueForOpcode(opcode)
+            var registerValue = getRegisterByte(opcode: opcode)
             registerValue.clearBit(bitIndex)
             setRegisterValueForOpcode(opcode, value: registerValue)
             
         case 0xC0...0xFF: // Set bit
             let relativeOpcode = opcode - 0xC0
             let bitIndex = Int(relativeOpcode / 8)
-            var registerValue = getRegisterValueForOpcode(opcode)
+            var registerValue = getRegisterByte(opcode: opcode)
             registerValue.setBit(bitIndex)
             setRegisterValueForOpcode(opcode, value: registerValue)
             
@@ -1098,6 +1118,43 @@ extension CPU {
 }
 
 // MARK: - Convenience
+
+extension CPU {
+    
+    /// Parts of the opcode tables are organised in a way where the high nibble is the function
+    /// and the low nibble is the register parameter.
+    private func getRegisterByte(opcode: UInt8) -> UInt8 {
+        switch opcode.lowNibble {
+        case 0x0, 0x8: return b
+        case 0x1, 0x9: return c
+        case 0x2, 0xA: return d
+        case 0x3, 0xB: return e
+        case 0x4, 0xC: return h
+        case 0x5, 0xD: return l
+        case 0x6, 0xE: return MMU.shared.readValue(address: hl)
+        case 0x7, 0xF: return a
+        default: fatalError("Failed to get byte register for opcode: \(opcode)")
+        }
+    }
+    
+    /// Parts of the opcode tables are organised in a way where the high nibble is the function
+    /// and the low nibble is the register parameter.
+    private func setRegisterValueForOpcode(_ opcode: UInt8, value: UInt8) {
+        switch opcode.lowNibble {
+        case 0x0, 0x8: b = value
+        case 0x1, 0x9: c = value
+        case 0x2, 0xA: d = value
+        case 0x3, 0xB: e = value
+        case 0x4, 0xC: h = value
+        case 0x5, 0xD: l = value
+        case 0x6, 0xE: MMU.shared.writeValue(value, address: hl)
+        case 0x7, 0xF: a = value
+        default: fatalError("Failed to set byte register for opcode: \(opcode)")
+        }
+    }
+}
+
+// MARK: - Arithmetic, Boolean Logic, and Control
 
 extension CPU {
     
@@ -1119,38 +1176,7 @@ extension CPU {
         sp &-= 1
         MMU.shared.writeValue(lowerByte, address: sp)
     }
-    
-    /// Parts of the opcode tables are organised in a way where the high nibble is the function
-    /// and the low nibble is the register parameter.
-    private func getRegisterValueForOpcode(_ opcode: UInt8) -> UInt8 {
-        switch opcode.lowNibble {
-        case 0x0, 0x8: return b
-        case 0x1, 0x9: return c
-        case 0x2, 0xA: return d
-        case 0x3, 0xB: return e
-        case 0x4, 0xC: return h
-        case 0x5, 0xD: return l
-        case 0x6, 0xE: return MMU.shared.readValue(address: hl)
-        case 0x7, 0xF: return a
-        default: fatalError("Failed to get register for opcode: \(opcode)")
-        }
-    }
-    
-    /// Parts of the opcode tables are organised in a way where the high nibble is the function
-    /// and the low nibble is the register parameter.
-    private func setRegisterValueForOpcode(_ opcode: UInt8, value: UInt8) {
-        switch opcode.lowNibble {
-        case 0x0, 0x8: b = value
-        case 0x1, 0x9: c = value
-        case 0x2, 0xA: d = value
-        case 0x3, 0xB: e = value
-        case 0x4, 0xC: h = value
-        case 0x5, 0xD: l = value
-        case 0x6, 0xE: MMU.shared.writeValue(value, address: hl)
-        case 0x7, 0xF: a = value
-        default: fatalError("Failed to set register for opcode: \(opcode)")
-        }
-    }
+
     
     private func incrementOperation(_ value: UInt8) -> UInt8 {
         let (incrementedValue, halfCarry) = value.addingReportingHalfCarry(1)
@@ -1173,7 +1199,7 @@ extension CPU {
     }
     
     private func loadOperation(opcode: UInt8) {
-        let valueToSet = getRegisterValueForOpcode(opcode)
+        let valueToSet = getRegisterByte(opcode: opcode)
         
         switch opcode {
         case 0x40...0x47: b = valueToSet
