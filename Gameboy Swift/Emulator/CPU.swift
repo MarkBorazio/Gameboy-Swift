@@ -117,21 +117,21 @@ extension CPU {
     private func execute8BitInstruction(opcode: UInt8) -> Int {
         switch opcode {
         case 0x00: return noOp()
-        case 0x01: return loadImmediateShortIntoPair(opcode: opcode)
-        case 0x02: return loadAIntoAbsoluteBC()
-        case 0x03: return incrementBC()
-        case 0x04: return incrementB()
-        case 0x05: decrementB()
-        case 0x06: loadByteIntoB()
-        case 0x07: rotateALeftWithCarry()
-        case 0x08: loadSPIntoAddress()
-        case 0x09: addBCtoHL()
-        case 0x0A: loadAbsoluteBCIntoA()
-        case 0x0B: decrementBC()
-        case 0x0C: incrementC()
-        case 0x0D: decrementC()
-        case 0x0E: loadByteIntoC()
-        case 0x0F: rotateARightWithCarry()
+        case 0x01: return loadImmediateShortIntoPair(&bc)
+        case 0x02: return loadAccumulatorIntoPair(&bc)
+        case 0x03: return incrementPair(&bc)
+        case 0x04: return incrementRegister(&b)
+        case 0x05: return decrementRegister(&b)
+        case 0x06: return loadImmediateByteIntoRegister(&b)
+        case 0x07: return rotateALeftWithCarry()
+        case 0x08: return loadSPIntoAddress()
+        case 0x09: return addToHL(bc)
+        case 0x0A: return loadPointeeIntoA(pointer: bc)
+        case 0x0B: return decrementPair(&bc)
+        case 0x0C: return incrementRegister(&c)
+        case 0x0D: return decrementRegister(&c)
+        case 0x0E: return loadImmediateByteIntoRegister(&c)
+        case 0x0F: return rotateARightWithCarry()
             
         case 0x10: stop()
         case 0x11: loadImmediateShortIntoPair(opcode: opcode)
@@ -275,36 +275,6 @@ extension CPU {
         return 1
     }
     
-    /// 0x02
-    private func loadAIntoAbsoluteBC() -> Int {
-        MMU.shared.writeValue(a, address: bc)
-        return 2
-    }
-    
-    /// 0x03
-    private func incrementBC() -> Int {
-        bc &+= 1
-        return 2
-    }
-    
-    /// 0x04
-    private func incrementB() -> Int {
-        b = incrementOperation(b)
-        return 1
-    }
-    
-    /// 0x05
-    private func decrementB() -> Int {
-        b = decrementOperation(b)
-        return 1
-    }
-    
-    /// 0x06
-    private func loadByteIntoB() -> Int {
-        b = fetchNextByte()
-        return 2
-    }
-    
     /// 0x07
     private func rotateALeftWithCarry() -> Int {
         cFlag = a.checkBit(7)
@@ -321,42 +291,6 @@ extension CPU {
         MMU.shared.writeValue(sp.asBytes()[0], address: address)
         MMU.shared.writeValue(sp.asBytes()[1], address: address+1)
         return 5
-    }
-    
-    /// 0x09
-    private func addBCtoHL() -> Int {
-        hl = addOperation(lhs: hl, rhs: bc)
-        return 2
-    }
-    
-    /// 0x0A
-    private func loadAbsoluteBCIntoA() -> Int {
-        a = MMU.shared.readValue(address: bc)
-        return 2
-    }
-    
-    /// 0x0B
-    private func decrementBC() -> Int {
-        bc &-= 1
-        return 2
-    }
-    
-    /// 0x0C
-    private func incrementC() -> Int {
-        c = incrementOperation(c)
-        return 1
-    }
-    
-    /// 0x0D
-    private func decrementC() -> Int {
-        c = decrementOperation(c)
-        return 1
-    }
-    
-    /// 0x0E
-    private func loadByteIntoC() -> Int {
-        c = fetchNextByte()
-        return 2
     }
     
     /// 0x0F
@@ -977,10 +911,23 @@ extension CPU {
         return 3
     }
     
-    // 0x02, 0x12, 0x22
+    // 0x02, 0x12
     private func loadAccumulatorIntoPair(_ pair: inout UInt16) -> Int {
         let value = UInt16(a)
         pair = value
+        return 2
+    }
+    
+    // 0x06, 0x16, 0x26, 0x0E, 0x1E, 0x2E, 0x3E
+    private func loadImmediateByteIntoRegister(_ register: inout UInt8) -> Int {
+        let value = fetchNextByte()
+        register = value
+        return 2
+    }
+    
+    // 0x0A, 0x1A, 0x2A, 0x3A
+    private func loadPointeeIntoA(pointer: UInt16) -> Int {
+        a = MMU.shared.readValue(address: pointer)
         return 2
     }
     
@@ -990,10 +937,55 @@ extension CPU {
         return 2
     }
     
-    // 0x04, 0x14, 0x24, 0x0C, 0x1C, 0x2C
+    // 0x0B, 0x1B, 0x2B, 0x3B
+    private func decrementPair(_ pair: inout UInt16) -> Int {
+        pair &-= 1
+        return 2
+    }
+    
+    // 0x04, 0x14, 0x24, 0x0C, 0x1C, 0x2C, 0x3C
     private func incrementRegister(_ register: inout UInt8) -> Int {
         register &+= 1
+        // TODO: Update flags
         return 1
+    }
+    
+    // 0x05, 0x15, 0x25, 0x0D, 0x1D, 0x2D, 0x3D
+    private func decrementRegister(_ register: inout UInt8) -> Int {
+        register &-= 1
+        // TODO: Update flags
+        return 1
+    }
+    
+    // 0x09, 0x19, 0x29, 0x39
+    private func addToHL(_ value: UInt16) -> Int {
+        // Ref: https://stackoverflow.com/a/57981912
+        _ = addOperation(lhs: &l, rhs: value.asBytes()[0])
+        _ = addWithCarryOperation(lhs: &h, rhs: value.asBytes()[1])
+        
+        // TODO: Confirm Z flag behaviour here.
+        return 2
+    }
+    
+    // 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x87
+    private func addOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
+        let (value, carry) = lhs.addingReportingOverflow(rhs)
+        let (_, halfCarry) = lhs.addingReportingHalfCarry(rhs)
+        
+        lhs = value
+        
+        zFlag = value == 0
+        nFlag = false
+        hFlag = halfCarry
+        cFlag = carry
+        
+        return 1
+    }
+    
+    // 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8F
+    private func addWithCarryOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
+        let carryBit: UInt8 = cFlag ? 1 : 0
+        return addOperation(lhs: &lhs, rhs: rhs &+ carryBit)
     }
 }
 
@@ -1212,34 +1204,6 @@ extension CPU {
         case 0x78...0x7F: a = valueToSet
         default: fatalError("Failed to SET value in load operation using opcode: \(opcode)")
         }
-    }
-    
-    private func addOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
-        let (value, carry) = lhs.addingReportingOverflow(rhs)
-        let (_, halfCarry) = lhs.addingReportingHalfCarry(rhs)
-        
-        zFlag = value == 0
-        nFlag = false
-        hFlag = halfCarry
-        cFlag = carry
-        
-        return value
-    }
-    
-    private func addWithCarryOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
-        let carryBit: UInt8 = cFlag ? 1 : 0
-        return addOperation(lhs: lhs, rhs: rhs &+ carryBit)
-    }
-    
-    private func addOperation(lhs: UInt16, rhs: UInt16) -> UInt16 {
-        // Ref: https://stackoverflow.com/a/57981912
-        let lhsBytes = lhs.asBytes()
-        let rhsBytes = rhs.asBytes()
-        
-        let lowerByte = addOperation(lhs: lhsBytes[0], rhs: rhsBytes[0])
-        let upperByte = addWithCarryOperation(lhs: lhsBytes[1], rhs: rhsBytes[1])
-        
-        return UInt16(bytes: [lowerByte, upperByte])!
     }
     
     private func addOperation(lhs: UInt16, rhs: Int8) -> UInt16 {
