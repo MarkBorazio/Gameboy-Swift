@@ -118,7 +118,7 @@ extension CPU {
         switch opcode {
         case 0x00: return noOp()
         case 0x01: return loadImmediateShortIntoPair(&bc)
-        case 0x02: return loadAccumulatorIntoPair(&bc)
+        case 0x02: return loadAccumulatorIntoAddress(bc)
         case 0x03: return incrementPair(&bc)
         case 0x04: return incrementRegister(&b)
         case 0x05: return decrementRegister(&b)
@@ -126,63 +126,63 @@ extension CPU {
         case 0x07: return rotateALeftWithCarry()
         case 0x08: return loadSPIntoAddress()
         case 0x09: return addToHL(bc)
-        case 0x0A: return loadPointeeIntoA(pointer: bc)
+        case 0x0A: return loadValueIntoA(address: bc)
         case 0x0B: return decrementPair(&bc)
         case 0x0C: return incrementRegister(&c)
         case 0x0D: return decrementRegister(&c)
         case 0x0E: return loadImmediateByteIntoRegister(&c)
         case 0x0F: return rotateARightWithCarry()
             
-        case 0x10: stop()
-        case 0x11: loadImmediateShortIntoPair(opcode: opcode)
-        case 0x12: loadAIntoAbsoluteDE()
-        case 0x13: incrementDE()
-        case 0x14: incrementD()
-        case 0x15: decrementD()
-        case 0x16: loadByteIntoD()
-        case 0x17: rotateALeftThroughCarry()
-        case 0x18: unconditionalRelativeJump()
-        case 0x19: addDEtoHL()
-        case 0x1A: loadAbsoluteDEIntoA()
-        case 0x1B: decrementDE()
-        case 0x1C: incrementE()
-        case 0x1D: decrementE()
-        case 0x1E: loadByteIntoE()
-        case 0x1F: rotateARightThroughCarry()
+        case 0x10: return stop()
+        case 0x11: return loadImmediateShortIntoPair(&de)
+        case 0x12: return loadAccumulatorIntoAddress(de)
+        case 0x13: return incrementPair(&de)
+        case 0x14: return incrementRegister(&d)
+        case 0x15: return decrementRegister(&d)
+        case 0x16: return loadImmediateByteIntoRegister(&d)
+        case 0x17: return rotateALeftThroughCarry()
+        case 0x18: return unconditionalRelativeJump()
+        case 0x19: return addToHL(de)
+        case 0x1A: return loadValueIntoA(address: de)
+        case 0x1B: return decrementPair(&de)
+        case 0x1C: return incrementRegister(&e)
+        case 0x1D: return decrementRegister(&e)
+        case 0x1E: return loadImmediateByteIntoRegister(&e)
+        case 0x1F: return rotateARightThroughCarry()
             
-        case 0x20: relativeJumpIfZFlagCleared()
-        case 0x21: loadImmediateShortIntoPair(opcode: opcode)
-        case 0x22: loadAIntoAbsoluteHLAndIncrementHL()
-        case 0x23: incrementHL()
-        case 0x24: incrementH()
-        case 0x25: decrementH()
-        case 0x26: loadByteIntoH()
-        case 0x27: decimalAdjustAfterAddition()
-        case 0x28: relativeJumpIfZFlagSet()
-        case 0x29: addHLtoHL()
-        case 0x2A: loadAbsoluteHLIntoAAndIncrementHL()
-        case 0x2B: decrementHL()
-        case 0x2C: incrementL()
-        case 0x2D: decrementL()
-        case 0x2E: loadByteIntoL()
-        case 0x2F: flipBitsInA()
+        case 0x20: return relativeJumpIfZFlagCleared()
+        case 0x21: return loadImmediateShortIntoPair(&hl)
+        case 0x22: return loadAccumulatorIntoAddress(hl, hlOperation: .increment)
+        case 0x23: return incrementPair(&hl)
+        case 0x24: return incrementRegister(&h)
+        case 0x25: return decrementRegister(&h)
+        case 0x26: return loadImmediateByteIntoRegister(&h)
+        case 0x27: return decimalAdjustAfterAddition()
+        case 0x28: return relativeJumpIfZFlagSet()
+        case 0x29: return addToHL(hl)
+        case 0x2A: return loadValueIntoA(address: hl, hlOperation: .increment)
+        case 0x2B: return decrementPair(&hl)
+        case 0x2C: return incrementRegister(&l)
+        case 0x2D: return decrementRegister(&l)
+        case 0x2E: return loadImmediateByteIntoRegister(&l)
+        case 0x2F: return flipBitsInA()
             
-        case 0x30: relativeJumpIfCFlagCleared()
-        case 0x31: loadImmediateShortIntoPair(opcode: opcode)
-        case 0x32: loadAIntoAbsoluteHLAndDecrementHL()
-        case 0x33: incrementSP()
-        case 0x34: incrementAbsoluteHL()
-        case 0x35: decrementAbsoluteHL()
-        case 0x36: loadByteIntoAbsoluteHL()
-        case 0x37: setCFlag()
-        case 0x38: relativeJumpIfCFlagSet()
-        case 0x39: addSPtoHL()
-        case 0x3A: loadAbsoluteHLIntoAAndDecrementHL()
-        case 0x3B: decrementSP()
-        case 0x3C: incrementA()
-        case 0x3D: decrementA()
-        case 0x3E: loadByteIntoA()
-        case 0x3F: flipCFlag()
+        case 0x30: return relativeJumpIfCFlagCleared()
+        case 0x31: return loadImmediateShortIntoPair(&sp)
+        case 0x32: return loadAccumulatorIntoAddress(hl, hlOperation: .decrement)
+        case 0x33: return incrementPair(&sp)
+        case 0x34: return incrementValue(address: hl)
+        case 0x35: return decrementValue(address: hl)
+        case 0x36: return loadImmediateByteIntoAddress(hl)
+        case 0x37: return setCFlag()
+        case 0x38: return relativeJumpIfCFlagSet()
+        case 0x39: return addToHL(sp)
+        case 0x3A: return loadValueIntoA(address: hl, hlOperation: .decrement)
+        case 0x3B: return decrementPair(&sp)
+        case 0x3C: return incrementRegister(&a)
+        case 0x3D: return decrementRegister(&a)
+        case 0x3E: return loadImmediateByteIntoRegister(&a)
+        case 0x3F: return flipCFlag()
             
         // Middle Of Table
         case 0x40...0x75: loadOperation(opcode: opcode)
@@ -312,33 +312,8 @@ extension CPU {
         return 1
     }
     
-    /// 0x12
-    private func loadAIntoAbsoluteDE() {
-        MMU.shared.writeValue(a, address: de)
-    }
-    
-    /// 0x13
-    private func incrementDE() {
-        de &+= 1
-    }
-    
-    /// 0x14
-    private func incrementD() {
-        d = incrementOperation(d)
-    }
-    
-    /// 0x15
-    private func decrementD() {
-        d = decrementOperation(d)
-    }
-    
-    /// 0x16
-    private func loadByteIntoD() {
-        d = fetchNextByte()
-    }
-    
     /// 0x17
-    private func rotateALeftThroughCarry() {
+    private func rotateALeftThroughCarry() -> Int {
         let previousCarry = cFlag
         cFlag = a.checkBit(7)
         a = a.bitwiseLeftRotation(amount: 1)
@@ -346,45 +321,18 @@ extension CPU {
         zFlag = false
         nFlag = false
         hFlag = false
+        
+        return 1
     }
     
     /// 0x18
-    private func unconditionalRelativeJump() {
+    private func unconditionalRelativeJump() -> Int {
         relativeJump(byte: fetchNextByte())
-    }
-    
-    /// 0x19
-    private func addDEtoHL() {
-        hl = addOperation(lhs: hl, rhs: de)
-    }
-    
-    /// 0x1A
-    private func loadAbsoluteDEIntoA() {
-        a = MMU.shared.readValue(address: de)
-    }
-    
-    /// 0x1B
-    private func decrementDE() {
-        de &-= 1
-    }
-    
-    /// 0x1C
-    private func incrementE() {
-        e = incrementOperation(e)
-    }
-    
-    /// 0x1D
-    private func decrementE() {
-        e = decrementOperation(e)
-    }
-    
-    /// 0x1E
-    private func loadByteIntoE() {
-        e = fetchNextByte()
+        return 3
     }
     
     /// 0x1F
-    private func rotateARightThroughCarry() {
+    private func rotateARightThroughCarry() -> Int {
         let previousCarry = cFlag
         cFlag = a.checkBit(0)
         a = a.bitwiseRightRotation(amount: 1)
@@ -392,44 +340,23 @@ extension CPU {
         zFlag = false
         nFlag = false
         hFlag = false
+        
+        return 1
     }
     
     /// 0x20
-    private func relativeJumpIfZFlagCleared() {
+    private func relativeJumpIfZFlagCleared() -> Int {
         let operand = fetchNextByte()
         if !zFlag {
             relativeJump(byte: operand)
+            return 3
+        } else {
+            return 2
         }
-    }
-    
-    /// 0x22
-    private func loadAIntoAbsoluteHLAndIncrementHL() {
-        MMU.shared.writeValue(a, address: hl)
-        hl += 1
-    }
-    
-    /// 0x23
-    private func incrementHL() {
-        hl &+= 1
-    }
-    
-    /// 0x24
-    private func incrementH() {
-        h = incrementOperation(h)
-    }
-    
-    /// 0x25
-    private func decrementH() {
-        h = decrementOperation(h)
-    }
-    
-    /// 0x26
-    private func loadByteIntoH() {
-        h = fetchNextByte()
     }
 
     /// 0x27
-    private func decimalAdjustAfterAddition() {
+    private func decimalAdjustAfterAddition() -> Int {
         // Refs:
         // https://ehaskins.com/2018-01-30%20Z80%20DAA/
         // https://binji.github.io/posts/pokegb/
@@ -453,142 +380,80 @@ extension CPU {
         zFlag = a == 0
         hFlag = false
         cFlag = carry
+        
+        return 1
     }
     
     /// 0x28
-    private func relativeJumpIfZFlagSet() {
+    private func relativeJumpIfZFlagSet() -> Int {
         let operand = fetchNextByte()
         if zFlag {
             relativeJump(byte: operand)
+            return 3
+        } else {
+            return 2
         }
-    }
-    
-    /// 0x29
-    private func addHLtoHL() {
-        hl = addOperation(lhs: hl, rhs: hl)
-    }
-    
-    /// 0x2A
-    private func loadAbsoluteHLIntoAAndIncrementHL() {
-        a = MMU.shared.readValue(address: hl)
-        hl &+= 1
-    }
-    
-    /// 0x2B
-    private func decrementHL() {
-        hl &-= 1
-    }
-    
-    /// 0x2C
-    private func incrementL() {
-        l = incrementOperation(l)
-    }
-    
-    /// 0x2D
-    private func decrementL() {
-        l = decrementOperation(l)
-    }
-    
-    /// 0x2E
-    private func loadByteIntoL() {
-        l = fetchNextByte()
     }
     
     /// 0x2F
-    private func flipBitsInA() {
+    private func flipBitsInA() -> Int {
         a = ~a
         nFlag = true
         hFlag = true
+        
+        return 1
     }
     
     /// 0x30
-    private func relativeJumpIfCFlagCleared() {
+    private func relativeJumpIfCFlagCleared() -> Int {
         let operand = fetchNextByte()
         if !cFlag {
             relativeJump(byte: operand)
+            return 3
+        } else {
+            return 2
         }
     }
     
-    /// 0x32
-    private func loadAIntoAbsoluteHLAndDecrementHL() {
-        MMU.shared.writeValue(a, address: hl)
-        hl -= 1
-    }
-    
-    /// 0x33
-    private func incrementSP() {
-        sp &+= 1
-    }
-    
     /// 0x34
-    private func incrementAbsoluteHL() {
-        let value = MMU.shared.readValue(address: hl)
+    private func incrementValue(address: UInt16) -> Int {
+        let value = MMU.shared.readValue(address: address)
         let incrementedValue = incrementOperation(value)
-        MMU.shared.writeValue(incrementedValue, address: hl)
+        MMU.shared.writeValue(incrementedValue, address: address)
+        return 3
     }
     
     /// 0x35
-    private func decrementAbsoluteHL() {
-        let value = MMU.shared.readValue(address: hl)
+    private func decrementValue(address: UInt16) -> Int {
+        let value = MMU.shared.readValue(address: address)
         let decrementedValue = decrementOperation(value)
-        MMU.shared.writeValue(decrementedValue, address: hl)
-    }
-    
-    /// 0x36
-    private func loadByteIntoAbsoluteHL() {
-        let byte = fetchNextByte()
-        MMU.shared.writeValue(byte, address: hl)
+        MMU.shared.writeValue(decrementedValue, address: address)
+        return 3
     }
     
     /// 0x37
-    private func setCFlag() {
+    private func setCFlag() -> Int {
         cFlag = true
         // Also need to clear n and h flags
         nFlag = false
         hFlag = false
+        
+        return 1
     }
     
     /// 0x38
-    private func relativeJumpIfCFlagSet() {
+    private func relativeJumpIfCFlagSet() -> Int {
         let operand = fetchNextByte()
         if cFlag {
             relativeJump(byte: operand)
+            return 3
+        } else {
+            return 2
         }
     }
     
-    /// 0x39
-    private func addSPtoHL() {
-        hl = addOperation(lhs: hl, rhs: sp)
-    }
-    
-    /// 0x3A
-    private func loadAbsoluteHLIntoAAndDecrementHL() {
-        a = MMU.shared.readValue(address: hl)
-        hl -= 1
-    }
-    
-    /// 0x3B
-    private func decrementSP() {
-        sp &-= 1
-    }
-    
-    /// 0x3C
-    private func incrementA() {
-        a = incrementOperation(a)
-    }
-    
-    /// 0x3D
-    private func decrementA() {
-        a = decrementOperation(a)
-    }
-    
-    /// 0x3E
-    private func loadByteIntoA() {
-        a = fetchNextByte()
-    }
-    
     /// 0x3F
-    private func flipCFlag() {
+    private func flipCFlag() -> Int {
         cFlag.toggle()
         // Also need to clear n and h flags
         nFlag = false
@@ -911,11 +776,18 @@ extension CPU {
         return 3
     }
     
-    // 0x02, 0x12
-    private func loadAccumulatorIntoPair(_ pair: inout UInt16) -> Int {
-        let value = UInt16(a)
-        pair = value
+    // 0x02, 0x12, 0x22, 0x32
+    private func loadAccumulatorIntoAddress(_ address: UInt16, hlOperation: HLOperation = .nothing) -> Int {
+        MMU.shared.writeValue(a, address: address)
+        executeHLOperation(hlOperation)
         return 2
+    }
+    
+    // 0x36
+    private func loadImmediateByteIntoAddress(_ address: UInt16) -> Int {
+        let value = fetchNextByte()
+        MMU.shared.writeValue(value, address: address)
+        return 3
     }
     
     // 0x06, 0x16, 0x26, 0x0E, 0x1E, 0x2E, 0x3E
@@ -926,8 +798,9 @@ extension CPU {
     }
     
     // 0x0A, 0x1A, 0x2A, 0x3A
-    private func loadPointeeIntoA(pointer: UInt16) -> Int {
-        a = MMU.shared.readValue(address: pointer)
+    private func loadValueIntoA(address: UInt16, hlOperation: HLOperation = .nothing) -> Int {
+        a = MMU.shared.readValue(address: address)
+        executeHLOperation(hlOperation)
         return 2
     }
     
@@ -1305,6 +1178,28 @@ extension CPU {
             pc &+= offsetMagnitude
         } else {
             pc &-= offsetMagnitude
+        }
+    }
+}
+
+// MARK: - HL Operation Convenience
+
+extension CPU {
+    
+    // Some functions require the HL pair to be incremented or decremented after the instruction has been executed.
+    // This is a convenience enum to allow us to not have to create custom functions just for the HL pair.
+    // Maybe not the most intuitive way to do this, but it works.
+    private enum HLOperation {
+        case nothing
+        case increment
+        case decrement
+    }
+    
+    private func executeHLOperation(_ operation: HLOperation) {
+        switch operation {
+        case .nothing: break
+        case .increment: hl &+= 1
+        case .decrement: hl &-= 1
         }
     }
 }
