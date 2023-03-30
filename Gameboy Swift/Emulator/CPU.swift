@@ -118,7 +118,7 @@ extension CPU {
         switch opcode {
         case 0x00: return noOp()
         case 0x01: return loadImmediateShortIntoPair(&bc)
-        case 0x02: return loadAccumulatorIntoAddress(bc)
+        case 0x02: return loadRegisterIntoAddress(address: bc, register: a)
         case 0x03: return incrementPair(&bc)
         case 0x04: return incrementRegister(&b)
         case 0x05: return decrementRegister(&b)
@@ -126,7 +126,7 @@ extension CPU {
         case 0x07: return rotateALeftWithCarry()
         case 0x08: return loadSPIntoAddress()
         case 0x09: return addToHL(bc)
-        case 0x0A: return loadValueIntoA(address: bc)
+        case 0x0A: return loadValueIntoRegister(register: &a, address: bc)
         case 0x0B: return decrementPair(&bc)
         case 0x0C: return incrementRegister(&c)
         case 0x0D: return decrementRegister(&c)
@@ -135,7 +135,7 @@ extension CPU {
             
         case 0x10: return stop()
         case 0x11: return loadImmediateShortIntoPair(&de)
-        case 0x12: return loadAccumulatorIntoAddress(de)
+        case 0x12: return loadRegisterIntoAddress(address: de, register: a)
         case 0x13: return incrementPair(&de)
         case 0x14: return incrementRegister(&d)
         case 0x15: return decrementRegister(&d)
@@ -143,7 +143,7 @@ extension CPU {
         case 0x17: return rotateALeftThroughCarry()
         case 0x18: return unconditionalRelativeJump()
         case 0x19: return addToHL(de)
-        case 0x1A: return loadValueIntoA(address: de)
+        case 0x1A: return loadValueIntoRegister(register: &a, address: de)
         case 0x1B: return decrementPair(&de)
         case 0x1C: return incrementRegister(&e)
         case 0x1D: return decrementRegister(&e)
@@ -152,7 +152,7 @@ extension CPU {
             
         case 0x20: return relativeJumpIfZFlagCleared()
         case 0x21: return loadImmediateShortIntoPair(&hl)
-        case 0x22: return loadAccumulatorIntoAddress(hl, hlOperation: .increment)
+        case 0x22: return loadRegisterIntoAddress(address: hl, register: a, hlOperation: .increment)
         case 0x23: return incrementPair(&hl)
         case 0x24: return incrementRegister(&h)
         case 0x25: return decrementRegister(&h)
@@ -160,7 +160,7 @@ extension CPU {
         case 0x27: return decimalAdjustAfterAddition()
         case 0x28: return relativeJumpIfZFlagSet()
         case 0x29: return addToHL(hl)
-        case 0x2A: return loadValueIntoA(address: hl, hlOperation: .increment)
+        case 0x2A: return loadValueIntoRegister(register: &a, address: hl, hlOperation: .increment)
         case 0x2B: return decrementPair(&hl)
         case 0x2C: return incrementRegister(&l)
         case 0x2D: return decrementRegister(&l)
@@ -169,7 +169,7 @@ extension CPU {
             
         case 0x30: return relativeJumpIfCFlagCleared()
         case 0x31: return loadImmediateShortIntoPair(&sp)
-        case 0x32: return loadAccumulatorIntoAddress(hl, hlOperation: .decrement)
+        case 0x32: return loadRegisterIntoAddress(address: hl, register: a, hlOperation: .decrement)
         case 0x33: return incrementPair(&sp)
         case 0x34: return incrementValue(address: hl)
         case 0x35: return decrementValue(address: hl)
@@ -177,17 +177,82 @@ extension CPU {
         case 0x37: return setCFlag()
         case 0x38: return relativeJumpIfCFlagSet()
         case 0x39: return addToHL(sp)
-        case 0x3A: return loadValueIntoA(address: hl, hlOperation: .decrement)
+        case 0x3A: return loadValueIntoRegister(register: &a, address: hl, hlOperation: .decrement)
         case 0x3B: return decrementPair(&sp)
         case 0x3C: return incrementRegister(&a)
         case 0x3D: return decrementRegister(&a)
         case 0x3E: return loadImmediateByteIntoRegister(&a)
         case 0x3F: return flipCFlag()
             
+        case 0x40: return loadByteIntoRegister(lhs: &b, rhs: b)
+        case 0x41: return loadByteIntoRegister(lhs: &b, rhs: c)
+        case 0x42: return loadByteIntoRegister(lhs: &b, rhs: d)
+        case 0x43: return loadByteIntoRegister(lhs: &b, rhs: e)
+        case 0x44: return loadByteIntoRegister(lhs: &b, rhs: h)
+        case 0x45: return loadByteIntoRegister(lhs: &b, rhs: l)
+        case 0x46: return loadValueIntoRegister(register: &b, address: hl)
+        case 0x47: return loadByteIntoRegister(lhs: &b, rhs: a)
+        case 0x48: return loadByteIntoRegister(lhs: &c, rhs: b)
+        case 0x49: return loadByteIntoRegister(lhs: &c, rhs: c)
+        case 0x4A: return loadByteIntoRegister(lhs: &c, rhs: d)
+        case 0x4B: return loadByteIntoRegister(lhs: &c, rhs: e)
+        case 0x4C: return loadByteIntoRegister(lhs: &c, rhs: h)
+        case 0x4D: return loadByteIntoRegister(lhs: &c, rhs: l)
+        case 0x4E: return loadValueIntoRegister(register: &c, address: hl)
+        case 0x4F: return loadByteIntoRegister(lhs: &c, rhs: a)
+            
+        case 0x50: return loadByteIntoRegister(lhs: &d, rhs: b)
+        case 0x51: return loadByteIntoRegister(lhs: &d, rhs: c)
+        case 0x52: return loadByteIntoRegister(lhs: &d, rhs: d)
+        case 0x53: return loadByteIntoRegister(lhs: &d, rhs: e)
+        case 0x54: return loadByteIntoRegister(lhs: &d, rhs: h)
+        case 0x55: return loadByteIntoRegister(lhs: &d, rhs: l)
+        case 0x56: return loadValueIntoRegister(register: &d, address: hl)
+        case 0x57: return loadByteIntoRegister(lhs: &d, rhs: a)
+        case 0x58: return loadByteIntoRegister(lhs: &e, rhs: b)
+        case 0x59: return loadByteIntoRegister(lhs: &e, rhs: c)
+        case 0x5A: return loadByteIntoRegister(lhs: &e, rhs: d)
+        case 0x5B: return loadByteIntoRegister(lhs: &e, rhs: e)
+        case 0x5C: return loadByteIntoRegister(lhs: &e, rhs: h)
+        case 0x5D: return loadByteIntoRegister(lhs: &e, rhs: l)
+        case 0x5E: return loadValueIntoRegister(register: &e, address: hl)
+        case 0x5F: return loadByteIntoRegister(lhs: &e, rhs: a)
+            
+        case 0x60: return loadByteIntoRegister(lhs: &h, rhs: b)
+        case 0x61: return loadByteIntoRegister(lhs: &h, rhs: c)
+        case 0x62: return loadByteIntoRegister(lhs: &h, rhs: d)
+        case 0x63: return loadByteIntoRegister(lhs: &h, rhs: e)
+        case 0x64: return loadByteIntoRegister(lhs: &h, rhs: h)
+        case 0x65: return loadByteIntoRegister(lhs: &h, rhs: l)
+        case 0x66: return loadValueIntoRegister(register: &h, address: hl)
+        case 0x67: return loadByteIntoRegister(lhs: &h, rhs: a)
+        case 0x68: return loadByteIntoRegister(lhs: &l, rhs: b)
+        case 0x69: return loadByteIntoRegister(lhs: &l, rhs: c)
+        case 0x6A: return loadByteIntoRegister(lhs: &l, rhs: d)
+        case 0x6B: return loadByteIntoRegister(lhs: &l, rhs: e)
+        case 0x6C: return loadByteIntoRegister(lhs: &l, rhs: h)
+        case 0x6D: return loadByteIntoRegister(lhs: &l, rhs: l)
+        case 0x6E: return loadValueIntoRegister(register: &l, address: hl)
+        case 0x6F: return loadByteIntoRegister(lhs: &l, rhs: a)
+            
+        case 0x70: return loadRegisterIntoAddress(address: hl, register: b)
+        case 0x71: return loadRegisterIntoAddress(address: hl, register: c)
+        case 0x72: return loadRegisterIntoAddress(address: hl, register: d)
+        case 0x73: return loadRegisterIntoAddress(address: hl, register: e)
+        case 0x74: return loadRegisterIntoAddress(address: hl, register: h)
+        case 0x75: return loadRegisterIntoAddress(address: hl, register: l)
+        case 0x76: return halt()
+        case 0x77: return loadRegisterIntoAddress(address: hl, register: a)
+        case 0x78: return loadByteIntoRegister(lhs: &a, rhs: b)
+        case 0x79: return loadByteIntoRegister(lhs: &a, rhs: c)
+        case 0x7A: return loadByteIntoRegister(lhs: &a, rhs: d)
+        case 0x7B: return loadByteIntoRegister(lhs: &a, rhs: e)
+        case 0x7C: return loadByteIntoRegister(lhs: &a, rhs: h)
+        case 0x7D: return loadByteIntoRegister(lhs: &a, rhs: l)
+        case 0x7E: return loadValueIntoRegister(register: &a, address: hl)
+        case 0x7F: return loadByteIntoRegister(lhs: &a, rhs: a)
+            
         // Middle Of Table
-        case 0x40...0x75: loadOperation(opcode: opcode)
-        case 0x76: halt()
-        case 0x77...0x7F: loadOperation(opcode: opcode)
         case 0x80...0x87: a = addOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
         case 0x88...0x8F: a = addWithCarryOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
         case 0x90...0x97: a = subtractOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
@@ -415,22 +480,6 @@ extension CPU {
         }
     }
     
-    /// 0x34
-    private func incrementValue(address: UInt16) -> Int {
-        let value = MMU.shared.readValue(address: address)
-        let incrementedValue = incrementOperation(value)
-        MMU.shared.writeValue(incrementedValue, address: address)
-        return 3
-    }
-    
-    /// 0x35
-    private func decrementValue(address: UInt16) -> Int {
-        let value = MMU.shared.readValue(address: address)
-        let decrementedValue = decrementOperation(value)
-        MMU.shared.writeValue(decrementedValue, address: address)
-        return 3
-    }
-    
     /// 0x37
     private func setCFlag() -> Int {
         cFlag = true
@@ -461,8 +510,10 @@ extension CPU {
     }
     
     /// 0x76
-    private func halt() {
+    private func halt() -> Int {
         haltFlag = true
+        // TODO: This is pretty complicated, I think.
+        return 1
     }
     
     /// 0xC0
@@ -768,6 +819,7 @@ extension CPU {
         pc = UInt16(bytes: [0x38, 0x00])!
     }
     
+    // MARK: - Load Operations
     
     // 0x01, 0x11, 0x21, 0x31
     private func loadImmediateShortIntoPair(_ pair: inout UInt16) -> Int {
@@ -776,8 +828,8 @@ extension CPU {
         return 3
     }
     
-    // 0x02, 0x12, 0x22, 0x32
-    private func loadAccumulatorIntoAddress(_ address: UInt16, hlOperation: HLOperation = .nothing) -> Int {
+    // 0x02, 0x12, 0x22, 0x32, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x77
+    private func loadRegisterIntoAddress(address: UInt16, register: UInt8, hlOperation: HLOperation = .nothing) -> Int {
         MMU.shared.writeValue(a, address: address)
         executeHLOperation(hlOperation)
         return 2
@@ -797,12 +849,23 @@ extension CPU {
         return 2
     }
     
-    // 0x0A, 0x1A, 0x2A, 0x3A
-    private func loadValueIntoA(address: UInt16, hlOperation: HLOperation = .nothing) -> Int {
-        a = MMU.shared.readValue(address: address)
+    // 0x0A, 0x1A, 0x2A, 0x3A, 0x46, 0x56, 0x66, 0x4E, 0x5E, 0x6E
+    private func loadValueIntoRegister(register: inout UInt8, address: UInt16, hlOperation: HLOperation = .nothing) -> Int {
+        register = MMU.shared.readValue(address: address)
         executeHLOperation(hlOperation)
         return 2
     }
+    
+    // 0x40 - 0x45, 0x47 - 0x4D, 0x4F
+    // 0x50 - 0x55, 0x57 - 0x5D, 0x5F
+    // 0x60 - 0x65, 0x67 - 0x6D, 0x6F
+    // 0x78 - 0x7D, 0x7F
+    private func loadByteIntoRegister(lhs: inout UInt8, rhs: UInt8) -> Int {
+        lhs = rhs
+        return 1
+    }
+    
+    // MARK: - Increment/Decrement Operations
     
     // 0x03, 0x13, 0x23, 0x33
     private func incrementPair(_ pair: inout UInt16) -> Int {
@@ -830,6 +893,24 @@ extension CPU {
         return 1
     }
     
+    /// 0x34
+    private func incrementValue(address: UInt16) -> Int {
+        let value = MMU.shared.readValue(address: address)
+        let incrementedValue = incrementOperation(value)
+        MMU.shared.writeValue(incrementedValue, address: address)
+        return 3
+    }
+    
+    /// 0x35
+    private func decrementValue(address: UInt16) -> Int {
+        let value = MMU.shared.readValue(address: address)
+        let decrementedValue = decrementOperation(value)
+        MMU.shared.writeValue(decrementedValue, address: address)
+        return 3
+    }
+    
+    // MARK: - Arithmetical Operations
+        
     // 0x09, 0x19, 0x29, 0x39
     private func addToHL(_ value: UInt16) -> Int {
         // Ref: https://stackoverflow.com/a/57981912
