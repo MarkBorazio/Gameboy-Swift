@@ -252,20 +252,78 @@ extension CPU {
         case 0x7E: return loadValueIntoRegister(register: &a, address: hl)
         case 0x7F: return loadByteIntoRegister(lhs: &a, rhs: a)
             
-        // Middle Of Table
-        case 0x80...0x87: a = addOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
-        case 0x88...0x8F: a = addWithCarryOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
-        case 0x90...0x97: a = subtractOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
-        case 0x98...0x9F: a = subtractWithCarryOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
-        case 0xA0...0xA7: a = logicalAndOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
-        case 0xA8...0xAF: a = logicalXorOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
-        case 0xB0...0xB7: a = logicalOrOperation(lhs: a, rhs: getRegisterByte(opcode: opcode))
-        case 0xB8...0xBF: compare(a, to: getRegisterByte(opcode: opcode))
+        case 0x80: return addOperation(lhs: &a, rhs: b)
+        case 0x81: return addOperation(lhs: &a, rhs: c)
+        case 0x82: return addOperation(lhs: &a, rhs: d)
+        case 0x83: return addOperation(lhs: &a, rhs: e)
+        case 0x84: return addOperation(lhs: &a, rhs: h)
+        case 0x85: return addOperation(lhs: &a, rhs: l)
+        case 0x86: return addOperation(lhs: &a, address: hl)
+        case 0x87: return addOperation(lhs: &a, rhs: a)
+        case 0x88: return addWithCarryOperation(lhs: &a, rhs: b)
+        case 0x89: return addWithCarryOperation(lhs: &a, rhs: c)
+        case 0x8A: return addWithCarryOperation(lhs: &a, rhs: d)
+        case 0x8B: return addWithCarryOperation(lhs: &a, rhs: e)
+        case 0x8C: return addWithCarryOperation(lhs: &a, rhs: h)
+        case 0x8D: return addWithCarryOperation(lhs: &a, rhs: l)
+        case 0x8E: return addWithCarryOperation(lhs: &a, address: hl)
+        case 0x8F: return addWithCarryOperation(lhs: &a, rhs: a)
             
-        case 0xC0: returnIfZFlagCleared()
-        case 0xC1: popStackIntoBC()
-        case 0xC2: absoluteJumpIfZFlagCleared()
-        case 0xC3: unconditionalAbsoluteJump()
+        case 0x90: return addOperation(lhs: &a, rhs: b)
+        case 0x91: return addOperation(lhs: &a, rhs: c)
+        case 0x92: return addOperation(lhs: &a, rhs: d)
+        case 0x93: return addOperation(lhs: &a, rhs: e)
+        case 0x94: return addOperation(lhs: &a, rhs: h)
+        case 0x95: return addOperation(lhs: &a, rhs: l)
+        case 0x96: return addOperation(lhs: &a, address: hl)
+        case 0x97: return addOperation(lhs: &a, rhs: a)
+        case 0x98: return addWithCarryOperation(lhs: &a, rhs: b)
+        case 0x99: return addWithCarryOperation(lhs: &a, rhs: c)
+        case 0x9A: return addWithCarryOperation(lhs: &a, rhs: d)
+        case 0x9B: return addWithCarryOperation(lhs: &a, rhs: e)
+        case 0x9C: return addWithCarryOperation(lhs: &a, rhs: h)
+        case 0x9D: return addWithCarryOperation(lhs: &a, rhs: l)
+        case 0x9E: return addWithCarryOperation(lhs: &a, address: hl)
+        case 0x9F: return addWithCarryOperation(lhs: &a, rhs: a)
+            
+        case 0xA0: return logicalAndOperation(lhs: &a, rhs: b)
+        case 0xA1: return logicalAndOperation(lhs: &a, rhs: c)
+        case 0xA2: return logicalAndOperation(lhs: &a, rhs: d)
+        case 0xA3: return logicalAndOperation(lhs: &a, rhs: e)
+        case 0xA4: return logicalAndOperation(lhs: &a, rhs: h)
+        case 0xA5: return logicalAndOperation(lhs: &a, rhs: l)
+        case 0xA6: return logicalAndOperation(lhs: &a, address: hl)
+        case 0xA7: return logicalAndOperation(lhs: &a, rhs: a)
+        case 0xA8: return logicalXorOperation(lhs: &a, rhs: b)
+        case 0xA9: return logicalXorOperation(lhs: &a, rhs: c)
+        case 0xAA: return logicalXorOperation(lhs: &a, rhs: d)
+        case 0xAB: return logicalXorOperation(lhs: &a, rhs: e)
+        case 0xAC: return logicalXorOperation(lhs: &a, rhs: h)
+        case 0xAD: return logicalXorOperation(lhs: &a, rhs: l)
+        case 0xAE: return logicalXorOperation(lhs: &a, address: hl)
+        case 0xAF: return logicalXorOperation(lhs: &a, rhs: a)
+            
+        case 0xB0: return logicalOrOperation(lhs: &a, rhs: b)
+        case 0xB1: return logicalOrOperation(lhs: &a, rhs: c)
+        case 0xB2: return logicalOrOperation(lhs: &a, rhs: d)
+        case 0xB3: return logicalOrOperation(lhs: &a, rhs: e)
+        case 0xB4: return logicalOrOperation(lhs: &a, rhs: h)
+        case 0xB5: return logicalOrOperation(lhs: &a, rhs: l)
+        case 0xB6: return logicalOrOperation(lhs: &a, address: hl)
+        case 0xB7: return logicalOrOperation(lhs: &a, rhs: a)
+        case 0xB8: return compare(lhs: a, rhs: b)
+        case 0xB9: return compare(lhs: a, rhs: c)
+        case 0xBA: return compare(lhs: a, rhs: d)
+        case 0xBB: return compare(lhs: a, rhs: e)
+        case 0xBC: return compare(lhs: a, rhs: h)
+        case 0xBD: return compare(lhs: a, rhs: l)
+        case 0xBE: return compare(lhs: a, address: hl)
+        case 0xBF: return compare(lhs: a, rhs: a)
+            
+        case 0xC0: return returnIfZFlagCleared()
+        case 0xC1: return popStack(into: &bc)
+        case 0xC2: return absoluteJumpIfZFlagCleared()
+        case 0xC3: return unconditionalAbsoluteJump()
         case 0xC4: callIfZFlagCleared()
         case 0xC5: pushOntoStack(address: bc)
         case 0xC6: addByteToA()
@@ -517,9 +575,12 @@ extension CPU {
     }
     
     /// 0xC0
-    private func returnIfZFlagCleared() {
+    private func returnIfZFlagCleared() -> Int {
         if !zFlag {
             pc = popStack()
+            return 5
+        } else {
+            return 2
         }
     }
     
@@ -529,17 +590,21 @@ extension CPU {
     }
     
     /// 0xC2
-    private func absoluteJumpIfZFlagCleared() {
+    private func absoluteJumpIfZFlagCleared() -> Int {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
         if !zFlag {
             pc = address
+            return 4
+        } else {
+            return 3
         }
     }
     
     /// 0xC3
-    private func unconditionalAbsoluteJump() {
+    private func unconditionalAbsoluteJump() -> Int {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
         pc = address
+        return 4
     }
     
     /// 0xC4
@@ -856,6 +921,22 @@ extension CPU {
         return 2
     }
     
+    private func load(opcode: UInt8) -> Int {
+        let valueToSet = getRegisterByte(opcode: opcode)
+        
+        switch opcode {
+        case 0x40...0x47: b = valueToSet
+        case 0x48...0x4F: c = valueToSet
+        case 0x50...0x57: d = valueToSet
+        case 0x58...0x5F: e = valueToSet
+        case 0x60...0x67: h = valueToSet
+        case 0x68...0x6F: l = valueToSet
+        case 0x70...0x75, 0x77: MMU.shared.writeValue(valueToSet, address: hl)
+        case 0x78...0x7F: a = valueToSet
+        default: fatalError("Failed to SET value in load operation using opcode: \(opcode)")
+        }
+    }
+    
     // 0x40 - 0x45, 0x47 - 0x4D, 0x4F
     // 0x50 - 0x55, 0x57 - 0x5D, 0x5F
     // 0x60 - 0x65, 0x67 - 0x6D, 0x6F
@@ -936,10 +1017,152 @@ extension CPU {
         return 1
     }
     
+    // 0x86
+    private func addOperation(lhs: inout UInt8, address: UInt16) -> Int {
+        let rhs = MMU.shared.readValue(address: address)
+        _ = addOperation(lhs: &lhs, rhs: rhs)
+        return 2
+    }
+    
     // 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8F
     private func addWithCarryOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
         let carryBit: UInt8 = cFlag ? 1 : 0
         return addOperation(lhs: &lhs, rhs: rhs &+ carryBit)
+    }
+    
+    // 0x8E
+    private func addWithCarryOperation(lhs: inout UInt8, address: UInt16) -> Int {
+        let rhs = MMU.shared.readValue(address: address)
+        _ = addWithCarryOperation(lhs: &lhs, rhs: rhs)
+        return 2
+    }
+    
+    // 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x97
+    private func subtractOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
+        let (value, carry) = lhs.subtractingReportingOverflow(rhs)
+        let (_, halfCarry) = lhs.subtractingReportingHalfCarry(rhs)
+        
+        lhs = value
+        
+        zFlag = value == 0
+        nFlag = true
+        hFlag = halfCarry
+        cFlag = carry
+        
+        return 1
+    }
+    
+    // 0x96
+    private func subtractOperation(lhs: inout UInt8, address: UInt16) -> Int {
+        let rhs = MMU.shared.readValue(address: address)
+        _ = subtractOperation(lhs: &lhs, rhs: rhs)
+        return 2
+    }
+    
+    // 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9F
+    private func subtractWithCarryOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
+        let carryBit: UInt8 = cFlag ? 1 : 0
+        return subtractOperation(lhs: &lhs, rhs: rhs &- carryBit)
+    }
+    
+    // 0x9E
+    private func subtractWithCarryOperation(lhs: inout UInt8, address: UInt16) -> Int {
+        let rhs = MMU.shared.readValue(address: address)
+        _ = subtractWithCarryOperation(lhs: &lhs, rhs: rhs)
+        return 2
+    }
+    
+    // MARK: - Logical Operations
+    
+    // 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA7
+    private func logicalAndOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
+        let value = lhs & rhs
+        
+        lhs = value
+        
+        zFlag = value == 0
+        nFlag = false
+        hFlag = true
+        cFlag = false
+        
+        return 1
+    }
+    
+    // 0xA6
+    private func logicalAndOperation(lhs: inout UInt8, address: UInt16) -> Int {
+        let rhs = MMU.shared.readValue(address: address)
+        _ = logicalAndOperation(lhs: &lhs, rhs: rhs)
+        return 2
+    }
+    
+    // 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAF
+    private func logicalXorOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
+        let value = lhs ^ rhs
+        
+        lhs = value
+        
+        zFlag = value == 0
+        nFlag = false
+        hFlag = false
+        cFlag = false
+        
+        return 1
+    }
+    
+    // 0xAE
+    private func logicalXorOperation(lhs: inout UInt8, address: UInt16) -> Int {
+        let rhs = MMU.shared.readValue(address: address)
+        _ = logicalXorOperation(lhs: &lhs, rhs: rhs)
+        return 2
+    }
+    
+    // 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB7
+    private func logicalOrOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
+        let value = lhs | rhs
+        
+        lhs = value
+        
+        zFlag = value == 0
+        nFlag = false
+        hFlag = false
+        cFlag = false
+        
+        return 1
+    }
+    
+    // 0xB6
+    private func logicalOrOperation(lhs: inout UInt8, address: UInt16) -> Int {
+        let rhs = MMU.shared.readValue(address: address)
+        _ = logicalOrOperation(lhs: &lhs, rhs: rhs)
+        return 2
+    }
+    
+    // 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBF
+    private func compare(lhs: UInt8, rhs: UInt8) -> Int {
+        let (comparison, carry) = lhs.subtractingReportingOverflow(rhs)
+        let (_, halfCarry) = lhs.subtractingReportingHalfCarry(rhs)
+        
+        zFlag = comparison == 0
+        nFlag = true
+        hFlag = halfCarry
+        cFlag = carry
+        
+        return 1
+    }
+    
+    // 0xBE
+    private func compare(lhs: UInt8, address: UInt16) -> Int {
+        let rhs = MMU.shared.readValue(address: address)
+        _ = compare(lhs: lhs, rhs: rhs)
+        return 2
+    }
+    
+    // MARK: - Miscellaneous Operations
+    
+    // 0xC1, 0xD1, 0xE1, 0xF1
+    private func popStack(into pair: inout UInt16) -> Int {
+        pair = popStack()
+        return 3
     }
 }
 
@@ -1189,66 +1412,6 @@ extension CPU {
             cFlag = carry
             return value
         }
-    }
-    
-    private func subtractOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
-        let (value, carry) = lhs.subtractingReportingOverflow(rhs)
-        let (_, halfCarry) = lhs.subtractingReportingHalfCarry(rhs)
-        
-        zFlag = value == 0
-        nFlag = true
-        hFlag = halfCarry
-        cFlag = carry
-        
-        return value
-    }
-    
-    private func subtractWithCarryOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
-        let carryBit: UInt8 = cFlag ? 1 : 0
-        return subtractOperation(lhs: lhs, rhs: rhs &- carryBit)
-    }
-    
-    private func logicalAndOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
-        let value = lhs & rhs
-        
-        zFlag = value == 0
-        nFlag = false
-        hFlag = true
-        cFlag = false
-        
-        return value
-    }
-    
-    private func logicalXorOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
-        let value = lhs ^ rhs
-        
-        zFlag = value == 0
-        nFlag = false
-        hFlag = false
-        cFlag = false
-        
-        return value
-    }
-    
-    private func logicalOrOperation(lhs: UInt8, rhs: UInt8) -> UInt8 {
-        let value = lhs | rhs
-        
-        zFlag = value == 0
-        nFlag = false
-        hFlag = false
-        cFlag = false
-        
-        return value
-    }
-    
-    private func compare(_ lhs: UInt8, to rhs: UInt8) {
-        let (comparison, carry) = lhs.subtractingReportingOverflow(rhs)
-        let (_, halfCarry) = lhs.subtractingReportingHalfCarry(rhs)
-        
-        zFlag = comparison == 0
-        nFlag = true
-        hFlag = halfCarry
-        cFlag = carry
     }
     
     private func relativeJump(byte: UInt8) {
