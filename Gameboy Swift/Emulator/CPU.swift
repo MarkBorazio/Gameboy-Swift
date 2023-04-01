@@ -7,6 +7,7 @@
 
 import Foundation
 
+// TODO: Consider using function builders
 class CPU {
     
     static let shared = CPU()
@@ -83,10 +84,12 @@ class CPU {
     private var stopFlag = false // TODO: Figure out when this should be reset.
     
     /// Execute the next instruction and returns the number of cycles it took.
-    private func executeInstruction() -> Int {
+    func executeInstruction() -> Int {
+        print("--- PC: \(pc.toHexString())")
         let opcode = fetchNextByte()
         if opcode == 0xCB {
-            execute16BitInstruction()
+            print("Byte was 0xCB")
+            return execute16BitInstruction()
         } else {
             return execute8BitInstruction(opcode: opcode)
         }
@@ -96,7 +99,7 @@ class CPU {
         if imeFlag { // Is master interrupt enable flag set?
             if let interruptAddress = MMU.shared.checkForInterrupt() {
                 imeFlag = false
-                pushOntoStack(address: pc)
+                _ = pushOntoStack(address: pc)
                 pc = interruptAddress
             }
         }
@@ -123,6 +126,7 @@ extension CPU {
     
     /// Execute the instruction from the opcode and returns the number of cycles it took.
     private func execute8BitInstruction(opcode: UInt8) -> Int {
+        print("Excuting 8-Bit Instruction: \(opcode.toHexString())")
         switch opcode {
         case 0x00: return noOp()
         case 0x01: return loadImmediateShortIntoPair(&bc)
@@ -1066,116 +1070,57 @@ extension CPU {
 
 extension CPU {
     
-    private func execute16BitInstruction() {
+    private func execute16BitInstruction() -> Int {
         let opcode = fetchNextByte()
+        print("Executing 8-Bit Instruction: \(opcode.toHexString())")
+        let registerId = opcode.lowNibble
+        let usesHL = (registerId == 0x6) || (registerId == 0xE)
         
         switch opcode {
         
-        case 0x00...0x07: // Rotate left with carry
-            let oldRegisterValue = getRegisterByte(opcode: opcode)
-            let newRegisterValue = oldRegisterValue.bitwiseLeftRotation(amount: 1)
-            
-            setRegisterValueForOpcode(opcode, value: newRegisterValue)
-            zFlag = newRegisterValue == 0
-            nFlag = false
-            hFlag = false
-            cFlag = oldRegisterValue.checkBit(7)
+        case 0x00...0x07:
+            rotateLeftWithCarry(opcode: opcode)
+            return usesHL ? 4 : 2
             
         case 0x08...0x0F: // Rotate right with carry
-            let oldRegisterValue = getRegisterByte(opcode: opcode)
-            let newRegisterValue = oldRegisterValue.bitwiseRightRotation(amount: 1)
-            
-            setRegisterValueForOpcode(opcode, value: newRegisterValue)
-            zFlag = newRegisterValue == 0
-            nFlag = false
-            hFlag = false
-            cFlag = oldRegisterValue.checkBit(0)
+            rotateRightWithCarry(opcode: opcode)
+            return usesHL ? 4 : 2
             
         case 0x10...0x17: // Rotate left
-            let oldRegisterValue = getRegisterByte(opcode: opcode)
-            var newRegisterValue = oldRegisterValue.bitwiseLeftRotation(amount: 1)
-            cFlag ? newRegisterValue.setBit(0) : newRegisterValue.clearBit(0)
-            
-            setRegisterValueForOpcode(opcode, value: newRegisterValue)
-            zFlag = newRegisterValue == 0
-            nFlag = false
-            hFlag = false
-            cFlag = oldRegisterValue.checkBit(7)
+            rotateLeft(opcode: opcode)
+            return usesHL ? 4 : 2
             
         case 0x18...0x1F: // Rotate right
-            let oldRegisterValue = getRegisterByte(opcode: opcode)
-            var newRegisterValue = oldRegisterValue.bitwiseRightRotation(amount: 1)
-            cFlag ? newRegisterValue.setBit(7) : newRegisterValue.clearBit(7)
-            
-            setRegisterValueForOpcode(opcode, value: newRegisterValue)
-            zFlag = newRegisterValue == 0
-            nFlag = false
-            hFlag = false
-            cFlag = oldRegisterValue.checkBit(0)
+            rotateRight(opcode: opcode)
+            return usesHL ? 4 : 2
             
         case 0x20...0x27: // Shift left arithmetic
-            let oldRegisterValue = getRegisterByte(opcode: opcode)
-            let newRegisterValue = oldRegisterValue << 1
-            
-            setRegisterValueForOpcode(opcode, value: newRegisterValue)
-            zFlag = newRegisterValue == 0
-            nFlag = false
-            hFlag = false
-            cFlag = oldRegisterValue.checkBit(7)
+            shiftLeftArithmetic(opcode: opcode)
+            return usesHL ? 4 : 2
             
         case 0x28...0x2F: // Shift right arithmetic
-            let oldRegisterValue = getRegisterByte(opcode: opcode)
-            var newRegisterValue = oldRegisterValue >> 1
-            oldRegisterValue.checkBit(7) ? newRegisterValue.setBit(7) : newRegisterValue.clearBit(0)
-            
-            setRegisterValueForOpcode(opcode, value: newRegisterValue)
-            zFlag = newRegisterValue == 0
-            nFlag = false
-            hFlag = false
-            cFlag = oldRegisterValue.checkBit(0)
+            shiftRightArithmetic(opcode: opcode)
+            return usesHL ? 4 : 2
             
         case 0x30...0x37: // Swap nibbles
-            let oldRegisterValue = getRegisterByte(opcode: opcode)
-            let newRegisterValue = (oldRegisterValue.lowNibble << 4) | oldRegisterValue.highNibble
-            
-            setRegisterValueForOpcode(opcode, value: newRegisterValue)
-            zFlag = newRegisterValue == 0
-            nFlag = false
-            hFlag = false
-            cFlag = false
+            swapNibbles(opcode: opcode)
+            return usesHL ? 4 : 2
             
         case 0x38...0x3F: // Shift right logical
-            let oldRegisterValue = getRegisterByte(opcode: opcode)
-            let newRegisterValue = oldRegisterValue >> 1
-            
-            setRegisterValueForOpcode(opcode, value: newRegisterValue)
-            zFlag = newRegisterValue == 0
-            nFlag = false
-            hFlag = false
-            cFlag = oldRegisterValue.checkBit(0)
+            shiftRightLogical(opcode: opcode)
+            return usesHL ? 4 : 2
             
         case 0x40...0x7F: // Check bit
-            let relativeOpcode = opcode - 0x40
-            let bitIndex = Int(relativeOpcode / 8)
-            let registerValue = getRegisterByte(opcode: opcode)
-            let isBitSet = registerValue.checkBit(bitIndex)
-            zFlag = !isBitSet
-            nFlag = false
-            hFlag = false
+            checkBit(opcode: opcode)
+            return usesHL ? 3 : 2
             
         case 0x80...0xBF: // Reset bit
-            let relativeOpcode = opcode - 0x80
-            let bitIndex = Int(relativeOpcode / 8)
-            var registerValue = getRegisterByte(opcode: opcode)
-            registerValue.clearBit(bitIndex)
-            setRegisterValueForOpcode(opcode, value: registerValue)
+            resetBit(opcode: opcode)
+            return usesHL ? 4 : 2
             
         case 0xC0...0xFF: // Set bit
-            let relativeOpcode = opcode - 0xC0
-            let bitIndex = Int(relativeOpcode / 8)
-            var registerValue = getRegisterByte(opcode: opcode)
-            registerValue.setBit(bitIndex)
-            setRegisterValueForOpcode(opcode, value: registerValue)
+            setBit(opcode: opcode)
+            return usesHL ? 4 : 2
             
         default: fatalError("Unhandled opcode found. Got \(opcode).")
         }
@@ -1252,22 +1197,6 @@ extension CPU {
         return decrementedValue
     }
     
-    private func loadOperation(opcode: UInt8) {
-        let valueToSet = getRegisterByte(opcode: opcode)
-        
-        switch opcode {
-        case 0x40...0x47: b = valueToSet
-        case 0x48...0x4F: c = valueToSet
-        case 0x50...0x57: d = valueToSet
-        case 0x58...0x5F: e = valueToSet
-        case 0x60...0x67: h = valueToSet
-        case 0x68...0x6F: l = valueToSet
-        case 0x70...0x75, 0x77: MMU.shared.writeValue(valueToSet, address: hl)
-        case 0x78...0x7F: a = valueToSet
-        default: fatalError("Failed to SET value in load operation using opcode: \(opcode)")
-        }
-    }
-    
     private func addOperation(lhs: UInt16, rhs: Int8) -> UInt16 {
         let isPositive = rhs >= 0
         let magnitude = rhs.magnitude
@@ -1303,9 +1232,10 @@ extension CPU {
     }
     
     private func relativeJump(byte: UInt8) {
-        let isPositive = Int8(bitPattern: byte) >= 0
+        let offset = Int8(bitPattern: byte)
+        let offsetMagnitude = UInt16(offset.magnitude)
         
-        let offsetMagnitude = UInt16(byte)
+        let isPositive = offset >= 0
         if isPositive {
             pc &+= offsetMagnitude
         } else {
@@ -1333,5 +1263,126 @@ extension CPU {
         case .increment: hl &+= 1
         case .decrement: hl &-= 1
         }
+    }
+}
+
+extension CPU {
+    
+    private func rotateLeftWithCarry(opcode: UInt8) {
+        let oldRegisterValue = getRegisterByte(opcode: opcode)
+        let newRegisterValue = oldRegisterValue.bitwiseLeftRotation(amount: 1)
+        
+        setRegisterValueForOpcode(opcode, value: newRegisterValue)
+        zFlag = newRegisterValue == 0
+        nFlag = false
+        hFlag = false
+        cFlag = oldRegisterValue.checkBit(7)
+    }
+    
+    private func rotateRightWithCarry(opcode: UInt8) {
+        let oldRegisterValue = getRegisterByte(opcode: opcode)
+        let newRegisterValue = oldRegisterValue.bitwiseRightRotation(amount: 1)
+        
+        setRegisterValueForOpcode(opcode, value: newRegisterValue)
+        zFlag = newRegisterValue == 0
+        nFlag = false
+        hFlag = false
+        cFlag = oldRegisterValue.checkBit(0)
+    }
+    
+    private func rotateLeft(opcode: UInt8) {
+        let oldRegisterValue = getRegisterByte(opcode: opcode)
+        var newRegisterValue = oldRegisterValue.bitwiseLeftRotation(amount: 1)
+        cFlag ? newRegisterValue.setBit(0) : newRegisterValue.clearBit(0)
+        
+        setRegisterValueForOpcode(opcode, value: newRegisterValue)
+        zFlag = newRegisterValue == 0
+        nFlag = false
+        hFlag = false
+        cFlag = oldRegisterValue.checkBit(7)
+    }
+    
+    private func rotateRight(opcode: UInt8) {
+        let oldRegisterValue = getRegisterByte(opcode: opcode)
+        var newRegisterValue = oldRegisterValue.bitwiseRightRotation(amount: 1)
+        cFlag ? newRegisterValue.setBit(7) : newRegisterValue.clearBit(7)
+        
+        setRegisterValueForOpcode(opcode, value: newRegisterValue)
+        zFlag = newRegisterValue == 0
+        nFlag = false
+        hFlag = false
+        cFlag = oldRegisterValue.checkBit(0)
+    }
+    
+
+    private func shiftLeftArithmetic(opcode: UInt8) {
+        let oldRegisterValue = getRegisterByte(opcode: opcode)
+        let newRegisterValue = oldRegisterValue << 1
+        
+        setRegisterValueForOpcode(opcode, value: newRegisterValue)
+        zFlag = newRegisterValue == 0
+        nFlag = false
+        hFlag = false
+        cFlag = oldRegisterValue.checkBit(7)
+    }
+    
+    private func shiftRightArithmetic(opcode: UInt8) {
+        let oldRegisterValue = getRegisterByte(opcode: opcode)
+        var newRegisterValue = oldRegisterValue >> 1
+        oldRegisterValue.checkBit(7) ? newRegisterValue.setBit(7) : newRegisterValue.clearBit(0)
+        
+        setRegisterValueForOpcode(opcode, value: newRegisterValue)
+        zFlag = newRegisterValue == 0
+        nFlag = false
+        hFlag = false
+        cFlag = oldRegisterValue.checkBit(0)
+    }
+    
+    private func swapNibbles(opcode: UInt8) {
+        let oldRegisterValue = getRegisterByte(opcode: opcode)
+        let newRegisterValue = (oldRegisterValue.lowNibble << 4) | oldRegisterValue.highNibble
+        
+        setRegisterValueForOpcode(opcode, value: newRegisterValue)
+        zFlag = newRegisterValue == 0
+        nFlag = false
+        hFlag = false
+        cFlag = false
+    }
+    
+    private func shiftRightLogical(opcode: UInt8) {
+        let oldRegisterValue = getRegisterByte(opcode: opcode)
+        let newRegisterValue = oldRegisterValue >> 1
+        
+        setRegisterValueForOpcode(opcode, value: newRegisterValue)
+        zFlag = newRegisterValue == 0
+        nFlag = false
+        hFlag = false
+        cFlag = oldRegisterValue.checkBit(0)
+    }
+    
+    private func checkBit(opcode: UInt8) {
+        let relativeOpcode = opcode - 0x40
+        let bitIndex = Int(relativeOpcode / 8)
+        let registerValue = getRegisterByte(opcode: opcode)
+        let isBitSet = registerValue.checkBit(bitIndex)
+        zFlag = !isBitSet
+        nFlag = false
+        hFlag = false
+    }
+    
+    private func resetBit(opcode: UInt8) {
+        let relativeOpcode = opcode - 0x80
+        let bitIndex = Int(relativeOpcode / 8)
+        var registerValue = getRegisterByte(opcode: opcode)
+        registerValue.clearBit(bitIndex)
+        setRegisterValueForOpcode(opcode, value: registerValue)
+    }
+    
+    private func setBit(opcode: UInt8) {
+        let relativeOpcode = opcode - 0xC0
+        let bitIndex = Int(relativeOpcode / 8)
+        var registerValue = getRegisterByte(opcode: opcode)
+        registerValue.setBit(bitIndex)
+        setRegisterValueForOpcode(opcode, value: registerValue)
     }
 }

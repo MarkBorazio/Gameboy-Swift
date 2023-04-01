@@ -12,7 +12,7 @@ struct ROM {
     let data: [UInt8]
     
     init(fileName: String) throws {
-        let url = Bundle.main.url(forResource: fileName, withExtension: nil)!
+        let url = Bundle.main.url(forResource: fileName, withExtension: "gb")!
         let romData = try Data(contentsOf: url)
         data = [UInt8](romData)
     

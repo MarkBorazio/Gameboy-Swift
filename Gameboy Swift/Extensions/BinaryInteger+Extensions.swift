@@ -55,4 +55,10 @@ extension BinaryInteger {
         }
         return new
     }
+    
+    func toHexString() -> String {
+        let prefix = (self >= 0) ? "0x" : "-0x"
+        let hexString = String(self.magnitude, radix: 16, uppercase: true)
+        return prefix + hexString
+    }
 }
