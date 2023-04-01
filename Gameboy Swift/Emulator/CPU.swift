@@ -88,7 +88,7 @@ class CPU {
         if opcode == 0xCB {
             execute16BitInstruction()
         } else {
-            execute8BitInstruction(opcode: opcode)
+            return execute8BitInstruction(opcode: opcode)
         }
     }
     
@@ -103,9 +103,17 @@ class CPU {
     }
     
     private func fetchNextByte() -> UInt8 {
-        let opcode = MMU.shared.readValue(address: pc)
+        let byte = MMU.shared.readValue(address: pc)
         pc &+= 1
-        return opcode
+        return byte
+    }
+    
+    private func fetchNextShort() -> UInt16 {
+        return UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
+    }
+    
+    private func fetchByteAtNextAddress() -> UInt8 {
+        return MMU.shared.readValue(address: fetchNextShort())
     }
 }
 
@@ -320,76 +328,78 @@ extension CPU {
         case 0xBE: return compare(lhs: a, address: hl)
         case 0xBF: return compare(lhs: a, rhs: a)
             
-        case 0xC0: return returnIfZFlagCleared()
+        case 0xC0: return returnControl(condition: !zFlag)
         case 0xC1: return popStack(into: &bc)
-        case 0xC2: return absoluteJumpIfZFlagCleared()
-        case 0xC3: return unconditionalAbsoluteJump()
-        case 0xC4: callIfZFlagCleared()
-        case 0xC5: pushOntoStack(address: bc)
-        case 0xC6: addByteToA()
-        case 0xC7: resetToByte0()
-        case 0xC8: returnIfZFlagSet()
-        case 0xC9: unconditionalReturn()
-        case 0xCA: absoluteJumpIfZFlagSet()
+        case 0xC2: return jumpToNextByteAddress(condition: !zFlag)
+        case 0xC3: return jump(address: fetchNextShort())
+        case 0xC4: return call(condition: !zFlag)
+        case 0xC5: return pushOntoStack(address: bc)
+        case 0xC6: return addNextByteToA()
+        case 0xC7: return restart(offset: 0)
+        case 0xC8: return returnControl(condition: zFlag)
+        case 0xC9: return returnControl()
+        case 0xCA: return jumpToNextByteAddress(condition: zFlag)
         case 0xCB: break
-        case 0xCC: callIfZFlagSet()
-        case 0xCD: unconditionalCall()
-        case 0xCE: addByteWithCarryToA()
-        case 0xCF: resetToByte1()
+        case 0xCC: return call(condition: zFlag)
+        case 0xCD: return call()
+        case 0xCE: return addNextByteWithCarryToA()
+        case 0xCF: return restart(offset: 1)
             
-        case 0xD0: returnIfCFlagCleared()
-        case 0xD1: popStackIntoDE()
-        case 0xD2: absoluteJumpIfCFlagCleared()
+        case 0xD0: return returnControl(condition: !cFlag)
+        case 0xD1: return popStack(into: &de)
+        case 0xD2: return jumpToNextByteAddress(condition: !cFlag)
         case 0xD3: break
-        case 0xD4: callIfCFlagCleared()
-        case 0xD5: pushOntoStack(address: de)
-        case 0xD6: subtractByteFromA()
-        case 0xD7: resetToByte2()
-        case 0xD8: returnIfCFlagSet()
-        case 0xD9: unconditionalReturnWithInterrupt()
-        case 0xDA: absoluteJumpIfCFlagSet()
+        case 0xD4: return call(condition: !cFlag)
+        case 0xD5: return pushOntoStack(address: de)
+        case 0xD6: return subtractNextByteFromA()
+        case 0xD7: return restart(offset: 2)
+        case 0xD8: return returnControl(condition: cFlag)
+        case 0xD9: return returnControlEnablingInterrupt()
+        case 0xDA: return jumpToNextByteAddress(condition: cFlag)
         case 0xDB: break
-        case 0xDC: callIfCFlagSet()
+        case 0xDC: return call(condition: cFlag)
         case 0xDD: break
-        case 0xDE: subtractByteWithCarryToA()
-        case 0xDF: resetToByte3()
+        case 0xDE: return subtractNextByteWithCarryFromA()
+        case 0xDF: return restart(offset: 3)
             
-        case 0xE0: highPageLoadAIntoByteAddress()
-        case 0xE1: popStackIntoHL()
-        case 0xE2: highPageLoadAIntoAbsoluteC()
+        case 0xE0: return highPageLoadAIntoNextByteAddress()
+        case 0xE1: return popStack(into: &hl)
+        case 0xE2: return highPageLoadAIntoAddressC()
         case 0xE3: break
         case 0xE4: break
-        case 0xE5: pushOntoStack(address: hl)
-        case 0xE6: logicalAndByteToA()
-        case 0xE7: resetToByte4()
-        case 0xE8: addByteToSP()
-        case 0xE9: jumpToHL()
-        case 0xEA: loadAIntoShortAddress()
+        case 0xE5: return pushOntoStack(address: hl)
+        case 0xE6: return logicalAndNextByteToA()
+        case 0xE7: return restart(offset: 4)
+        case 0xE8: return addNextByteToSP()
+        case 0xE9: return jump(address: hl)
+        case 0xEA: return loadAIntoShortAddress()
         case 0xEB: break
         case 0xEC: break
         case 0xED: break
-        case 0xEE: logicalXorByteToA()
-        case 0xEF: resetToByte5()
+        case 0xEE: return logicalXorByteToA()
+        case 0xEF: return restart(offset: 5)
             
-        case 0xF0: highPageLoadAbsoluteByteAddressIntoA()
-        case 0xF1: popStackIntoAF()
-        case 0xF2: highPageLoadAbsoluteCIntoA()
-        case 0xF3: disableInterruptHandling()
+        case 0xF0: return highPageLoadNextByteAddressIntoA()
+        case 0xF1: return popStack(into: &af)
+        case 0xF2: return highPageLoadAddressCIntoA()
+        case 0xF3: return disableInterruptHandling()
         case 0xF4: break
-        case 0xF5: pushOntoStack(address: af)
-        case 0xF6: logicalOrByteToA()
-        case 0xF7: resetToByte6()
-        case 0xF8: loadSPPlusByteIntoHL()
-        case 0xF9: loadHLIntoSP()
-        case 0xFA: loadAbsoluteShortAddressIntoA()
-        case 0xFB: scheduleInterruptHandling()
+        case 0xF5: return pushOntoStack(address: af)
+        case 0xF6: return logicalOrByteToA()
+        case 0xF7: return restart(offset: 6)
+        case 0xF8: return loadSPPlusByteIntoHL()
+        case 0xF9: return loadHLIntoSP()
+        case 0xFA: return loadShortAddressIntoA()
+        case 0xFB: return scheduleInterruptHandling()
         case 0xFC: break
         case 0xFD: break
-        case 0xFE: compareByteToA()
-        case 0xFF: resetToByte7()
+        case 0xFE: return compareByteToA()
+        case 0xFF: return restart(offset: 7)
             
         default: fatalError("Encountered unknown 8-bit opcode: \(opcode).")
         }
+        
+        return 0 // No instruction for opcode.
     }
     
     /// 0x00
@@ -565,6 +575,8 @@ extension CPU {
         // Also need to clear n and h flags
         nFlag = false
         hFlag = false
+        
+        return 1
     }
     
     /// 0x76
@@ -574,316 +586,6 @@ extension CPU {
         return 1
     }
     
-    /// 0xC0
-    private func returnIfZFlagCleared() -> Int {
-        if !zFlag {
-            pc = popStack()
-            return 5
-        } else {
-            return 2
-        }
-    }
-    
-    /// 0xC1
-    private func popStackIntoBC() {
-        bc = popStack()
-    }
-    
-    /// 0xC2
-    private func absoluteJumpIfZFlagCleared() -> Int {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        if !zFlag {
-            pc = address
-            return 4
-        } else {
-            return 3
-        }
-    }
-    
-    /// 0xC3
-    private func unconditionalAbsoluteJump() -> Int {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        pc = address
-        return 4
-    }
-    
-    /// 0xC4
-    private func callIfZFlagCleared() {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        if !zFlag {
-            pushOntoStack(address: pc)
-            pc = address
-        }
-    }
-    
-    /// 0xC6
-    private func addByteToA() {
-        a = addOperation(lhs: a, rhs: fetchNextByte())
-    }
-    
-    /// 0xC7
-    private func resetToByte0() {
-        pushOntoStack(address: pc)
-        pc = UInt16(bytes: [0x00, 0x00])!
-    }
-    
-    /// 0xC8
-    private func returnIfZFlagSet() {
-        if zFlag {
-            pc = popStack()
-        }
-    }
-    
-    /// 0xC9
-    private func unconditionalReturn() {
-        pc = popStack()
-    }
-    
-    /// 0xCA
-    private func absoluteJumpIfZFlagSet() {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        if zFlag {
-            pc = address
-        }
-    }
-    
-    /// 0xCC
-    private func callIfZFlagSet() {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        if zFlag {
-            pushOntoStack(address: pc)
-            pc = address
-        }
-    }
-    
-    /// 0xCD
-    private func unconditionalCall() {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        pushOntoStack(address: pc)
-        pc = address
-    }
-    
-    /// 0xCE
-    private func addByteWithCarryToA() {
-        let byte = fetchNextByte()
-        a = addWithCarryOperation(lhs: a, rhs: byte)
-    }
-    
-    /// 0xCF
-    private func resetToByte1() {
-        pushOntoStack(address: pc)
-        pc = UInt16(bytes: [0x08, 0x00])!
-    }
-    
-    /// 0xD0
-    private func returnIfCFlagCleared() {
-        if !cFlag {
-            pc = popStack()
-        }
-    }
-    
-    /// 0xD1
-    private func popStackIntoDE() {
-        de = popStack()
-    }
-    
-    /// 0xD2
-    private func absoluteJumpIfCFlagCleared() {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        if !cFlag {
-            pc = address
-        }
-    }
-    
-    /// 0xD4
-    private func callIfCFlagCleared() {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        if !cFlag {
-            pushOntoStack(address: pc)
-            pc = address
-        }
-    }
-    
-    /// 0xD6
-    private func subtractByteFromA() {
-        a = subtractOperation(lhs: a, rhs: fetchNextByte())
-    }
-    
-    /// 0xD7
-    private func resetToByte2() {
-        pushOntoStack(address: pc)
-        pc = UInt16(bytes: [0x10, 0x00])!
-    }
-    
-    /// 0xD8
-    private func returnIfCFlagSet() {
-        if cFlag {
-            pc = popStack()
-        }
-    }
-    
-    /// 0xD9
-    private func unconditionalReturnWithInterrupt() {
-        pc = popStack()
-        imeFlag = true
-    }
-    
-    /// 0xDA
-    private func absoluteJumpIfCFlagSet() {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        if cFlag {
-            pc = address
-        }
-    }
-    
-    /// 0xDC
-    private func callIfCFlagSet() {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        if cFlag {
-            pushOntoStack(address: pc)
-            pc = address
-        }
-    }
-    
-    /// 0xDE
-    private func subtractByteWithCarryToA() {
-        let byte = fetchNextByte()
-        a = subtractWithCarryOperation(lhs: a, rhs: byte)
-    }
-    
-    /// 0xDF
-    private func resetToByte3() {
-        pushOntoStack(address: pc)
-        pc = UInt16(bytes: [0x18, 0x00])!
-    }
-    
-    /// 0xE0
-    private func highPageLoadAIntoByteAddress() {
-        let lowerByte = fetchNextByte()
-        let address = UInt16(bytes: [lowerByte, 0xFF])!
-        MMU.shared.writeValue(a, address: address)
-    }
-    
-    /// 0xE1
-    private func popStackIntoHL() {
-        hl = popStack()
-    }
-    
-    /// 0xE2
-    private func highPageLoadAIntoAbsoluteC() {
-        let address = UInt16(bytes: [c, 0xFF])!
-        MMU.shared.writeValue(a, address: address)
-    }
-    
-    /// 0xE6
-    private func logicalAndByteToA() {
-        let byte = fetchNextByte()
-        a = logicalAndOperation(lhs: a, rhs: byte)
-    }
-    
-    /// 0xE7
-    private func resetToByte4() {
-        pushOntoStack(address: pc)
-        pc = UInt16(bytes: [0x20, 0x00])!
-    }
-    
-    /// 0xE8
-    private func addByteToSP() {
-        let signedByte = Int8(bitPattern: fetchNextByte())
-        sp = addOperation(lhs: sp, rhs: signedByte)
-    }
-    
-    /// 0xE9
-    private func jumpToHL() {
-        pc = hl
-    }
-    
-    /// 0xEA
-    private func loadAIntoShortAddress() {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        MMU.shared.writeValue(a, address: address)
-    }
-    
-    /// 0xEE
-    private func logicalXorByteToA() {
-        a = logicalXorOperation(lhs: a, rhs: fetchNextByte())
-    }
-    
-    /// 0xEF
-    private func resetToByte5() {
-        pushOntoStack(address: pc)
-        pc = UInt16(bytes: [0x28, 0x00])!
-    }
-    
-    /// 0xF0
-    private func highPageLoadAbsoluteByteAddressIntoA() {
-        let lowerByte = fetchNextByte()
-        let address = UInt16(bytes: [lowerByte, 0xFF])!
-        a = MMU.shared.readValue(address: address)
-    }
-    
-    /// 0xF1
-    private func popStackIntoAF() {
-        af = popStack()
-    }
-    
-    /// 0xF2
-    private func highPageLoadAbsoluteCIntoA() {
-        let address = UInt16(bytes: [c, 0xFF])!
-        a = MMU.shared.readValue(address: address)
-    }
-    
-    /// 0xF3
-    private func disableInterruptHandling() {
-        imeFlag = false
-    }
-    
-    /// 0xF6
-    private func logicalOrByteToA() {
-        let byte = fetchNextByte()
-        a = logicalOrOperation(lhs: a, rhs: byte)
-    }
-    
-    /// 0xF7
-    private func resetToByte6() {
-        pushOntoStack(address: pc)
-        pc = UInt16(bytes: [0x30, 0x00])!
-    }
-    
-    /// 0xF8
-    private func loadSPPlusByteIntoHL() {
-        let signedByte = Int8(bitPattern: fetchNextByte())
-        hl = addOperation(lhs: sp, rhs: signedByte)
-    }
-    
-    /// 0xF9
-    private func loadHLIntoSP() {
-        sp = hl
-    }
-    
-    /// 0xFA
-    private func loadAbsoluteShortAddressIntoA() {
-        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        a = MMU.shared.readValue(address: address)
-    }
-    
-    /// 0xFB
-    private func scheduleInterruptHandling() {
-        imeFlag = true
-        // TODO: Should this use a imeScheduledFlag instead?
-    }
-    
-    /// 0xFE
-    private func compareByteToA() {
-        compare(a, to: fetchNextByte())
-    }
-    
-    /// 0xFF
-    private func resetToByte7() {
-        pushOntoStack(address: pc)
-        pc = UInt16(bytes: [0x38, 0x00])!
-    }
-    
     // MARK: - Load Operations
     
     // 0x01, 0x11, 0x21, 0x31
@@ -891,6 +593,12 @@ extension CPU {
         let value = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
         pair = value
         return 3
+    }
+    
+    // 0xF9
+    private func loadHLIntoSP() -> Int {
+        sp = hl
+        return 2
     }
     
     // 0x02, 0x12, 0x22, 0x32, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x77
@@ -921,22 +629,6 @@ extension CPU {
         return 2
     }
     
-    private func load(opcode: UInt8) -> Int {
-        let valueToSet = getRegisterByte(opcode: opcode)
-        
-        switch opcode {
-        case 0x40...0x47: b = valueToSet
-        case 0x48...0x4F: c = valueToSet
-        case 0x50...0x57: d = valueToSet
-        case 0x58...0x5F: e = valueToSet
-        case 0x60...0x67: h = valueToSet
-        case 0x68...0x6F: l = valueToSet
-        case 0x70...0x75, 0x77: MMU.shared.writeValue(valueToSet, address: hl)
-        case 0x78...0x7F: a = valueToSet
-        default: fatalError("Failed to SET value in load operation using opcode: \(opcode)")
-        }
-    }
-    
     // 0x40 - 0x45, 0x47 - 0x4D, 0x4F
     // 0x50 - 0x55, 0x57 - 0x5D, 0x5F
     // 0x60 - 0x65, 0x67 - 0x6D, 0x6F
@@ -944,6 +636,57 @@ extension CPU {
     private func loadByteIntoRegister(lhs: inout UInt8, rhs: UInt8) -> Int {
         lhs = rhs
         return 1
+    }
+    
+    // 0xE0
+    private func highPageLoadAIntoNextByteAddress() -> Int {
+        let lowerByte = fetchNextByte()
+        let address = UInt16(bytes: [lowerByte, 0xFF])!
+        MMU.shared.writeValue(a, address: address)
+        return 3
+    }
+    
+    // 0xF0
+    private func highPageLoadNextByteAddressIntoA() -> Int {
+        let lowerByte = fetchNextByte()
+        let address = UInt16(bytes: [lowerByte, 0xFF])!
+        a = MMU.shared.readValue(address: address)
+        return 3
+    }
+    
+    // 0xE2
+    private func highPageLoadAIntoAddressC() -> Int {
+        let address = UInt16(bytes: [c, 0xFF])!
+        MMU.shared.writeValue(a, address: address)
+        return 2
+    }
+    
+    // 0xF2
+    private func highPageLoadAddressCIntoA() -> Int {
+        let address = UInt16(bytes: [c, 0xFF])!
+        a = MMU.shared.readValue(address: address)
+        return 2
+    }
+    
+    // 0xEA
+    private func loadAIntoShortAddress() -> Int {
+        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
+        MMU.shared.writeValue(a, address: address)
+        return 4
+    }
+    
+    // 0xEA
+    private func loadShortAddressIntoA() -> Int {
+        let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
+        a = MMU.shared.readValue(address: address)
+        return 4
+    }
+    
+    // 0xF8
+    private func loadSPPlusByteIntoHL() -> Int {
+        let signedByte = Int8(bitPattern: fetchNextByte())
+        hl = addOperation(lhs: sp, rhs: signedByte)
+        return 3
     }
     
     // MARK: - Increment/Decrement Operations
@@ -991,6 +734,27 @@ extension CPU {
     }
     
     // MARK: - Arithmetical Operations
+
+    // 0xE8
+    private func addNextByteToSP() -> Int {
+        let signedByte = Int8(bitPattern: fetchNextByte())
+        sp = addOperation(lhs: sp, rhs: signedByte)
+        return 4
+    }
+    
+    // 0xC6
+    private func addNextByteToA() -> Int {
+        _ = addOperation(lhs: &a, rhs: fetchNextByte())
+        return 2
+    }
+    
+    // 0xCE
+    private func addNextByteWithCarryToA() -> Int {
+        let carryBit: UInt8 = cFlag ? 1 : 0
+        let byte = fetchNextByte() &+ carryBit
+        _ = addOperation(lhs: &a, rhs: byte)
+        return 2
+    }
         
     // 0x09, 0x19, 0x29, 0x39
     private func addToHL(_ value: UInt16) -> Int {
@@ -1001,6 +765,7 @@ extension CPU {
         // TODO: Confirm Z flag behaviour here.
         return 2
     }
+    
     
     // 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x87
     private func addOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
@@ -1027,13 +792,28 @@ extension CPU {
     // 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8F
     private func addWithCarryOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
         let carryBit: UInt8 = cFlag ? 1 : 0
-        return addOperation(lhs: &lhs, rhs: rhs &+ carryBit)
+        let value = rhs &+ carryBit
+        return addOperation(lhs: &lhs, rhs: value)
     }
     
     // 0x8E
     private func addWithCarryOperation(lhs: inout UInt8, address: UInt16) -> Int {
         let rhs = MMU.shared.readValue(address: address)
         _ = addWithCarryOperation(lhs: &lhs, rhs: rhs)
+        return 2
+    }
+    
+    // 0xD6
+    private func subtractNextByteFromA() -> Int {
+        _ = subtractOperation(lhs: &a, rhs: fetchNextByte())
+        return 2
+    }
+    
+    // 0xDE
+    private func subtractNextByteWithCarryFromA() -> Int {
+        let carryBit: UInt8 = cFlag ? 1 : 0
+        let byte = fetchNextByte() &+ carryBit
+        _ = subtractOperation(lhs: &a, rhs: byte)
         return 2
     }
     
@@ -1062,7 +842,8 @@ extension CPU {
     // 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9F
     private func subtractWithCarryOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
         let carryBit: UInt8 = cFlag ? 1 : 0
-        return subtractOperation(lhs: &lhs, rhs: rhs &- carryBit)
+        let value = rhs &+ carryBit
+        return subtractOperation(lhs: &lhs, rhs: value)
     }
     
     // 0x9E
@@ -1095,6 +876,13 @@ extension CPU {
         return 2
     }
     
+    // 0xE6
+    private func logicalAndNextByteToA() -> Int {
+        let byte = fetchNextByte()
+        _ = logicalAndOperation(lhs: &a, rhs: byte)
+        return 2
+    }
+    
     // 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAF
     private func logicalXorOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
         let value = lhs ^ rhs
@@ -1113,6 +901,13 @@ extension CPU {
     private func logicalXorOperation(lhs: inout UInt8, address: UInt16) -> Int {
         let rhs = MMU.shared.readValue(address: address)
         _ = logicalXorOperation(lhs: &lhs, rhs: rhs)
+        return 2
+    }
+    
+    // 0xEE
+    private func logicalXorByteToA() -> Int {
+        let byte = fetchNextByte()
+        _ = logicalXorOperation(lhs: &a, rhs: byte)
         return 2
     }
     
@@ -1137,6 +932,13 @@ extension CPU {
         return 2
     }
     
+    // 0xF6
+    private func logicalOrByteToA() -> Int {
+        let byte = fetchNextByte()
+        _ = logicalOrOperation(lhs: &a, rhs: byte)
+        return 2
+    }
+    
     // 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBF
     private func compare(lhs: UInt8, rhs: UInt8) -> Int {
         let (comparison, carry) = lhs.subtractingReportingOverflow(rhs)
@@ -1157,12 +959,106 @@ extension CPU {
         return 2
     }
     
+    // 0xFE
+    private func compareByteToA() -> Int {
+        let byte = fetchNextByte()
+        _ = compare(lhs: a, rhs: byte)
+        return 2
+    }
+    
     // MARK: - Miscellaneous Operations
+    
+    // 0xC0, 0xC8, 0xD0, 0xD8
+    private func returnControl(condition: Bool) -> Int {
+        if condition {
+            pc = popStack()
+            return 5
+        } else {
+            return 2
+        }
+    }
+    
+    // 0xC9
+    private func returnControl() -> Int {
+        pc = popStack()
+        return 4
+    }
+    
+    // 0xD9
+    private func returnControlEnablingInterrupt() -> Int {
+        pc = popStack()
+        imeFlag = true
+        return 4
+    }
     
     // 0xC1, 0xD1, 0xE1, 0xF1
     private func popStack(into pair: inout UInt16) -> Int {
         pair = popStack()
         return 3
+    }
+    
+    // 0xC5, 0xD5, 0xE5, 0xF5
+    private func pushOntoStack(address: UInt16) -> Int {
+        let bytes = address.asBytes()
+        let lowerByte = bytes[0]
+        let upperByte = bytes[1]
+        
+        sp &-= 1
+        MMU.shared.writeValue(upperByte, address: sp)
+        sp &-= 1
+        MMU.shared.writeValue(lowerByte, address: sp)
+        
+        return 4
+    }
+    
+    // 0xC2, 0xCA, 0xD2, 0xDA
+    private func jumpToNextByteAddress(condition: Bool = true) -> Int {
+        let address = fetchNextShort()
+        if condition {
+            pc = address
+            return 4
+        } else {
+            return 3
+        }
+    }
+    
+    // 0xE9
+    private func jump(address: UInt16) -> Int {
+        pc = address
+        return 1
+    }
+    
+    // 0xC4, 0xCC, 0xCD, 0xD4, 0xDC
+    private func call(condition: Bool = true) -> Int {
+        let address = fetchNextShort()
+        if condition {
+            _ = pushOntoStack(address: pc)
+            pc = address
+            return 6
+        } else {
+            return 3
+        }
+    }
+    
+    // 0xC7, 0xD7, 0xE7, 0xF7, 0xCF, 0xDF, 0xEF, 0xFF
+    private func restart(offset: Int) -> Int {
+        _ = pushOntoStack(address: pc)
+        let address: UInt16 = 0x08 * UInt16(offset)
+        pc = address
+        return 4
+    }
+    
+    // 0xF3
+    private func disableInterruptHandling() -> Int {
+        imeFlag = false
+        return 1
+    }
+    
+    // 0xFB
+    private func scheduleInterruptHandling() -> Int {
+        imeFlag = true
+        // TODO: Invesitgate this more
+        return 1
     }
 }
 
@@ -1334,17 +1230,6 @@ extension CPU {
         sp &+= 1
         return UInt16(bytes: [lowerByte, upperByte])!
     }
-    
-    private func pushOntoStack(address: UInt16) {
-        let bytes = address.asBytes()
-        let lowerByte = bytes[0]
-        let upperByte = bytes[1]
-        
-        sp &-= 1
-        MMU.shared.writeValue(upperByte, address: sp)
-        sp &-= 1
-        MMU.shared.writeValue(lowerByte, address: sp)
-    }
 
     
     private func incrementOperation(_ value: UInt8) -> UInt8 {
@@ -1387,31 +1272,34 @@ extension CPU {
         let isPositive = rhs >= 0
         let magnitude = rhs.magnitude
         
+        let value: UInt16
+        let halfCarryFlag: Bool
+        let carryFlag: Bool
         if isPositive {
             let (lowerByte, carry) = lhs.asBytes()[0].addingReportingOverflow(magnitude)
             let (_, halfCarry) = lhs.asBytes()[0].addingReportingHalfCarry(magnitude)
             let carryBit: UInt8 = carry ? 1 : 0
             let upperByte = lhs.asBytes()[1] &+ carryBit
-            let value = UInt16(bytes: [lowerByte, upperByte])!
             
-            zFlag = false
-            nFlag = false
-            hFlag = halfCarry
-            cFlag = carry
-            return value
+            value = UInt16(bytes: [lowerByte, upperByte])!
+            halfCarryFlag = halfCarry
+            carryFlag = carry
         } else {
             let (lowerByte, carry) = lhs.asBytes()[0].subtractingReportingOverflow(magnitude)
             let (_, halfCarry) = lhs.asBytes()[0].subtractingReportingHalfCarry(magnitude)
             let carryBit: UInt8 = carry ? 1 : 0
             let upperByte = lhs.asBytes()[1] &- carryBit
-            let value = UInt16(bytes: [lowerByte, upperByte])!
             
-            zFlag = false
-            nFlag = false
-            hFlag = halfCarry
-            cFlag = carry
-            return value
+            value = UInt16(bytes: [lowerByte, upperByte])!
+            halfCarryFlag = halfCarry
+            carryFlag = carry
         }
+        
+        zFlag = false
+        nFlag = false
+        hFlag = halfCarryFlag
+        cFlag = carryFlag
+        return value
     }
     
     private func relativeJump(byte: UInt8) {
