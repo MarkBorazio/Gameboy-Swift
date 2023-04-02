@@ -56,9 +56,17 @@ extension BinaryInteger {
         return new
     }
     
-    func toHexString() -> String {
+    var hexString: String {
         let prefix = (self >= 0) ? "0x" : "-0x"
-        let hexString = String(self.magnitude, radix: 16, uppercase: true)
+        let hexString = String(magnitude, radix: 16, uppercase: true)
         return prefix + hexString
+    }
+    
+    var binaryString: String {
+        var binaryString = String(self, radix: 2)
+        while binaryString.count < bitWidth {
+            binaryString = "0" + binaryString
+        }
+        return binaryString
     }
 }

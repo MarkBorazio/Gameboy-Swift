@@ -85,7 +85,8 @@ class CPU {
     
     /// Execute the next instruction and returns the number of cycles it took.
     func executeInstruction() -> Int {
-        print("--- PC: \(pc.toHexString())")
+        
+        print("--- PC: \(pc.hexString)")
         let opcode = fetchNextByte()
         if opcode == 0xCB {
             print("Byte was 0xCB")
@@ -126,7 +127,7 @@ extension CPU {
     
     /// Execute the instruction from the opcode and returns the number of cycles it took.
     private func execute8BitInstruction(opcode: UInt8) -> Int {
-        print("Excuting 8-Bit Instruction: \(opcode.toHexString())")
+        print("Excuting 8-Bit Instruction: \(opcode.hexString)")
         switch opcode {
         case 0x00: return noOp()
         case 0x01: return loadImmediateShortIntoPair(&bc)
@@ -709,15 +710,13 @@ extension CPU {
     
     // 0x04, 0x14, 0x24, 0x0C, 0x1C, 0x2C, 0x3C
     private func incrementRegister(_ register: inout UInt8) -> Int {
-        register &+= 1
-        // TODO: Update flags
+        register = incrementOperation(register)
         return 1
     }
     
     // 0x05, 0x15, 0x25, 0x0D, 0x1D, 0x2D, 0x3D
     private func decrementRegister(_ register: inout UInt8) -> Int {
-        register &-= 1
-        // TODO: Update flags
+        register = decrementOperation(register)
         return 1
     }
     
@@ -762,11 +761,15 @@ extension CPU {
         
     // 0x09, 0x19, 0x29, 0x39
     private func addToHL(_ value: UInt16) -> Int {
+        let oldZflag = zFlag
         // Ref: https://stackoverflow.com/a/57981912
         _ = addOperation(lhs: &l, rhs: value.asBytes()[0])
         _ = addWithCarryOperation(lhs: &h, rhs: value.asBytes()[1])
         
-        // TODO: Confirm Z flag behaviour here.
+        // Apparently the Z Flag is unnaffected by this operation, so we set it back to it's original value
+        // from before the two operations.
+        // That's weird though since it kinda goes against what the reference above suggests happens.
+        zFlag = oldZflag
         return 2
     }
     
@@ -1072,7 +1075,7 @@ extension CPU {
     
     private func execute16BitInstruction() -> Int {
         let opcode = fetchNextByte()
-        print("Executing 8-Bit Instruction: \(opcode.toHexString())")
+        print("Executing 8-Bit Instruction: \(opcode.hexString)")
         let registerId = opcode.lowNibble
         let usesHL = (registerId == 0x6) || (registerId == 0xE)
         
@@ -1329,7 +1332,7 @@ extension CPU {
     private func shiftRightArithmetic(opcode: UInt8) {
         let oldRegisterValue = getRegisterByte(opcode: opcode)
         var newRegisterValue = oldRegisterValue >> 1
-        oldRegisterValue.checkBit(7) ? newRegisterValue.setBit(7) : newRegisterValue.clearBit(0)
+        oldRegisterValue.checkBit(7) ? newRegisterValue.setBit(7) : newRegisterValue.clearBit(7)
         
         setRegisterValueForOpcode(opcode, value: newRegisterValue)
         zFlag = newRegisterValue == 0
@@ -1367,7 +1370,7 @@ extension CPU {
         let isBitSet = registerValue.checkBit(bitIndex)
         zFlag = !isBitSet
         nFlag = false
-        hFlag = false
+        hFlag = true
     }
     
     private func resetBit(opcode: UInt8) {

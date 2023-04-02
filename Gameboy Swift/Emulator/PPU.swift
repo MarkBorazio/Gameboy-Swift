@@ -34,14 +34,14 @@ class PPU {
         if scanlineTimer >= Self.machineCyclesPerScanline {
             scanlineTimer = 0
             
-            MMU.shared.currentScanline += 1
+            MMU.shared.currentScanline &+= 1
             let currentScanlineIndex = MMU.shared.currentScanline
             
             switch currentScanlineIndex {
             case ...Self.lastVisibleScanlineIndex:
                 drawScanline()
                 
-            case Self.lastVisibleScanlineIndex + 1:
+            case Self.lastVisibleScanlineIndex &+ 1:
                 MMU.shared.requestVBlankInterrupt()
                 
             case Self.lastAbsoluteScanlineIndex...:
@@ -142,7 +142,7 @@ class PPU {
         let scrollY = MMU.shared.readValue(address: MMU.addressScrollY)
         let scrollX = MMU.shared.readValue(address: MMU.addressScrollX)
         let windowY = MMU.shared.readValue(address: MMU.addressWindowY)
-        let windowX = MMU.shared.readValue(address: MMU.addressWindowX) - Self.windowXOffset
+        let windowX = MMU.shared.readValue(address: MMU.addressWindowX) &- Self.windowXOffset
         let control = MMU.shared.readValue(address: MMU.addressLCDC)
         
         // Check if we are rendering the window
@@ -158,7 +158,7 @@ class PPU {
         let addressBgAndWindowArea = control.checkBit(addressBgAndWindowBitIndex) ? MMU.addressBgAndWindowArea1 : MMU.addressBgAndWindowArea2
         
         // Get Y coordinate relative to window or background space
-        let relativeYCo = isRenderingWindow ? (currentScanline - windowY) : (currentScanline + scrollY)
+        let relativeYCo = isRenderingWindow ? (currentScanline &- windowY) : (currentScanline &+ scrollY)
         
         // Get row index of tile from row of 32 tiles
         let tileRowIndex = relativeYCo/8
@@ -173,37 +173,37 @@ class PPU {
             // we could move from drawing a background pixel to drawing a window pixel in the same scanline.
             let isPixelIndexWithinWindowXBounds = pixelIndex >= windowX
             let shouldUseWindowSpaceForXCo = isRenderingWindow && isPixelIndexWithinWindowXBounds
-            let relativeXCo = shouldUseWindowSpaceForXCo ? (pixelIndex - windowX) : (pixelIndex + scrollX)
+            let relativeXCo = shouldUseWindowSpaceForXCo ? (pixelIndex &- windowX) : (pixelIndex &+ scrollX)
             
             // Get column index of tile from column of 32 tiles
             let tileColumnIndex = relativeXCo/8
             
             // Get memory index of tile
             let tileIndexAddress: UInt16 = addressBgAndWindowArea
-                + (UInt16(tileRowIndex) * Self.tilesPerRow)
-                + UInt16(tileColumnIndex)
+                &+ (UInt16(tileRowIndex) &* Self.tilesPerRow)
+                &+ UInt16(tileColumnIndex)
             let tileIndex = MMU.shared.readValue(address: tileIndexAddress)
             
             // Get memory address of tile
             let tileAddress: UInt16
             if isUsingTileDataAddress1 {
                 // Tile Data Address 1 indexes using unsigned integer
-                let tileAddressOffset = UInt16(tileIndex) * Self.bytesPerTile
-                tileAddress = MMU.addressTileArea1 + tileAddressOffset
+                let tileAddressOffset = UInt16(tileIndex) &* Self.bytesPerTile
+                tileAddress = MMU.addressTileArea1 &+ tileAddressOffset
             } else {
                 // Tile Data Address 2 indexes using signed integer
                 let signedTileIndex = Int8(bitPattern: tileIndex)
                 // Originates from UInt8 so guaranteed to be positive after adding 128
-                let convertedTileIndex = Int16(signedTileIndex) + 128
-                let tileAddressOffset = convertedTileIndex.magnitude * Self.bytesPerTile
-                tileAddress = MMU.addressTileArea2 + tileAddressOffset
+                let convertedTileIndex = Int16(signedTileIndex) &+ 128
+                let tileAddressOffset = convertedTileIndex.magnitude &* Self.bytesPerTile
+                tileAddress = MMU.addressTileArea2 &+ tileAddressOffset
             }
             
             // Find which of the tile's pixel rows we are on and get the pixel row data from memory
-            let pixelRowIndex = (relativeYCo % 8) * Self.bytesPerPixelRow
-            let pixelRowAddress = tileAddress + UInt16(pixelRowIndex)
+            let pixelRowIndex = (relativeYCo % 8) &* Self.bytesPerPixelRow
+            let pixelRowAddress = tileAddress &+ UInt16(pixelRowIndex)
             let rowData1 = MMU.shared.readValue(address: pixelRowAddress)
-            let rowData2 = MMU.shared.readValue(address: pixelRowAddress + 1)
+            let rowData2 = MMU.shared.readValue(address: pixelRowAddress &+ 1)
 
             // Reverse pixel row data to align bit indices with pixel indices.
             // Pixel 0 corresponds to bit 7 of rowData1 and rowData2,
@@ -230,12 +230,12 @@ class PPU {
         let areLargeSprites = control.checkBit(MMU.objectSizeBitIndex)
         
         for spriteIndex in 0..<Self.maxNumberOfSprites {
-            let spriteIndexOffset = spriteIndex * Self.bytesPerSprite
-            let spriteDataAddress = MMU.addressOAM + UInt16(spriteIndexOffset)
-            let yCo = MMU.shared.readValue(address: spriteDataAddress) - Self.spriteYOffset
-            let xCo = MMU.shared.readValue(address: spriteDataAddress + 1) - Self.spriteXOffset
-            let tileIndex = MMU.shared.readValue(address: spriteDataAddress + 2)
-            let attributes = MMU.shared.readValue(address: spriteDataAddress + 3)
+            let spriteIndexOffset = spriteIndex &* Self.bytesPerSprite
+            let spriteDataAddress = MMU.addressOAM &+ UInt16(spriteIndexOffset)
+            let yCo = MMU.shared.readValue(address: spriteDataAddress) &- Self.spriteYOffset
+            let xCo = MMU.shared.readValue(address: spriteDataAddress &+ 1) &- Self.spriteXOffset
+            let tileIndex = MMU.shared.readValue(address: spriteDataAddress &+ 2)
+            let attributes = MMU.shared.readValue(address: spriteDataAddress &+ 3)
             
             let flipY = attributes.checkBit(MMU.yFlipBitIndex)
             let flipX = attributes.checkBit(MMU.xFlipBitIndex)
@@ -245,18 +245,18 @@ class PPU {
             // Check if sprite intercepts with scanline
             let spriteBounds = yCo..<(yCo + spriteHeight)
             if spriteBounds ~= scanline {
-                var spriteRowIndex = scanline - yCo
+                var spriteRowIndex = scanline &- yCo
                 
                 if flipY {
                     spriteRowIndex = 7 - spriteRowIndex
                 }
 
-                spriteRowIndex *= Self.bytesPerPixelRow
+                spriteRowIndex &*= Self.bytesPerPixelRow
                 let dataAddress = MMU.addressTileArea1
-                    + (UInt16(tileIndex) * Self.bytesPerTile)
-                    + UInt16(spriteRowIndex)
+                    &+ (UInt16(tileIndex) &* Self.bytesPerTile)
+                    &+ UInt16(spriteRowIndex)
                 let data1 = MMU.shared.readValue(address: dataAddress)
-                let data2 = MMU.shared.readValue(address: dataAddress + 1)
+                let data2 = MMU.shared.readValue(address: dataAddress &+ 1)
                 
                 // Reverse since it's easier to read from right to left due to colour data
                 let reversedPixelIndices = (0...UInt8.bitWidth-1).reversed()
@@ -278,7 +278,7 @@ class PPU {
                     }
                     
                     let readjustedPixelIndex = 7 - pixelIndex // Since we looped in reverese order
-                    let globalXco = Int(xCo) + readjustedPixelIndex
+                    let globalXco = Int(xCo) &+ readjustedPixelIndex
                     
                     // Sanity check... cbf
                     
