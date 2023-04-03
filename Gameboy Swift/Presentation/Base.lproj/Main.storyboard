@@ -707,13 +707,78 @@
             <objects>
                 <viewController id="XfG-lQ-9wD" customClass="ViewController" customModule="Gameboy_Swift" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" id="m2S-Jp-Qdl">
-                        <rect key="frame" x="0.0" y="0.0" width="480" height="270"/>
+                        <rect key="frame" x="0.0" y="0.0" width="781" height="470"/>
                         <autoresizingMask key="autoresizingMask"/>
+                        <subviews>
+                            <stackView distribution="fill" orientation="vertical" alignment="centerX" spacing="249" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IgF-sx-YA9">
+                                <rect key="frame" x="0.0" y="0.0" width="781" height="470"/>
+                                <subviews>
+                                    <customView id="pAX-Qy-Bec" customClass="GameBoyView" customModule="Gameboy_Swift" customModuleProvider="target">
+                                        <rect key="frame" x="20" y="70" width="761" height="380"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    </customView>
+                                    <stackView distribution="fill" orientation="horizontal" alignment="centerY" spacing="12" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" id="GXT-tM-DLv">
+                                        <rect key="frame" x="299" y="0.0" width="204" height="22"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <subviews>
+                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Vb-wS-xHz">
+                                                <rect key="frame" x="-7" y="-6" width="76" height="32"/>
+                                                <buttonCell key="cell" type="push" title="START" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="R80-89-5Fq">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                            </button>
+                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ebU-xj-GBD">
+                                                <rect key="frame" x="67" y="-6" width="70" height="32"/>
+                                                <buttonCell key="cell" type="push" title="STOP" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="cF6-R8-Oio">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                            </button>
+                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="QuO-Uf-EvA">
+                                                <rect key="frame" x="135" y="-6" width="76" height="32"/>
+                                                <buttonCell key="cell" type="push" title="RESET" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zYT-TH-sSb">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                            </button>
+                                        </subviews>
+                                        <visibilityPriorities>
+                                            <integer value="1000"/>
+                                            <integer value="1000"/>
+                                            <integer value="1000"/>
+                                        </visibilityPriorities>
+                                        <customSpacing>
+                                            <real value="3.4028234663852886e+38"/>
+                                            <real value="3.4028234663852886e+38"/>
+                                            <real value="3.4028234663852886e+38"/>
+                                        </customSpacing>
+                                    </stackView>
+                                </subviews>
+                                <visibilityPriorities>
+                                    <integer value="1000"/>
+                                    <integer value="1000"/>
+                                </visibilityPriorities>
+                                <customSpacing>
+                                    <real value="3.4028234663852886e+38"/>
+                                    <real value="3.4028234663852886e+38"/>
+                                </customSpacing>
+                            </stackView>
+                        </subviews>
+                        <constraints>
+                            <constraint firstItem="IgF-sx-YA9" firstAttribute="top" secondItem="m2S-Jp-Qdl" secondAttribute="top" id="FeJ-yx-Hsb"/>
+                            <constraint firstItem="IgF-sx-YA9" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" id="H8Y-Xg-gc1"/>
+                            <constraint firstAttribute="bottom" secondItem="IgF-sx-YA9" secondAttribute="bottom" id="ZdK-qz-MMz"/>
+                            <constraint firstAttribute="trailing" secondItem="IgF-sx-YA9" secondAttribute="trailing" id="qYq-KC-ek9"/>
+                        </constraints>
                     </view>
+                    <connections>
+                        <outlet property="gameBoyView" destination="pAX-Qy-Bec" id="y22-x5-Ngz"/>
+                    </connections>
                 </viewController>
                 <customObject id="rPt-NT-nkU" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="75" y="655"/>
+            <point key="canvasLocation" x="75" y="816"/>
         </scene>
     </scenes>
 </document>

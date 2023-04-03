@@ -8,10 +8,13 @@
 import Cocoa
 
 class ViewController: NSViewController {
-
+    
+    @IBOutlet var gameBoyView: GameBoyView!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        MasterClock.shared.screenRenderDelegate = gameBoyView
         // Do any additional setup after loading the view.
     }
 

@@ -7,8 +7,9 @@
 
 import Foundation
 
-// Initialiser for all fixed width integer types (signed and unsigned)
-extension FixedWidthInteger {
+extension BinaryInteger {
+    
+    static var byteWidth: Int { MemoryLayout<Self>.size }
     
     public init?(bytes: [UInt8], endianness: Endianness = .littleEndian) {
         guard bytes.count <= Self.byteWidth else { return nil }
@@ -22,16 +23,18 @@ extension FixedWidthInteger {
         guard let value = optionalValue else { return nil }
         self = value
     }
-}
+    
+    public func asBytes() -> [UInt8] {
+        let width = Self.byteWidth
+        var bytes = [UInt8](repeating: 0, count: width)
 
-// `asBytes` method for unsigned integers
-extension UnsignedInteger {
-    public func asBytes(endianness: Endianness = .littleEndian) -> [UInt8] {
-        let bytes = Array(0 ..< Self.byteWidth)
-            .map { $0 * 8 }
-            .map { (self >> $0) & 0xFF }
-            .map { UInt8($0) }
-        return endianness.matchesPlatform ? bytes : bytes.reversed()
+        withUnsafeBytes(of: self) { rawBufferPointer in
+            for i in 0..<width {
+                bytes[i] = rawBufferPointer[i]
+            }
+        }
+
+        return bytes
     }
 }
 
@@ -45,8 +48,4 @@ public enum Endianness {
         case .littleEndian: return CFByteOrderGetCurrent() == CFByteOrder(CFByteOrderLittleEndian.rawValue)
         }
     }
-}
-
-extension BinaryInteger {
-    static var byteWidth: Int { MemoryLayout<Self>.size }
 }

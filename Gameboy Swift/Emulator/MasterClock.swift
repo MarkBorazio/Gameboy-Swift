@@ -6,26 +6,31 @@
 //
 
 import Foundation
+import Cocoa
 
 class MasterClock {
     
     static let shared = MasterClock()
     
-    private var timer: Timer?
+    weak var screenRenderDelegate: ScreenRenderDelegate?
+    
+    var timer: Timer?
+    let timerQueue = DispatchQueue(label: "timerQueue")
     
     private static let framesPerSecond: UInt32 = 60
     
     private static let clockCycleHz: UInt32 = 4194304
-    private static let clockCyclesPerFrame: UInt32 = clockCycleHz / framesPerSecond
+    private static let instructionClockCycleHz: UInt32 = clockCycleHz / 4
+    private static let clockCyclesPerFrame: UInt32 = instructionClockCycleHz / framesPerSecond
+    private static let timerInterval: TimeInterval = 1 / 60
     
     private var divTimer: Int = 0
     private var timaTimer = 0 // Increments at configurable frequency
     
     func startTicking() {
-        let timerQueue = DispatchQueue(label: "timerQueue", qos: .background)
-        let timerInterval = 1.0 / 4194304
+        let timerQueue = DispatchQueue(label: "timerQueue")
         timerQueue.async {
-            self.timer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true, block: { _ in
+            self.timer = Timer.scheduledTimer(withTimeInterval: Self.timerInterval, repeats: true, block: { _ in
                 self.tick()
             })
             RunLoop.current.add(self.timer!, forMode: .common)
@@ -40,14 +45,16 @@ class MasterClock {
     func tick() {
         var cycles = 0
         while cycles < Self.clockCyclesPerFrame {
+//            print("cycles: \(cycles)")
             cycles += CPU.shared.executeInstruction()
-            
+
             incrementDivRegister(cycles: cycles)
             incrementTimaRegister(cycles: cycles)
             PPU.shared.update(machineCycles: cycles)
             CPU.shared.handleInterrupts()
         }
-        // TODO: Render screen
+        print("cycles! COMPLTETE")
+        screenRenderDelegate?.renderScreen(screenData: PPU.shared.screenData)
     }
     
     private func incrementDivRegister(cycles: Int) {
@@ -92,4 +99,9 @@ class MasterClock {
         default: fatalError("This should never be reached.")
         }
     }
+}
+
+// TODO: Cleanup and rename
+protocol ScreenRenderDelegate: AnyObject {
+    func renderScreen(screenData: [ColourPalette.PixelData])
 }

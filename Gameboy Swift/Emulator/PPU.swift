@@ -13,14 +13,19 @@ class PPU {
     static let shared = PPU()
     
     private var scanlineTimer = 0
-    
-    private var screenData: [[NSColor]] = Array(
-        repeating: Array(
-            repeating: ColourPalette.black,
-            count: Int(pixelHeight)
-        ),
-        count: Int(pixelWidth)
+  
+    var screenData: [ColourPalette.PixelData] = Array(
+        repeating: .init(id: 0, palette: 0),
+        count: Int(pixelHeight) * Int(pixelWidth)
     )
+    
+//    var screenData: [[NSColor]] = Array(
+//        repeating: Array(
+//            repeating: ColourPalette.black,
+//            count: Int(pixelHeight)
+//        ),
+//        count: Int(pixelWidth)
+//    )
     
     func update(machineCycles: Int) {
         guard MMU.shared.isLCDEnabled else {
@@ -117,7 +122,7 @@ class PPU {
     }
     
     private func drawScanline() {
-        let control = MMU.shared.readValue(address: MMU.addressLCDC)
+        let control = UInt8.max //MMU.shared.readValue(address: MMU.addressLCDC)
         
         // TODO: Consider rendering background layer, and then window layer separately over the top
         if control.checkBit(MMU.bgAndWindowEnabledBitIndex) {
@@ -205,22 +210,35 @@ class PPU {
             let rowData1 = MMU.shared.readValue(address: pixelRowAddress)
             let rowData2 = MMU.shared.readValue(address: pixelRowAddress &+ 1)
 
-            // Reverse pixel row data to align bit indices with pixel indices.
+            // Get the colour ID of the pixel
+            let bitIndex = Int(relativeXCo % 8)
+            
+            // Adjust pixel row data to align bit indices with pixel indices.
             // Pixel 0 corresponds to bit 7 of rowData1 and rowData2,
             // pixel 1 corresponds to bit 6 of rowData1 and rowData2,
             // etc.
-            let reversedRowData1 = rowData1.reversedBits
-            let reversedRowData2 = rowData2.reversedBits
-            
-            // Get the colour ID of the pixel
-            let bitIndex = Int(relativeXCo % 8)
-            let colourID = (reversedRowData2.getBitValue(bitIndex) << 1) | reversedRowData1.getBitValue(bitIndex)
+            // I could reverse the bits, but that isn't performant.
+            let adjustedBitIndex: Int
+            switch bitIndex {
+            case 0: adjustedBitIndex = 7
+            case 1: adjustedBitIndex = 6
+            case 2: adjustedBitIndex = 5
+            case 3: adjustedBitIndex = 4
+            case 4: adjustedBitIndex = 3
+            case 5: adjustedBitIndex = 2
+            case 6: adjustedBitIndex = 1
+            case 7: adjustedBitIndex = 0
+            default: adjustedBitIndex = 0
+            }
+            let colourID = (rowData2.getBitValue(adjustedBitIndex) << 1) | rowData1.getBitValue(adjustedBitIndex)
             
             // Use colour ID to get colour from palette
             let palette = MMU.shared.readValue(address: MMU.addressBgPalette)
-            let colour = ColourPalette.getColour(id: colourID, palette: palette)
+            let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
             
-            screenData[pixelIndex][currentScanline] = colour
+//            screenData[pixelIndex][currentScanline] = colour
+            let index = Int(pixelIndex) * Int(Self.pixelHeight) + Int(currentScanline)
+            screenData[index] = pixelData
         }
     }
     
@@ -270,10 +288,10 @@ class PPU {
                     let colourID = (data2.getBitValue(colourBitIndex) << 1) | data1.getBitValue(colourBitIndex)
                     let colourAddress = attributes.checkBit(MMU.paletteNumberBitIndex) ? MMU.addressObjPalette2 : MMU.addressObjPalette1
                     let palette = MMU.shared.readValue(address: colourAddress)
-                    let colour = ColourPalette.getColour(id: colourID, palette: palette)
+                    let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
                     
                     // White is transparent for sprites (supposedly...)
-                    if colour == ColourPalette.white {
+                    if pixelData.colourId == ColourPalette.whiteColourId {
                         continue
                     }
                     
@@ -282,7 +300,9 @@ class PPU {
                     
                     // Sanity check... cbf
                     
-                    screenData[globalXco][scanline] = colour
+//                    screenData[globalXco][scanline] = colour
+                    let index = globalXco * Int(Self.pixelHeight) + Int(scanline)
+                    screenData[index] = pixelData
                 }
             }
         }
