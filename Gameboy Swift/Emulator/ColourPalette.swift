@@ -24,7 +24,7 @@ struct ColourPalette {
     // Third bit pair is for colour ID 2
     // Fourth bit pair is for colour ID 3
     // We can use the value of the colour ID to index each bit pair
-    static func getColour(pixelData: PixelData) -> NSColor {
+    static func getColour(pixelData: PixelData) -> UInt32 {
         let bitShiftLength = pixelData.id * bitsPerColourID
         let rawColour = (pixelData.palette >> bitShiftLength) & bitMask
         switch rawColour {
@@ -48,8 +48,8 @@ extension ColourPalette {
     static let darkGreyColourId: UInt8 = 0b10
     static let blackColourId: UInt8 = 0b11
     
-    private static let white = NSColor.white
-    private static let lightGrey = NSColor(red: 0xCC, green: 0xCC, blue: 0xCC, alpha: 1)
-    private static let darkGrey = NSColor(red: 0x77, green: 0x77, blue: 0x77, alpha: 1)
-    private static let black = NSColor.black
+    private static let white = UInt32(bytes: [0xFF, 0xFF, 0xFF, 0xFF])!
+    private static let lightGrey = UInt32(bytes: [0xCC, 0xCC, 0xCC, 0xFF])!
+    private static let darkGrey = UInt32(bytes: [0x77, 0x77, 0x77, 0xFF])!
+    private static let black = UInt32(bytes: [0x00, 0x00, 0x00, 0xFF])!
 }
