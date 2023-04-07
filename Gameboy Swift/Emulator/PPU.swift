@@ -19,14 +19,6 @@ class PPU {
         count: Int(pixelHeight) * Int(pixelWidth)
     )
     
-//    var screenData: [[NSColor]] = Array(
-//        repeating: Array(
-//            repeating: ColourPalette.black,
-//            count: Int(pixelHeight)
-//        ),
-//        count: Int(pixelWidth)
-//    )
-    
     func update(machineCycles: Int) {
         guard MMU.shared.isLCDEnabled else {
             updateDisabledLCDStatus()
@@ -39,8 +31,7 @@ class PPU {
         if scanlineTimer >= Self.machineCyclesPerScanline {
             scanlineTimer = 0
             
-            MMU.shared.currentScanline &+= 1
-            let currentScanlineIndex = MMU.shared.currentScanline
+            var currentScanlineIndex = MMU.shared.currentScanline
             
             switch currentScanlineIndex {
             case ...Self.lastVisibleScanlineIndex:
@@ -49,12 +40,15 @@ class PPU {
             case Self.lastVisibleScanlineIndex &+ 1:
                 MMU.shared.requestVBlankInterrupt()
                 
-            case Self.lastAbsoluteScanlineIndex...:
-                MMU.shared.currentScanline = 0
-                
             default:
                 break
             }
+            
+            currentScanlineIndex &+= 1
+            if currentScanlineIndex > Self.lastAbsoluteScanlineIndex {
+                currentScanlineIndex = 0
+            }
+            MMU.shared.currentScanline = currentScanlineIndex
         }
     }
     
@@ -169,16 +163,16 @@ class PPU {
         let tileRowIndex = relativeYCo/8
         
         // Draw 160 horizontal pixels for scanline
-        for pixelIndex in 0..<Self.pixelWidth {
+        for scanlinePixelIndex in 0..<Self.pixelWidth {
             
             // Get X coordinate relative to window or background space
             // TODO: Confirm if this is correct. It seems that we can have a y-coordinate relative to the window
             // space, but an x-coordinate relative to the background space. That seems wrong.
             // Update: It's probably correct, actually. The window is rendered on top of the background, so
             // we could move from drawing a background pixel to drawing a window pixel in the same scanline.
-            let isPixelIndexWithinWindowXBounds = pixelIndex >= windowX
+            let isPixelIndexWithinWindowXBounds = scanlinePixelIndex >= windowX
             let shouldUseWindowSpaceForXCo = isRenderingWindow && isPixelIndexWithinWindowXBounds
-            let relativeXCo = shouldUseWindowSpaceForXCo ? (pixelIndex &- windowX) : (pixelIndex &+ scrollX)
+            let relativeXCo = shouldUseWindowSpaceForXCo ? (scanlinePixelIndex &- windowX) : (scanlinePixelIndex &+ scrollX)
             
             // Get column index of tile from column of 32 tiles
             let tileColumnIndex = relativeXCo/8
@@ -236,9 +230,9 @@ class PPU {
             let palette = MMU.shared.readValue(address: MMU.addressBgPalette)
             let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
             
-//            screenData[pixelIndex][currentScanline] = colour
-            let index = Int(pixelIndex) * Int(Self.pixelHeight) + Int(currentScanline)
-            screenData[index] = pixelData
+            let globalPixelIndex = Int(currentScanline) * Int(Self.pixelWidth) + Int(scanlinePixelIndex)
+            
+            screenData[globalPixelIndex] = pixelData
         }
     }
     
@@ -299,10 +293,10 @@ class PPU {
                     let globalXco = Int(xCo) &+ readjustedPixelIndex
                     
                     // Sanity check... cbf
-                    
-//                    screenData[globalXco][scanline] = colour
-                    let index = globalXco * Int(Self.pixelHeight) + Int(scanline)
+                    let index = Int(scanline) * Int(Self.pixelWidth) + Int(globalXco)
                     screenData[index] = pixelData
+                    
+                    print(pixelData)
                 }
             }
         }
