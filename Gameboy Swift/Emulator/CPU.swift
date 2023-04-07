@@ -86,10 +86,11 @@ class CPU {
     /// Execute the next instruction and returns the number of cycles it took.
     func executeInstruction() -> Int {
         
-//        print("--- PC: \(pc.hexString)")
+        print("--- PC: \(pc.hexString)")
         let opcode = fetchNextByte()
+        
         if opcode == 0xCB {
-//            print("Byte was 0xCB")
+            print("Byte was 0xCB")
             return execute16BitInstruction()
         } else {
             return execute8BitInstruction(opcode: opcode)
@@ -127,7 +128,7 @@ extension CPU {
     
     /// Execute the instruction from the opcode and returns the number of cycles it took.
     private func execute8BitInstruction(opcode: UInt8) -> Int {
-//        print("Excuting 8-Bit Instruction: \(opcode.hexString)")
+        print("Excuting 8-Bit Instruction: \(opcode.hexString)")
         switch opcode {
         case 0x00: return noOp()
         case 0x01: return loadImmediateShortIntoPair(&bc)
@@ -282,22 +283,22 @@ extension CPU {
         case 0x8E: return addWithCarryOperation(lhs: &a, address: hl)
         case 0x8F: return addWithCarryOperation(lhs: &a, rhs: a)
             
-        case 0x90: return addOperation(lhs: &a, rhs: b)
-        case 0x91: return addOperation(lhs: &a, rhs: c)
-        case 0x92: return addOperation(lhs: &a, rhs: d)
-        case 0x93: return addOperation(lhs: &a, rhs: e)
-        case 0x94: return addOperation(lhs: &a, rhs: h)
-        case 0x95: return addOperation(lhs: &a, rhs: l)
-        case 0x96: return addOperation(lhs: &a, address: hl)
-        case 0x97: return addOperation(lhs: &a, rhs: a)
-        case 0x98: return addWithCarryOperation(lhs: &a, rhs: b)
-        case 0x99: return addWithCarryOperation(lhs: &a, rhs: c)
-        case 0x9A: return addWithCarryOperation(lhs: &a, rhs: d)
-        case 0x9B: return addWithCarryOperation(lhs: &a, rhs: e)
-        case 0x9C: return addWithCarryOperation(lhs: &a, rhs: h)
-        case 0x9D: return addWithCarryOperation(lhs: &a, rhs: l)
-        case 0x9E: return addWithCarryOperation(lhs: &a, address: hl)
-        case 0x9F: return addWithCarryOperation(lhs: &a, rhs: a)
+        case 0x90: return subtractOperation(lhs: &a, rhs: b)
+        case 0x91: return subtractOperation(lhs: &a, rhs: c)
+        case 0x92: return subtractOperation(lhs: &a, rhs: d)
+        case 0x93: return subtractOperation(lhs: &a, rhs: e)
+        case 0x94: return subtractOperation(lhs: &a, rhs: h)
+        case 0x95: return subtractOperation(lhs: &a, rhs: l)
+        case 0x96: return subtractOperation(lhs: &a, address: hl)
+        case 0x97: return subtractOperation(lhs: &a, rhs: a)
+        case 0x98: return subtractWithCarryOperation(lhs: &a, rhs: b)
+        case 0x99: return subtractWithCarryOperation(lhs: &a, rhs: c)
+        case 0x9A: return subtractWithCarryOperation(lhs: &a, rhs: d)
+        case 0x9B: return subtractWithCarryOperation(lhs: &a, rhs: e)
+        case 0x9C: return subtractWithCarryOperation(lhs: &a, rhs: h)
+        case 0x9D: return subtractWithCarryOperation(lhs: &a, rhs: l)
+        case 0x9E: return subtractWithCarryOperation(lhs: &a, address: hl)
+        case 0x9F: return subtractWithCarryOperation(lhs: &a, rhs: a)
             
         case 0xA0: return logicalAndOperation(lhs: &a, rhs: b)
         case 0xA1: return logicalAndOperation(lhs: &a, rhs: c)
@@ -336,7 +337,7 @@ extension CPU {
         case 0xC0: return returnControl(condition: !zFlag)
         case 0xC1: return popStack(into: &bc)
         case 0xC2: return jumpToNextByteAddress(condition: !zFlag)
-        case 0xC3: return jump(address: fetchNextShort())
+        case 0xC3: return jumpToNextByteAddress()
         case 0xC4: return call(condition: !zFlag)
         case 0xC5: return pushOntoStack(address: bc)
         case 0xC6: return addNextByteToA()
@@ -680,7 +681,7 @@ extension CPU {
         return 4
     }
     
-    // 0xEA
+    // 0xEA, 0xFA
     private func loadShortAddressIntoA() -> Int {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
         a = MMU.shared.readValue(address: address)
@@ -1018,7 +1019,7 @@ extension CPU {
         return 4
     }
     
-    // 0xC2, 0xCA, 0xD2, 0xDA
+    // 0xC2, 0xC3, 0xCA, 0xD2, 0xDA
     private func jumpToNextByteAddress(condition: Bool = true) -> Int {
         let address = fetchNextShort()
         if condition {
@@ -1075,7 +1076,7 @@ extension CPU {
     
     private func execute16BitInstruction() -> Int {
         let opcode = fetchNextByte()
-//        print("Executing 8-Bit Instruction: \(opcode.hexString)")
+        print("Executing 8-Bit Instruction: \(opcode.hexString)")
         let registerId = opcode.lowNibble
         let usesHL = (registerId == 0x6) || (registerId == 0xE)
         
