@@ -20,41 +20,38 @@ class MasterClock {
     private static let framesPerSecond: UInt32 = 60
     
     private static let clockCycleHz: UInt32 = 4194304
-    private static let instructionClockCycleHz: UInt32 = clockCycleHz / 4
-    private static let clockCyclesPerFrame: UInt32 = instructionClockCycleHz / framesPerSecond
-    private static let timerInterval: TimeInterval = 1 / 60
+    private static let machineCyclesHz: UInt32 = clockCycleHz / 4
+    private static let machineCyclesCyclesPerFrame: UInt32 = machineCyclesHz / framesPerSecond
+    private static let timerInterval: TimeInterval = 1.0 / Double(framesPerSecond)
     
     private var divTimer: Int = 0
     private var timaTimer = 0 // Increments at configurable frequency
     
     func startTicking() {
-        let timerQueue = DispatchQueue(label: "timerQueue")
-        timerQueue.async {
-            self.timer = Timer.scheduledTimer(withTimeInterval: Self.timerInterval, repeats: true, block: { _ in
-                self.tick()
-            })
-            RunLoop.current.add(self.timer!, forMode: .common)
-            RunLoop.current.run()
+        self.timer = Timer.scheduledTimer(withTimeInterval: Self.timerInterval, repeats: true) { _ in
+            self.tick()
         }
     }
     
-    func stopTicking() {
+    func stopTicking() { 
         // TODO
     }
     
     func tick() {
-        var cycles = 0
-        while cycles < Self.clockCyclesPerFrame {
-//            print("cycles: \(cycles)")
-            cycles += CPU.shared.executeInstruction()
-
-            incrementDivRegister(cycles: cycles)
-            incrementTimaRegister(cycles: cycles)
-            PPU.shared.update(machineCycles: cycles)
-            CPU.shared.handleInterrupts()
+        timerQueue.async {
+            var cyclesThisFrame = 0
+            while cyclesThisFrame < Self.machineCyclesCyclesPerFrame {
+                let cycles = CPU.shared.executeInstruction()
+                
+                self.incrementDivRegister(cycles: cycles)
+                self.incrementTimaRegister(cycles: cycles)
+                PPU.shared.update(machineCycles: cycles)
+                CPU.shared.handleInterrupts()
+                
+                cyclesThisFrame += cycles
+            }
+            self.screenRenderDelegate?.renderScreen(screenData: PPU.shared.screenData)
         }
-        print("cycles! COMPLTETE")
-        screenRenderDelegate?.renderScreen(screenData: PPU.shared.screenData)
     }
     
     private func incrementDivRegister(cycles: Int) {
