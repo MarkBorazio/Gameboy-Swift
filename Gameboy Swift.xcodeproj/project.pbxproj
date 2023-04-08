@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		4D106A7E29CFFB5500EBAAC1 /* MasterClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D106A7D29CFFB5500EBAAC1 /* MasterClock.swift */; };
+		4DAEF4E329D98A1C00F41DFC /* GameBoyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DAEF4E229D98A1C00F41DFC /* GameBoyView.swift */; };
 		6001DE2826DA4A3500D399A7 /* PPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6001DE2726DA4A3500D399A7 /* PPU.swift */; };
 		6055A78126E48E5400987457 /* ColourPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6055A78026E48E5400987457 /* ColourPalette.swift */; };
 		605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605AFB9D26C7CA760040E608 /* ByteConvertible.swift */; };
