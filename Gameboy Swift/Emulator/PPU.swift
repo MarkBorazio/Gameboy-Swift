@@ -295,8 +295,6 @@ class PPU {
                     // Sanity check... cbf
                     let index = Int(scanline) * Int(Self.pixelWidth) + Int(globalXco)
                     screenData[index] = pixelData
-                    
-                    print(pixelData)
                 }
             }
         }
