@@ -87,11 +87,11 @@ class CPU {
     /// Execute the next instruction and returns the number of cycles it took.
     func executeInstruction() -> Int {
         
-        print("--- PC: \(pc.hexString)")
+//        print("--- PC: \(pc.hexString)")
         let opcode = fetchNextByte()
         
         if opcode == 0xCB {
-            print("Byte was 0xCB")
+//            print("Byte was 0xCB")
             return execute16BitInstruction()
         } else {
             return execute8BitInstruction(opcode: opcode)
@@ -129,7 +129,7 @@ extension CPU {
     
     /// Execute the instruction from the opcode and returns the number of cycles it took.
     private func execute8BitInstruction(opcode: UInt8) -> Int {
-        print("Excuting 8-Bit Instruction: \(opcode.hexString)")
+//        print("Excuting 8-Bit Instruction: \(opcode.hexString)")
         switch opcode {
         case 0x00: return noOp()
         case 0x01: return loadImmediateShortIntoPair(&bc)
@@ -156,7 +156,7 @@ extension CPU {
         case 0x15: return decrementRegister(&d)
         case 0x16: return loadImmediateByteIntoRegister(&d)
         case 0x17: return rotateALeftThroughCarry()
-        case 0x18: return unconditionalRelativeJump()
+        case 0x18: return relativeJump()
         case 0x19: return addToHL(de)
         case 0x1A: return loadValueIntoRegister(register: &a, address: de)
         case 0x1B: return decrementPair(&de)
@@ -165,7 +165,7 @@ extension CPU {
         case 0x1E: return loadImmediateByteIntoRegister(&e)
         case 0x1F: return rotateARightThroughCarry()
             
-        case 0x20: return relativeJumpIfZFlagCleared()
+        case 0x20: return relativeJump(condition: !zFlag)
         case 0x21: return loadImmediateShortIntoPair(&hl)
         case 0x22: return loadRegisterIntoAddress(address: hl, register: a, hlOperation: .increment)
         case 0x23: return incrementPair(&hl)
@@ -173,7 +173,7 @@ extension CPU {
         case 0x25: return decrementRegister(&h)
         case 0x26: return loadImmediateByteIntoRegister(&h)
         case 0x27: return decimalAdjustAfterAddition()
-        case 0x28: return relativeJumpIfZFlagSet()
+        case 0x28: return relativeJump(condition: zFlag)
         case 0x29: return addToHL(hl)
         case 0x2A: return loadValueIntoRegister(register: &a, address: hl, hlOperation: .increment)
         case 0x2B: return decrementPair(&hl)
@@ -182,7 +182,7 @@ extension CPU {
         case 0x2E: return loadImmediateByteIntoRegister(&l)
         case 0x2F: return flipBitsInA()
             
-        case 0x30: return relativeJumpIfCFlagCleared()
+        case 0x30: return relativeJump(condition: !cFlag)
         case 0x31: return loadImmediateShortIntoPair(&sp)
         case 0x32: return loadRegisterIntoAddress(address: hl, register: a, hlOperation: .decrement)
         case 0x33: return incrementPair(&sp)
@@ -190,7 +190,7 @@ extension CPU {
         case 0x35: return decrementValue(address: hl)
         case 0x36: return loadImmediateByteIntoAddress(hl)
         case 0x37: return setCFlag()
-        case 0x38: return relativeJumpIfCFlagSet()
+        case 0x38: return relativeJump(condition: cFlag)
         case 0x39: return addToHL(sp)
         case 0x3A: return loadValueIntoRegister(register: &a, address: hl, hlOperation: .decrement)
         case 0x3B: return decrementPair(&sp)
@@ -465,12 +465,6 @@ extension CPU {
         return 1
     }
     
-    /// 0x18
-    private func unconditionalRelativeJump() -> Int {
-        relativeJump(byte: fetchNextByte())
-        return 3
-    }
-    
     /// 0x1F
     private func rotateARightThroughCarry() -> Int {
         let previousCarry = cFlag
@@ -482,17 +476,6 @@ extension CPU {
         hFlag = false
         
         return 1
-    }
-    
-    /// 0x20
-    private func relativeJumpIfZFlagCleared() -> Int {
-        let operand = fetchNextByte()
-        if !zFlag {
-            relativeJump(byte: operand)
-            return 3
-        } else {
-            return 2
-        }
     }
 
     /// 0x27
@@ -524,17 +507,6 @@ extension CPU {
         return 1
     }
     
-    /// 0x28
-    private func relativeJumpIfZFlagSet() -> Int {
-        let operand = fetchNextByte()
-        if zFlag {
-            relativeJump(byte: operand)
-            return 3
-        } else {
-            return 2
-        }
-    }
-    
     /// 0x2F
     private func flipBitsInA() -> Int {
         a = ~a
@@ -542,17 +514,6 @@ extension CPU {
         hFlag = true
         
         return 1
-    }
-    
-    /// 0x30
-    private func relativeJumpIfCFlagCleared() -> Int {
-        let operand = fetchNextByte()
-        if !cFlag {
-            relativeJump(byte: operand)
-            return 3
-        } else {
-            return 2
-        }
     }
     
     /// 0x37
@@ -563,17 +524,6 @@ extension CPU {
         hFlag = false
         
         return 1
-    }
-    
-    /// 0x38
-    private func relativeJumpIfCFlagSet() -> Int {
-        let operand = fetchNextByte()
-        if cFlag {
-            relativeJump(byte: operand)
-            return 3
-        } else {
-            return 2
-        }
     }
     
     /// 0x3F
@@ -1036,6 +986,24 @@ extension CPU {
         pc = address
         return 1
     }
+     // 0x18, 0x20, 0x28, 0x30
+    private func relativeJump(condition: Bool = true) -> Int {
+        let operand = fetchNextByte()
+        if condition {
+            let offset = Int8(bitPattern: operand)
+            let offsetMagnitude = UInt16(offset.magnitude)
+            
+            let isPositive = offset >= 0
+            if isPositive {
+                pc &+= offsetMagnitude
+            } else {
+                pc &-= offsetMagnitude
+            }
+            return 3
+        } else {
+            return 2
+        }
+    }
     
     // 0xC4, 0xCC, 0xCD, 0xD4, 0xDC
     private func call(condition: Bool = true) -> Int {
@@ -1077,7 +1045,7 @@ extension CPU {
     
     private func execute16BitInstruction() -> Int {
         let opcode = fetchNextByte()
-        print("Executing 8-Bit Instruction: \(opcode.hexString)")
+//        print("Executing 8-Bit Instruction: \(opcode.hexString)")
         let registerId = opcode.lowNibble
         let usesHL = (registerId == 0x6) || (registerId == 0xE)
         
@@ -1234,18 +1202,6 @@ extension CPU {
         hFlag = halfCarryFlag
         cFlag = carryFlag
         return value
-    }
-    
-    private func relativeJump(byte: UInt8) {
-        let offset = Int8(bitPattern: byte)
-        let offsetMagnitude = UInt16(offset.magnitude)
-        
-        let isPositive = offset >= 0
-        if isPositive {
-            pc &+= offsetMagnitude
-        } else {
-            pc &-= offsetMagnitude
-        }
     }
 }
 
