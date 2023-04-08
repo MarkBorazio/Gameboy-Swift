@@ -12,50 +12,51 @@ class CPU {
     
     static let shared = CPU()
     
-    // Register Pairs
-    private var af: UInt16 = 0x00
-    private var bc: UInt16 = 0x00
-    private var de: UInt16 = 0x00
-    private var hl: UInt16 = 0x00
-    private var sp: UInt16 = 0x00
-    private var pc: UInt16 = 0x00
-    
     // Individual Registers
-    private var a: UInt8 {
-        get { af.asBytes()[1] }
-        set { af = UInt16(bytes: [f, newValue])! }
-    }
-    private var f: UInt8 {
-        get { af.asBytes()[0] }
-        set { af = UInt16(bytes: [newValue, a])! }
-    }
+    private var a: UInt8 = 0
+    private var f: UInt8 = 0
+    private var b: UInt8 = 0
+    private var c: UInt8 = 0
+    private var d: UInt8 = 0
+    private var e: UInt8 = 0
+    private var h: UInt8 = 0
+    private var l: UInt8 = 0
     
-    private var b: UInt8 {
-        get { bc.asBytes()[1] }
-        set { bc = UInt16(bytes: [c, newValue])! }
+    // Register Pairs
+    private var af: UInt16 {
+        get { UInt16(bytes: [f, a])! }
+        set {
+            let bytes = newValue.asBytes()
+            a = bytes[1]
+            f = bytes[0]
+        }
     }
-    private var c: UInt8 {
-        get { bc.asBytes()[0] }
-        set { bc = UInt16(bytes: [newValue, b])! }
+    private var bc: UInt16 {
+        get { UInt16(bytes: [c, b])! }
+        set {
+            let bytes = newValue.asBytes()
+            b = bytes[1]
+            c = bytes[0]
+        }
     }
-    
-    private var d: UInt8 {
-        get { de.asBytes()[1] }
-        set { de = UInt16(bytes: [e, newValue])! }
+    private var de: UInt16 {
+        get { UInt16(bytes: [e, d])! }
+        set {
+            let bytes = newValue.asBytes()
+            d = bytes[1]
+            e = bytes[0]
+        }
     }
-    private var e: UInt8 {
-        get { de.asBytes()[0] }
-        set { de = UInt16(bytes: [newValue, d])! }
+    private var hl: UInt16 {
+        get { UInt16(bytes: [l, h])! }
+        set {
+            let bytes = newValue.asBytes()
+            h = bytes[1]
+            l = bytes[0]
+        }
     }
-    
-    private var h: UInt8 {
-        get { hl.asBytes()[1] }
-        set { hl = UInt16(bytes: [l, newValue])! }
-    }
-    private var l: UInt8 {
-        get { hl.asBytes()[0] }
-        set { hl = UInt16(bytes: [newValue, h])! }
-    }
+    private var sp: UInt16 = 0
+    private var pc: UInt16 = 0
     
     // Register Flags
     private var zFlag: Bool {
