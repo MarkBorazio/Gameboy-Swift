@@ -9,6 +9,20 @@
 /* Begin PBXBuildFile section */
 		4D106A7E29CFFB5500EBAAC1 /* MasterClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D106A7D29CFFB5500EBAAC1 /* MasterClock.swift */; };
 		4DAEF4E329D98A1C00F41DFC /* GameBoyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DAEF4E229D98A1C00F41DFC /* GameBoyView.swift */; };
+		4DFF762E29E1258F00BE180F /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF762D29E1258F00BE180F /* README.md */; };
+		4DFF767E29E1269000BE180F /* cpu_instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765129E1269000BE180F /* cpu_instrs.gb */; };
+		4DFF767F29E1269000BE180F /* readme.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765229E1269000BE180F /* readme.txt */; };
+		4DFF768029E1269000BE180F /* 02-interrupts.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765429E1269000BE180F /* 02-interrupts.gb */; };
+		4DFF768129E1269000BE180F /* 07-jr,jp,call,ret,rst.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765529E1269000BE180F /* 07-jr,jp,call,ret,rst.gb */; };
+		4DFF768229E1269000BE180F /* 09-op r,r.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765629E1269000BE180F /* 09-op r,r.gb */; };
+		4DFF768329E1269000BE180F /* 11-op a,(hl).gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765729E1269000BE180F /* 11-op a,(hl).gb */; };
+		4DFF768429E1269000BE180F /* 10-bit ops.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765829E1269000BE180F /* 10-bit ops.gb */; };
+		4DFF768529E1269000BE180F /* 04-op r,imm.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765929E1269000BE180F /* 04-op r,imm.gb */; };
+		4DFF768629E1269000BE180F /* 01-special.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765A29E1269000BE180F /* 01-special.gb */; };
+		4DFF768729E1269000BE180F /* 06-ld r,r.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765B29E1269000BE180F /* 06-ld r,r.gb */; };
+		4DFF768829E1269000BE180F /* 03-op sp,hl.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765C29E1269000BE180F /* 03-op sp,hl.gb */; };
+		4DFF768929E1269000BE180F /* 08-misc instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765D29E1269000BE180F /* 08-misc instrs.gb */; };
+		4DFF768A29E1269000BE180F /* 05-op rp.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765E29E1269000BE180F /* 05-op rp.gb */; };
 		6001DE2826DA4A3500D399A7 /* PPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6001DE2726DA4A3500D399A7 /* PPU.swift */; };
 		6055A78126E48E5400987457 /* ColourPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6055A78026E48E5400987457 /* ColourPalette.swift */; };
 		605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605AFB9D26C7CA760040E608 /* ByteConvertible.swift */; };
@@ -46,6 +60,51 @@
 /* Begin PBXFileReference section */
 		4D106A7D29CFFB5500EBAAC1 /* MasterClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterClock.swift; sourceTree = "<group>"; };
 		4DAEF4E229D98A1C00F41DFC /* GameBoyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBoyView.swift; sourceTree = "<group>"; };
+		4DFF762D29E1258F00BE180F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
+		4DFF765129E1269000BE180F /* cpu_instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = cpu_instrs.gb; sourceTree = "<group>"; };
+		4DFF765229E1269000BE180F /* readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = readme.txt; sourceTree = "<group>"; };
+		4DFF765429E1269000BE180F /* 02-interrupts.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "02-interrupts.gb"; sourceTree = "<group>"; };
+		4DFF765529E1269000BE180F /* 07-jr,jp,call,ret,rst.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "07-jr,jp,call,ret,rst.gb"; sourceTree = "<group>"; };
+		4DFF765629E1269000BE180F /* 09-op r,r.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "09-op r,r.gb"; sourceTree = "<group>"; };
+		4DFF765729E1269000BE180F /* 11-op a,(hl).gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "11-op a,(hl).gb"; sourceTree = "<group>"; };
+		4DFF765829E1269000BE180F /* 10-bit ops.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "10-bit ops.gb"; sourceTree = "<group>"; };
+		4DFF765929E1269000BE180F /* 04-op r,imm.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "04-op r,imm.gb"; sourceTree = "<group>"; };
+		4DFF765A29E1269000BE180F /* 01-special.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "01-special.gb"; sourceTree = "<group>"; };
+		4DFF765B29E1269000BE180F /* 06-ld r,r.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "06-ld r,r.gb"; sourceTree = "<group>"; };
+		4DFF765C29E1269000BE180F /* 03-op sp,hl.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "03-op sp,hl.gb"; sourceTree = "<group>"; };
+		4DFF765D29E1269000BE180F /* 08-misc instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "08-misc instrs.gb"; sourceTree = "<group>"; };
+		4DFF765E29E1269000BE180F /* 05-op rp.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "05-op rp.gb"; sourceTree = "<group>"; };
+		4DFF768C29E1293200BE180F /* 03-op sp,hl.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "03-op sp,hl.s"; sourceTree = "<group>"; };
+		4DFF768D29E1293200BE180F /* 06-ld r,r.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "06-ld r,r.s"; sourceTree = "<group>"; };
+		4DFF768E29E1293200BE180F /* 10-bit ops.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "10-bit ops.s"; sourceTree = "<group>"; };
+		4DFF768F29E1293200BE180F /* 08-misc instrs.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "08-misc instrs.s"; sourceTree = "<group>"; };
+		4DFF769029E1293200BE180F /* linkfile */ = {isa = PBXFileReference; lastKnownFileType = text; path = linkfile; sourceTree = "<group>"; };
+		4DFF769129E1293200BE180F /* shell.inc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.pascal; path = shell.inc; sourceTree = "<group>"; };
+		4DFF769229E1293200BE180F /* 11-op a,(hl).s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "11-op a,(hl).s"; sourceTree = "<group>"; };
+		4DFF769329E1293200BE180F /* 05-op rp.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "05-op rp.s"; sourceTree = "<group>"; };
+		4DFF769429E1293200BE180F /* 01-special.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "01-special.s"; sourceTree = "<group>"; };
+		4DFF769629E1293200BE180F /* console.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = console.s; sourceTree = "<group>"; };
+		4DFF769729E1293200BE180F /* testing.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = testing.s; sourceTree = "<group>"; };
+		4DFF769829E1293200BE180F /* gb.inc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.pascal; path = gb.inc; sourceTree = "<group>"; };
+		4DFF769929E1293200BE180F /* numbers.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = numbers.s; sourceTree = "<group>"; };
+		4DFF769A29E1293200BE180F /* cpu_speed.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = cpu_speed.s; sourceTree = "<group>"; };
+		4DFF769B29E1293200BE180F /* macros.inc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.pascal; path = macros.inc; sourceTree = "<group>"; };
+		4DFF769C29E1293200BE180F /* crc.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = crc.s; sourceTree = "<group>"; };
+		4DFF769D29E1293200BE180F /* crc_fast.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = crc_fast.s; sourceTree = "<group>"; };
+		4DFF769E29E1293200BE180F /* checksums.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = checksums.s; sourceTree = "<group>"; };
+		4DFF769F29E1293200BE180F /* runtime.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = runtime.s; sourceTree = "<group>"; };
+		4DFF76A029E1293200BE180F /* instr_test.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = instr_test.s; sourceTree = "<group>"; };
+		4DFF76A129E1293200BE180F /* apu.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = apu.s; sourceTree = "<group>"; };
+		4DFF76A229E1293200BE180F /* delay.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = delay.s; sourceTree = "<group>"; };
+		4DFF76A329E1293200BE180F /* console.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = console.bin; sourceTree = "<group>"; };
+		4DFF76A429E1293200BE180F /* multi_custom.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = multi_custom.s; sourceTree = "<group>"; };
+		4DFF76A529E1293200BE180F /* build_rom.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = build_rom.s; sourceTree = "<group>"; };
+		4DFF76A629E1293200BE180F /* printing.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = printing.s; sourceTree = "<group>"; };
+		4DFF76A729E1293200BE180F /* build_gbs.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = build_gbs.s; sourceTree = "<group>"; };
+		4DFF76A829E1293200BE180F /* 07-jr,jp,call,ret,rst.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "07-jr,jp,call,ret,rst.s"; sourceTree = "<group>"; };
+		4DFF76A929E1293200BE180F /* 04-op r,imm.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "04-op r,imm.s"; sourceTree = "<group>"; };
+		4DFF76AA29E1293200BE180F /* 09-op r,r.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "09-op r,r.s"; sourceTree = "<group>"; };
+		4DFF76AB29E1293200BE180F /* 02-interrupts.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "02-interrupts.s"; sourceTree = "<group>"; };
 		6001DE2726DA4A3500D399A7 /* PPU.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PPU.swift; sourceTree = "<group>"; };
 		6055A78026E48E5400987457 /* ColourPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColourPalette.swift; sourceTree = "<group>"; };
 		605AFB9D26C7CA760040E608 /* ByteConvertible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteConvertible.swift; sourceTree = "<group>"; };
@@ -113,6 +172,89 @@
 			path = Configuration;
 			sourceTree = "<group>";
 		};
+		4DAEF4DD29D884C100F41DFC /* Test ROMS */ = {
+			isa = PBXGroup;
+			children = (
+				4DFF762F29E1269000BE180F /* Blargg CPU Instructions */,
+			);
+			path = "Test ROMS";
+			sourceTree = "<group>";
+		};
+		4DFF762F29E1269000BE180F /* Blargg CPU Instructions */ = {
+			isa = PBXGroup;
+			children = (
+				4DFF765229E1269000BE180F /* readme.txt */,
+				4DFF765129E1269000BE180F /* cpu_instrs.gb */,
+				4DFF765329E1269000BE180F /* individual */,
+				4DFF768B29E1293200BE180F /* source */,
+			);
+			path = "Blargg CPU Instructions";
+			sourceTree = "<group>";
+		};
+		4DFF765329E1269000BE180F /* individual */ = {
+			isa = PBXGroup;
+			children = (
+				4DFF765A29E1269000BE180F /* 01-special.gb */,
+				4DFF765429E1269000BE180F /* 02-interrupts.gb */,
+				4DFF765C29E1269000BE180F /* 03-op sp,hl.gb */,
+				4DFF765929E1269000BE180F /* 04-op r,imm.gb */,
+				4DFF765E29E1269000BE180F /* 05-op rp.gb */,
+				4DFF765B29E1269000BE180F /* 06-ld r,r.gb */,
+				4DFF765529E1269000BE180F /* 07-jr,jp,call,ret,rst.gb */,
+				4DFF765D29E1269000BE180F /* 08-misc instrs.gb */,
+				4DFF765629E1269000BE180F /* 09-op r,r.gb */,
+				4DFF765829E1269000BE180F /* 10-bit ops.gb */,
+				4DFF765729E1269000BE180F /* 11-op a,(hl).gb */,
+			);
+			path = individual;
+			sourceTree = "<group>";
+		};
+		4DFF768B29E1293200BE180F /* source */ = {
+			isa = PBXGroup;
+			children = (
+				4DFF769429E1293200BE180F /* 01-special.s */,
+				4DFF76AB29E1293200BE180F /* 02-interrupts.s */,
+				4DFF768C29E1293200BE180F /* 03-op sp,hl.s */,
+				4DFF76A929E1293200BE180F /* 04-op r,imm.s */,
+				4DFF769329E1293200BE180F /* 05-op rp.s */,
+				4DFF768D29E1293200BE180F /* 06-ld r,r.s */,
+				4DFF76A829E1293200BE180F /* 07-jr,jp,call,ret,rst.s */,
+				4DFF768F29E1293200BE180F /* 08-misc instrs.s */,
+				4DFF76AA29E1293200BE180F /* 09-op r,r.s */,
+				4DFF768E29E1293200BE180F /* 10-bit ops.s */,
+				4DFF769229E1293200BE180F /* 11-op a,(hl).s */,
+				4DFF769529E1293200BE180F /* common */,
+				4DFF769029E1293200BE180F /* linkfile */,
+				4DFF769129E1293200BE180F /* shell.inc */,
+			);
+			path = source;
+			sourceTree = "<group>";
+		};
+		4DFF769529E1293200BE180F /* common */ = {
+			isa = PBXGroup;
+			children = (
+				4DFF769629E1293200BE180F /* console.s */,
+				4DFF769729E1293200BE180F /* testing.s */,
+				4DFF769829E1293200BE180F /* gb.inc */,
+				4DFF769929E1293200BE180F /* numbers.s */,
+				4DFF769A29E1293200BE180F /* cpu_speed.s */,
+				4DFF769B29E1293200BE180F /* macros.inc */,
+				4DFF769C29E1293200BE180F /* crc.s */,
+				4DFF769D29E1293200BE180F /* crc_fast.s */,
+				4DFF769E29E1293200BE180F /* checksums.s */,
+				4DFF769F29E1293200BE180F /* runtime.s */,
+				4DFF76A029E1293200BE180F /* instr_test.s */,
+				4DFF76A129E1293200BE180F /* apu.s */,
+				4DFF76A229E1293200BE180F /* delay.s */,
+				4DFF76A329E1293200BE180F /* console.bin */,
+				4DFF76A429E1293200BE180F /* multi_custom.s */,
+				4DFF76A529E1293200BE180F /* build_rom.s */,
+				4DFF76A629E1293200BE180F /* printing.s */,
+				4DFF76A729E1293200BE180F /* build_gbs.s */,
+			);
+			path = common;
+			sourceTree = "<group>";
+		};
 		605AFB9C26C7CA690040E608 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
@@ -150,8 +292,10 @@
 				605AFB9C26C7CA690040E608 /* Utilities */,
 				6070725F26BFCF8E002E7119 /* Extensions */,
 				4D73306D29C73BF200E4E5E6 /* Configuration */,
+				4DAEF4DD29D884C100F41DFC /* Test ROMS */,
 				6070723026BFA814002E7119 /* Assets.xcassets */,
 				6070723626BFA815002E7119 /* Gameboy_Swift.entitlements */,
+				4DFF762D29E1258F00BE180F /* README.md */,
 			);
 			path = "Gameboy Swift";
 			sourceTree = "<group>";
@@ -300,7 +444,21 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4DFF768529E1269000BE180F /* 04-op r,imm.gb in Resources */,
+				4DFF768229E1269000BE180F /* 09-op r,r.gb in Resources */,
 				6070723126BFA814002E7119 /* Assets.xcassets in Resources */,
+				4DFF768629E1269000BE180F /* 01-special.gb in Resources */,
+				4DFF768129E1269000BE180F /* 07-jr,jp,call,ret,rst.gb in Resources */,
+				4DFF762E29E1258F00BE180F /* README.md in Resources */,
+				4DFF768829E1269000BE180F /* 03-op sp,hl.gb in Resources */,
+				4DFF768729E1269000BE180F /* 06-ld r,r.gb in Resources */,
+				4DFF767F29E1269000BE180F /* readme.txt in Resources */,
+				4DFF768429E1269000BE180F /* 10-bit ops.gb in Resources */,
+				4DFF768929E1269000BE180F /* 08-misc instrs.gb in Resources */,
+				4DFF768329E1269000BE180F /* 11-op a,(hl).gb in Resources */,
+				4DFF767E29E1269000BE180F /* cpu_instrs.gb in Resources */,
+				4DFF768A29E1269000BE180F /* 05-op rp.gb in Resources */,
+				4DFF768029E1269000BE180F /* 02-interrupts.gb in Resources */,
 				6070723426BFA814002E7119 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
