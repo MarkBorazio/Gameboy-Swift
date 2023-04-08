@@ -11,8 +11,8 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        let tetris = try! ROM(fileName: "Tetris")
-        MMU.shared.loadRom(rom: tetris)
+        let rom = try! ROM(fileName: "01-special")
+        MMU.shared.loadRom(rom: rom, skipBootRom: true)
         MasterClock.shared.startTicking()
     }
 

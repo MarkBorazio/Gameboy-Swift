@@ -18,7 +18,7 @@ class MMU {
         memoryMap = Array(repeating: 0, count: Self.memorySizeBytes)
     }
     
-    func loadRom(rom: ROM) {
+    func loadRom(rom: ROM, skipBootRom: Bool) {
         memoryMap = Array(repeating: 0, count: Self.memorySizeBytes)
         self.rom = rom
         
@@ -33,8 +33,43 @@ class MMU {
             memoryMap[index] = rom.data[index]
         }
         
-        // Overlay BIOS/Bootroom at beginning
+        // Overlay BIOS/BootRom at beginning
         memoryMap.replaceSubrange(0..<Self.bios.count, with: Self.bios)
+        
+        if skipBootRom {
+            CPU.shared.skipBootRom()
+            memoryMap[0xFF05] = 0x00
+            memoryMap[0xFF06] = 0x00
+            memoryMap[0xFF07] = 0x00
+            memoryMap[0xFF10] = 0x80
+            memoryMap[0xFF11] = 0xBF
+            memoryMap[0xFF12] = 0xF3
+            memoryMap[0xFF14] = 0xBF
+            memoryMap[0xFF16] = 0x3F
+            memoryMap[0xFF17] = 0x00
+            memoryMap[0xFF19] = 0xBF
+            memoryMap[0xFF1A] = 0x7F
+            memoryMap[0xFF1B] = 0xFF
+            memoryMap[0xFF1C] = 0x9F
+            memoryMap[0xFF1E] = 0xBF
+            memoryMap[0xFF20] = 0xFF
+            memoryMap[0xFF21] = 0x00
+            memoryMap[0xFF22] = 0x00
+            memoryMap[0xFF23] = 0xBF
+            memoryMap[0xFF24] = 0x77
+            memoryMap[0xFF25] = 0xF3
+            memoryMap[0xFF26] = 0xF1
+            memoryMap[0xFF40] = 0x91
+            memoryMap[0xFF42] = 0x00
+            memoryMap[0xFF43] = 0x00
+            memoryMap[0xFF45] = 0x00
+            memoryMap[0xFF47] = 0xFC
+            memoryMap[0xFF48] = 0xFF
+            memoryMap[0xFF49] = 0xFF
+            memoryMap[0xFF4A] = 0x00
+            memoryMap[0xFF4B] = 0x00
+            memoryMap[0xFFFF] = 0x00
+        }
     }
     
     func readValue(address: UInt16) -> UInt8 {
@@ -269,6 +304,7 @@ extension MMU {
 
 extension MMU {
     
+    // BootRom
     private static let bios: [UInt8] = [ // 256 Bytes long
         0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB, 0x21, 0x26, 0xFF, 0x0E,
         0x11, 0x3E, 0x80, 0x32, 0xE2, 0x0C, 0x3E, 0xF3, 0xE2, 0x32, 0x3E, 0x77, 0x77, 0x3E, 0xFC, 0xE0,
