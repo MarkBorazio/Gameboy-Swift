@@ -23,6 +23,7 @@
 		4DFF768829E1269000BE180F /* 03-op sp,hl.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765C29E1269000BE180F /* 03-op sp,hl.gb */; };
 		4DFF768929E1269000BE180F /* 08-misc instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765D29E1269000BE180F /* 08-misc instrs.gb */; };
 		4DFF768A29E1269000BE180F /* 05-op rp.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765E29E1269000BE180F /* 05-op rp.gb */; };
+		4DFF76AD29E17CB200BE180F /* FixedWidthInteger+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFF76AC29E17CB200BE180F /* FixedWidthInteger+Extensions.swift */; };
 		6001DE2826DA4A3500D399A7 /* PPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6001DE2726DA4A3500D399A7 /* PPU.swift */; };
 		6055A78126E48E5400987457 /* ColourPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6055A78026E48E5400987457 /* ColourPalette.swift */; };
 		605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605AFB9D26C7CA760040E608 /* ByteConvertible.swift */; };
@@ -105,6 +106,7 @@
 		4DFF76A929E1293200BE180F /* 04-op r,imm.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "04-op r,imm.s"; sourceTree = "<group>"; };
 		4DFF76AA29E1293200BE180F /* 09-op r,r.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "09-op r,r.s"; sourceTree = "<group>"; };
 		4DFF76AB29E1293200BE180F /* 02-interrupts.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "02-interrupts.s"; sourceTree = "<group>"; };
+		4DFF76AC29E17CB200BE180F /* FixedWidthInteger+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FixedWidthInteger+Extensions.swift"; sourceTree = "<group>"; };
 		6001DE2726DA4A3500D399A7 /* PPU.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PPU.swift; sourceTree = "<group>"; };
 		6055A78026E48E5400987457 /* ColourPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColourPalette.swift; sourceTree = "<group>"; };
 		605AFB9D26C7CA760040E608 /* ByteConvertible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteConvertible.swift; sourceTree = "<group>"; };
@@ -336,6 +338,7 @@
 			children = (
 				6070726026BFCFA5002E7119 /* Array+UIntSubscript.swift */,
 				605AFBA526C810680040E608 /* BinaryInteger+Extensions.swift */,
+				4DFF76AC29E17CB200BE180F /* FixedWidthInteger+Extensions.swift */,
 				605AFBAD26C8FE580040E608 /* UInt8+Extensions.swift */,
 			);
 			path = Extensions;
@@ -490,6 +493,7 @@
 				6070726126BFCFA5002E7119 /* Array+UIntSubscript.swift in Sources */,
 				4DAEF4E329D98A1C00F41DFC /* GameBoyView.swift in Sources */,
 				6070722F26BFA814002E7119 /* ViewController.swift in Sources */,
+				4DFF76AD29E17CB200BE180F /* FixedWidthInteger+Extensions.swift in Sources */,
 				6001DE2826DA4A3500D399A7 /* PPU.swift in Sources */,
 				605AFBAE26C8FE580040E608 /* UInt8+Extensions.swift in Sources */,
 				6070722D26BFA814002E7119 /* AppDelegate.swift in Sources */,
