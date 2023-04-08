@@ -24,7 +24,7 @@ extension BinaryInteger {
         self = value
     }
     
-    public func asBytes() -> [UInt8] {
+    public func asBytes(endianness: Endianness = .littleEndian) -> [UInt8] {
         let width = Self.byteWidth
         var bytes = [UInt8](repeating: 0, count: width)
 
@@ -34,7 +34,8 @@ extension BinaryInteger {
             }
         }
 
-        return bytes
+        let adjustedBytes = endianness.matchesPlatform ? bytes : bytes.reversed()
+        return adjustedBytes
     }
 }
 
