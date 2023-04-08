@@ -276,39 +276,39 @@ extension CPU {
         case 0x7E: return loadValueIntoRegister(register: &a, address: hl)
         case 0x7F: return loadByteIntoRegister(lhs: &a, rhs: a)
             
-        case 0x80: return addOperation(lhs: &a, rhs: b)
-        case 0x81: return addOperation(lhs: &a, rhs: c)
-        case 0x82: return addOperation(lhs: &a, rhs: d)
-        case 0x83: return addOperation(lhs: &a, rhs: e)
-        case 0x84: return addOperation(lhs: &a, rhs: h)
-        case 0x85: return addOperation(lhs: &a, rhs: l)
-        case 0x86: return addOperation(lhs: &a, address: hl)
-        case 0x87: return addOperation(lhs: &a, rhs: a)
-        case 0x88: return addWithCarryOperation(lhs: &a, rhs: b)
-        case 0x89: return addWithCarryOperation(lhs: &a, rhs: c)
-        case 0x8A: return addWithCarryOperation(lhs: &a, rhs: d)
-        case 0x8B: return addWithCarryOperation(lhs: &a, rhs: e)
-        case 0x8C: return addWithCarryOperation(lhs: &a, rhs: h)
-        case 0x8D: return addWithCarryOperation(lhs: &a, rhs: l)
-        case 0x8E: return addWithCarryOperation(lhs: &a, address: hl)
-        case 0x8F: return addWithCarryOperation(lhs: &a, rhs: a)
+        case 0x80: return addOperation(lhs: &a, rhs: b, carry: false)
+        case 0x81: return addOperation(lhs: &a, rhs: c, carry: false)
+        case 0x82: return addOperation(lhs: &a, rhs: d, carry: false)
+        case 0x83: return addOperation(lhs: &a, rhs: e, carry: false)
+        case 0x84: return addOperation(lhs: &a, rhs: h, carry: false)
+        case 0x85: return addOperation(lhs: &a, rhs: l, carry: false)
+        case 0x86: return addOperation(lhs: &a, address: hl, carry: false)
+        case 0x87: return addOperation(lhs: &a, rhs: a, carry: false)
+        case 0x88: return addOperation(lhs: &a, rhs: b, carry: cFlag)
+        case 0x89: return addOperation(lhs: &a, rhs: c, carry: cFlag)
+        case 0x8A: return addOperation(lhs: &a, rhs: d, carry: cFlag)
+        case 0x8B: return addOperation(lhs: &a, rhs: e, carry: cFlag)
+        case 0x8C: return addOperation(lhs: &a, rhs: h, carry: cFlag)
+        case 0x8D: return addOperation(lhs: &a, rhs: l, carry: cFlag)
+        case 0x8E: return addOperation(lhs: &a, address: hl, carry: cFlag)
+        case 0x8F: return addOperation(lhs: &a, rhs: a, carry: cFlag)
             
-        case 0x90: return subtractOperation(lhs: &a, rhs: b)
-        case 0x91: return subtractOperation(lhs: &a, rhs: c)
-        case 0x92: return subtractOperation(lhs: &a, rhs: d)
-        case 0x93: return subtractOperation(lhs: &a, rhs: e)
-        case 0x94: return subtractOperation(lhs: &a, rhs: h)
-        case 0x95: return subtractOperation(lhs: &a, rhs: l)
-        case 0x96: return subtractOperation(lhs: &a, address: hl)
-        case 0x97: return subtractOperation(lhs: &a, rhs: a)
-        case 0x98: return subtractWithCarryOperation(lhs: &a, rhs: b)
-        case 0x99: return subtractWithCarryOperation(lhs: &a, rhs: c)
-        case 0x9A: return subtractWithCarryOperation(lhs: &a, rhs: d)
-        case 0x9B: return subtractWithCarryOperation(lhs: &a, rhs: e)
-        case 0x9C: return subtractWithCarryOperation(lhs: &a, rhs: h)
-        case 0x9D: return subtractWithCarryOperation(lhs: &a, rhs: l)
-        case 0x9E: return subtractWithCarryOperation(lhs: &a, address: hl)
-        case 0x9F: return subtractWithCarryOperation(lhs: &a, rhs: a)
+        case 0x90: return subtractOperation(lhs: &a, rhs: b, carry: false)
+        case 0x91: return subtractOperation(lhs: &a, rhs: c, carry: false)
+        case 0x92: return subtractOperation(lhs: &a, rhs: d, carry: false)
+        case 0x93: return subtractOperation(lhs: &a, rhs: e, carry: false)
+        case 0x94: return subtractOperation(lhs: &a, rhs: h, carry: false)
+        case 0x95: return subtractOperation(lhs: &a, rhs: l, carry: false)
+        case 0x96: return subtractOperation(lhs: &a, address: hl, carry: false)
+        case 0x97: return subtractOperation(lhs: &a, rhs: a, carry: false)
+        case 0x98: return subtractOperation(lhs: &a, rhs: b, carry: cFlag)
+        case 0x99: return subtractOperation(lhs: &a, rhs: c, carry: cFlag)
+        case 0x9A: return subtractOperation(lhs: &a, rhs: d, carry: cFlag)
+        case 0x9B: return subtractOperation(lhs: &a, rhs: e, carry: cFlag)
+        case 0x9C: return subtractOperation(lhs: &a, rhs: h, carry: cFlag)
+        case 0x9D: return subtractOperation(lhs: &a, rhs: l, carry: cFlag)
+        case 0x9E: return subtractOperation(lhs: &a, address: hl, carry: cFlag)
+        case 0x9F: return subtractOperation(lhs: &a, rhs: a, carry: cFlag)
             
         case 0xA0: return logicalAndOperation(lhs: &a, rhs: b)
         case 0xA1: return logicalAndOperation(lhs: &a, rhs: c)
@@ -350,7 +350,7 @@ extension CPU {
         case 0xC3: return jumpToNextByteAddress()
         case 0xC4: return call(condition: !zFlag)
         case 0xC5: return pushOntoStack(address: bc)
-        case 0xC6: return addNextByteToA()
+        case 0xC6: return addNextByteToA(carry: false)
         case 0xC7: return restart(offset: 0)
         case 0xC8: return returnControl(condition: zFlag)
         case 0xC9: return returnControl()
@@ -358,7 +358,7 @@ extension CPU {
         case 0xCB: break
         case 0xCC: return call(condition: zFlag)
         case 0xCD: return call()
-        case 0xCE: return addNextByteWithCarryToA()
+        case 0xCE: return addNextByteToA(carry: cFlag)
         case 0xCF: return restart(offset: 1)
             
         case 0xD0: return returnControl(condition: !cFlag)
@@ -367,7 +367,7 @@ extension CPU {
         case 0xD3: break
         case 0xD4: return call(condition: !cFlag)
         case 0xD5: return pushOntoStack(address: de)
-        case 0xD6: return subtractNextByteFromA()
+        case 0xD6: return subtractNextByteFromA(carry: false)
         case 0xD7: return restart(offset: 2)
         case 0xD8: return returnControl(condition: cFlag)
         case 0xD9: return returnControlEnablingInterrupt()
@@ -375,7 +375,7 @@ extension CPU {
         case 0xDB: break
         case 0xDC: return call(condition: cFlag)
         case 0xDD: break
-        case 0xDE: return subtractNextByteWithCarryFromA()
+        case 0xDE: return subtractNextByteFromA(carry: cFlag)
         case 0xDF: return restart(offset: 3)
             
         case 0xE0: return highPageLoadAIntoNextByteAddress()
@@ -706,17 +706,10 @@ extension CPU {
         return 4
     }
     
-    // 0xC6
-    private func addNextByteToA() -> Int {
-        _ = addOperation(lhs: &a, rhs: fetchNextByte())
-        return 2
-    }
-    
-    // 0xCE
-    private func addNextByteWithCarryToA() -> Int {
-        let carryBit: UInt8 = cFlag ? 1 : 0
-        let byte = fetchNextByte() &+ carryBit
-        _ = addOperation(lhs: &a, rhs: byte)
+    // 0xC6, 0xCE
+    private func addNextByteToA(carry: Bool) -> Int {
+        let byte = fetchNextByte()
+        _ = addOperation(lhs: &a, rhs: byte, carry: carry)
         return 2
     }
         
@@ -724,8 +717,8 @@ extension CPU {
     private func addToHL(_ value: UInt16) -> Int {
         let oldZflag = zFlag
         // Ref: https://stackoverflow.com/a/57981912
-        _ = addOperation(lhs: &l, rhs: value.asBytes()[0])
-        _ = addWithCarryOperation(lhs: &h, rhs: value.asBytes()[1])
+        _ = addOperation(lhs: &l, rhs: value.asBytes()[0], carry: false)
+        _ = addOperation(lhs: &h, rhs: value.asBytes()[1], carry: cFlag)
         
         // Apparently the Z Flag is unnaffected by this operation, so we set it back to it's original value
         // from before the two operations.
@@ -734,90 +727,56 @@ extension CPU {
         return 2
     }
     
-    
-    // 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x87
-    private func addOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
-        let (value, carry) = lhs.addingReportingOverflow(rhs)
-        let (_, halfCarry) = lhs.addingReportingHalfCarry(rhs)
+    // 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8F
+    private func addOperation(lhs: inout UInt8, rhs: UInt8, carry: Bool) -> Int {
+        let carryValue: UInt8 = carry ? 1 : 0
+        let (value, newCarry) = lhs.addingMultipleReportingOverflow(rhs, carryValue)
+        let halfCarry = calculateHalfCarryFromAddition(lhs: lhs, rhs: rhs, carry: carry)
         
         lhs = value
         
         zFlag = value == 0
         nFlag = false
         hFlag = halfCarry
-        cFlag = carry
+        cFlag = newCarry
         
         return 1
     }
     
-    // 0x86
-    private func addOperation(lhs: inout UInt8, address: UInt16) -> Int {
+    // 0x86, 0x8E
+    private func addOperation(lhs: inout UInt8, address: UInt16, carry: Bool) -> Int {
         let rhs = MMU.shared.readValue(address: address)
-        _ = addOperation(lhs: &lhs, rhs: rhs)
+        _ = addOperation(lhs: &lhs, rhs: rhs, carry: carry)
         return 2
     }
     
-    // 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8F
-    private func addWithCarryOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
-        let carryBit: UInt8 = cFlag ? 1 : 0
-        let value = rhs &+ carryBit
-        return addOperation(lhs: &lhs, rhs: value)
-    }
-    
-    // 0x8E
-    private func addWithCarryOperation(lhs: inout UInt8, address: UInt16) -> Int {
-        let rhs = MMU.shared.readValue(address: address)
-        _ = addWithCarryOperation(lhs: &lhs, rhs: rhs)
+    // 0xD6, 0xDE
+    private func subtractNextByteFromA(carry: Bool) -> Int {
+        let byte = fetchNextByte()
+        _ = subtractOperation(lhs: &a, rhs: byte, carry: carry)
         return 2
     }
     
-    // 0xD6
-    private func subtractNextByteFromA() -> Int {
-        _ = subtractOperation(lhs: &a, rhs: fetchNextByte())
-        return 2
-    }
-    
-    // 0xDE
-    private func subtractNextByteWithCarryFromA() -> Int {
-        let carryBit: UInt8 = cFlag ? 1 : 0
-        let byte = fetchNextByte() &+ carryBit
-        _ = subtractOperation(lhs: &a, rhs: byte)
-        return 2
-    }
-    
-    // 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x97
-    private func subtractOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
-        let (value, carry) = lhs.subtractingReportingOverflow(rhs)
-        let (_, halfCarry) = lhs.subtractingReportingHalfCarry(rhs)
+    // 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9F
+    private func subtractOperation(lhs: inout UInt8, rhs: UInt8, carry: Bool) -> Int {
+        let carryValue: UInt8 = carry ? 1 : 0
+        let (value, newCarry) = lhs.subtractingMultipleReportingOverflow(rhs, carryValue)
+        let halfCarry = calculateHalfCarryFromSubtraction(lhs: lhs, rhs: rhs, carry: carry)
         
         lhs = value
         
         zFlag = value == 0
         nFlag = true
         hFlag = halfCarry
-        cFlag = carry
+        cFlag = newCarry
         
         return 1
     }
     
-    // 0x96
-    private func subtractOperation(lhs: inout UInt8, address: UInt16) -> Int {
+    // 0x96, 0x9E
+    private func subtractOperation(lhs: inout UInt8, address: UInt16, carry: Bool) -> Int {
         let rhs = MMU.shared.readValue(address: address)
-        _ = subtractOperation(lhs: &lhs, rhs: rhs)
-        return 2
-    }
-    
-    // 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9F
-    private func subtractWithCarryOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
-        let carryBit: UInt8 = cFlag ? 1 : 0
-        let value = rhs &+ carryBit
-        return subtractOperation(lhs: &lhs, rhs: value)
-    }
-    
-    // 0x9E
-    private func subtractWithCarryOperation(lhs: inout UInt8, address: UInt16) -> Int {
-        let rhs = MMU.shared.readValue(address: address)
-        _ = subtractWithCarryOperation(lhs: &lhs, rhs: rhs)
+        _ = subtractOperation(lhs: &lhs, rhs: rhs, carry: carry)
         return 2
     }
     
@@ -825,6 +784,8 @@ extension CPU {
     
     // 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA7
     private func logicalAndOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
+        
+        
         let value = lhs & rhs
         
         lhs = value
@@ -910,7 +871,7 @@ extension CPU {
     // 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBF
     private func compare(lhs: UInt8, rhs: UInt8) -> Int {
         let (comparison, carry) = lhs.subtractingReportingOverflow(rhs)
-        let (_, halfCarry) = lhs.subtractingReportingHalfCarry(rhs)
+        let halfCarry = calculateHalfCarryFromSubtraction(lhs: lhs, rhs: rhs, carry: false)
         
         zFlag = comparison == 0
         nFlag = true
@@ -1160,7 +1121,8 @@ extension CPU {
 
     
     private func incrementOperation(_ value: UInt8) -> UInt8 {
-        let (incrementedValue, halfCarry) = value.addingReportingHalfCarry(1)
+        let incrementedValue = value &+ 1
+        let halfCarry = calculateHalfCarryFromAddition(lhs: value, rhs: 1, carry: false)
         
         zFlag = incrementedValue == 0
         nFlag = false
@@ -1170,7 +1132,8 @@ extension CPU {
     }
     
     private func decrementOperation(_ value: UInt8) -> UInt8 {
-        let (decrementedValue, halfCarry) = value.subtractingReportingHalfCarry(1)
+        let decrementedValue = value &- 1
+        let halfCarry = calculateHalfCarryFromSubtraction(lhs: value, rhs: 1, carry: false)
 
         zFlag = decrementedValue == 0
         nFlag = true
@@ -1188,7 +1151,7 @@ extension CPU {
         let carryFlag: Bool
         if isPositive {
             let (lowerByte, carry) = lhs.asBytes()[0].addingReportingOverflow(magnitude)
-            let (_, halfCarry) = lhs.asBytes()[0].addingReportingHalfCarry(magnitude)
+            let halfCarry = calculateHalfCarryFromAddition(lhs: lhs.asBytes()[0], rhs: magnitude, carry: false)
             let carryBit: UInt8 = carry ? 1 : 0
             let upperByte = lhs.asBytes()[1] &+ carryBit
             
@@ -1197,7 +1160,7 @@ extension CPU {
             carryFlag = carry
         } else {
             let (lowerByte, carry) = lhs.asBytes()[0].subtractingReportingOverflow(magnitude)
-            let (_, halfCarry) = lhs.asBytes()[0].subtractingReportingHalfCarry(magnitude)
+            let halfCarry = calculateHalfCarryFromSubtraction(lhs: lhs.asBytes()[0], rhs: magnitude, carry: false)
             let carryBit: UInt8 = carry ? 1 : 0
             let upperByte = lhs.asBytes()[1] &- carryBit
             
@@ -1211,6 +1174,19 @@ extension CPU {
         hFlag = halfCarryFlag
         cFlag = carryFlag
         return value
+    }
+    
+    private func calculateHalfCarryFromAddition(lhs: UInt8, rhs: UInt8, carry: Bool) -> Bool {
+        let carryValue: UInt8 = carry ? 1 : 0
+        let result = (lhs.lowNibble &+ rhs.lowNibble &+ carryValue) & 0x10
+        return result == 0x10
+    }
+     
+    // Ref: https://www.reddit.com/r/EmuDev/comments/knm196/gameboy_half_carry_flag_during_subtract_operation/
+    private func calculateHalfCarryFromSubtraction(lhs: UInt8, rhs: UInt8, carry: Bool) -> Bool {
+        let carryValue: UInt8 = carry ? 1 : 0
+        let result = (lhs.lowNibble &- rhs.lowNibble &- carryValue) & 0x10
+        return result == 0x10
     }
 }
 
@@ -1227,6 +1203,7 @@ extension CPU {
         case decrement
     }
     
+
     private func executeHLOperation(_ operation: HLOperation) {
         switch operation {
         case .nothing: break
