@@ -33,9 +33,6 @@ class MMU {
             memoryMap[index] = rom.data[index]
         }
         
-        // Overlay BIOS/BootRom at beginning
-        memoryMap.replaceSubrange(0..<Self.bios.count, with: Self.bios)
-        
         if skipBootRom {
             CPU.shared.skipBootRom()
             memoryMap[0xFF05] = 0x00
@@ -69,6 +66,9 @@ class MMU {
             memoryMap[0xFF4A] = 0x00
             memoryMap[0xFF4B] = 0x00
             memoryMap[0xFFFF] = 0x00
+        } else {
+            // Overlay BIOS/BootRom at beginning
+            memoryMap.replaceSubrange(0..<Self.bios.count, with: Self.bios)
         }
     }
     
