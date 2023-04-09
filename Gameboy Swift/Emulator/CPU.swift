@@ -575,7 +575,7 @@ extension CPU {
     
     // 0x02, 0x12, 0x22, 0x32, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x77
     private func loadRegisterIntoAddress(address: UInt16, register: UInt8, hlOperation: HLOperation = .nothing) -> Int {
-        MMU.shared.writeValue(a, address: address)
+        MMU.shared.writeValue(register, address: address)
         executeHLOperation(hlOperation)
         return 2
     }
@@ -1151,37 +1151,21 @@ extension CPU {
         return decrementedValue
     }
     
+    // Ref: https://stackoverflow.com/a/57978555
     private func addOperation(lhs: UInt16, rhs: Int8) -> UInt16 {
-        let isPositive = rhs >= 0
-        let magnitude = rhs.magnitude
+        // Carry and Half-Carry flags are calculated on lower byte as if it were an 8-bit operation.
+        let unsignedRhs = UInt8(bitPattern: rhs)
+        let (_, carry) = lhs.asBytes()[0].addingReportingOverflow(unsignedRhs)
+        let halfCarry = calculateHalfCarryFromAddition(lhs: lhs.asBytes()[0], rhs: unsignedRhs, carry: false)
         
-        let value: UInt16
-        let halfCarryFlag: Bool
-        let carryFlag: Bool
-        if isPositive {
-            let (lowerByte, carry) = lhs.asBytes()[0].addingReportingOverflow(magnitude)
-            let halfCarry = calculateHalfCarryFromAddition(lhs: lhs.asBytes()[0], rhs: magnitude, carry: false)
-            let carryBit: UInt8 = carry ? 1 : 0
-            let upperByte = lhs.asBytes()[1] &+ carryBit
-            
-            value = UInt16(bytes: [lowerByte, upperByte])!
-            halfCarryFlag = halfCarry
-            carryFlag = carry
-        } else {
-            let (lowerByte, carry) = lhs.asBytes()[0].subtractingReportingOverflow(magnitude)
-            let halfCarry = calculateHalfCarryFromSubtraction(lhs: lhs.asBytes()[0], rhs: magnitude, carry: false)
-            let carryBit: UInt8 = carry ? 1 : 0
-            let upperByte = lhs.asBytes()[1] &- carryBit
-            
-            value = UInt16(bytes: [lowerByte, upperByte])!
-            halfCarryFlag = halfCarry
-            carryFlag = carry
-        }
+        // Flag are calculated by this point, so we calculate result normally
+        let value = lhs &+ UInt16(bitPattern: Int16(rhs))
         
         zFlag = false
         nFlag = false
-        hFlag = halfCarryFlag
-        cFlag = carryFlag
+        hFlag = halfCarry
+        cFlag = carry
+        
         return value
     }
     

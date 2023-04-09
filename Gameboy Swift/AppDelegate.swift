@@ -11,21 +11,21 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
     
     let testRoms: [String] = [
-        "01-special", // Fails at DAA
+        "01-special", // Passes
         "02-interrupts", // Timer doesn't work
-        "03-op sp,hl", // Fails
-        "04-op r,imm", // Fails
-        "05-op rp", // Fails
-        "06-ld r,r", // Fails
-        "07-jr,jp,call,ret,rst", // Fails
-        "08-misc instrs", // Fails
-        "09-op r,r", // Fails (after a while)
-        "10-bit ops", // Fails (after a while)
-        "11-op a,(hl)" // Fails (after a while)
+        "03-op sp,hl", // Passes
+        "04-op r,imm", // Passes
+        "05-op rp", // Passes
+        "06-ld r,r", // Passes
+        "07-jr,jp,call,ret,rst", // Passes
+        "08-misc instrs", // Passes
+        "09-op r,r", // Passes
+        "10-bit ops", // Passes
+        "11-op a,(hl)" // Passes
     ]
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        let rom = try! ROM(fileName: testRoms[5])
+        let rom = try! ROM(fileName: testRoms[1])
         MMU.shared.loadRom(rom: rom, skipBootRom: true)
         MasterClock.shared.startTicking()
     }
