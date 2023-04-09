@@ -14,7 +14,9 @@ class CPU {
     
     // Individual Registers
     private var a: UInt8 = 0
-    private var f: UInt8 = 0
+    private var f: UInt8 = 0 {
+        didSet { f &= 0xF0 } // Low nibble must always be all zeroes
+    }
     private var b: UInt8 = 0
     private var c: UInt8 = 0
     private var d: UInt8 = 0
@@ -97,6 +99,8 @@ class CPU {
             return execute8BitInstruction(opcode: opcode)
         }
     }
+    
+    
     
     func handleInterrupts() {
         if imeFlag { // Is master interrupt enable flag set?
@@ -494,13 +498,13 @@ extension CPU {
         // https://binji.github.io/posts/pokegb/
         
         var bcdCorrection: UInt8 = 0
-        var carry = false
+        var shouldSetCarry = false
         if (hFlag || (!nFlag && a.lowNibble > 0x9)) {
-            bcdCorrection |= 0x6
+            bcdCorrection &+= 0x6
         }
         if (cFlag || (!nFlag && a > 0x99)) {
-            bcdCorrection |= 0x60
-            carry = true
+            bcdCorrection &+= 0x60
+            shouldSetCarry = true
         }
         
         if nFlag {
@@ -511,7 +515,9 @@ extension CPU {
         
         zFlag = a == 0
         hFlag = false
-        cFlag = carry
+        if shouldSetCarry { // TODO: Determine if we should ever set to false or not
+            cFlag = true
+        }
         
         return 1
     }
@@ -715,15 +721,20 @@ extension CPU {
         
     // 0x09, 0x19, 0x29, 0x39
     private func addToHL(_ value: UInt16) -> Int {
-        let oldZflag = zFlag
         // Ref: https://stackoverflow.com/a/57981912
-        _ = addOperation(lhs: &l, rhs: value.asBytes()[0], carry: false)
-        _ = addOperation(lhs: &h, rhs: value.asBytes()[1], carry: cFlag)
         
-        // Apparently the Z Flag is unnaffected by this operation, so we set it back to it's original value
-        // from before the two operations.
-        // That's weird though since it kinda goes against what the reference above suggests happens.
-        zFlag = oldZflag
+        // Do separate 8-bit additions on both bytes to ensure that the approriate flags are set.
+        // Then, discard these results and do a standard 16-bit addition on `hl` ensure that we overflow correctly.
+        let oldZflag = zFlag
+        var discardableH = h
+        var discardableL = l
+        _ = addOperation(lhs: &discardableL, rhs: value.asBytes()[0], carry: false)
+        _ = addOperation(lhs: &discardableH, rhs: value.asBytes()[1], carry: cFlag)
+        
+        // Update remaining values
+        zFlag = oldZflag // ZFlag state remains unchanged
+        hl &+= value
+        
         return 2
     }
     
@@ -784,8 +795,6 @@ extension CPU {
     
     // 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA7
     private func logicalAndOperation(lhs: inout UInt8, rhs: UInt8) -> Int {
-        
-        
         let value = lhs & rhs
         
         lhs = value
