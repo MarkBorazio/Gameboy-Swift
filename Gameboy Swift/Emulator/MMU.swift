@@ -77,12 +77,13 @@ class MMU {
     }
     
     func writeValue(_ value: UInt8, address: UInt16) {
-        let addressIsReadOnly = (address < 0x8000) || (0xFEA0...0xFEFF ~= address)
-        guard !addressIsReadOnly else { return }
         
         switch address {
         case Self.readOnlyAddressRange:
             print("WARNING: Attempted to write to READ ONLY memory.")
+            
+        case Self.probitedAddressRange:
+            print("WARNING: Attempted to write to PROHIBITED memory.")
             
         case Self.addressLY:
             // If the current scanline is attempted to be manually changed, set it to zero instead
@@ -96,12 +97,18 @@ class MMU {
             memoryMap[address] = value
             writeValue(value, address: address - Self.echoRamOffset)
             
-        case Self.probitedAddressRange:
-            print("WARNING: Attempted to write to PROHIBITED memory.")
-            
         case Self.addressDIV:
-            // If anything tried to write to this, then it should instead just be reset.
+            // If anything tries to write to this, then it should instead just be reset.
             memoryMap[address] = 0
+            
+        case Self.addressTAC:
+            // If we change the clock frequency, we need to reset it.
+            let previousFrequency = MasterClock.shared.clockCyclesPerTimaCycle
+            memoryMap[address] = value
+            let newFrequency = MasterClock.shared.clockCyclesPerTimaCycle
+            if previousFrequency != newFrequency {
+                MasterClock.shared.resetTimaCycle()
+            }
             
         default:
             // Standard write
@@ -113,7 +120,7 @@ class MMU {
     }
 }
 
-// MARK: - Interrupt Registers
+// MARK: - Interrupts
 
 extension MMU {
     
@@ -132,7 +139,12 @@ extension MMU {
     private static let serialInterruptBitIndex = 3
     private static let joypadInterruptBitIndex = 4
     
-    func checkForInterrupt() -> UInt16? {
+    var hasPendingAndEnabledInterrupt: Bool {
+        let interruptByte = memoryMap[Self.addressIE] & memoryMap[Self.addressIF]
+        return interruptByte & 0b0001_1111 != 0 // First five bits correspond to pending interrupts as per static definitions above
+    }
+    
+    func getNextPendingAndEnabledInterrupt() -> UInt16? {
         let interruptByte = memoryMap[Self.addressIE] & memoryMap[Self.addressIF]
         
         // Priority is simply the bit order
@@ -186,7 +198,21 @@ extension MMU {
     }
 }
 
-// MARK: - Timer Registers
+// MARK: - Joypad
+
+extension MMU {
+    
+    static let addressJoypad: UInt16 = 0xFF00
+    
+    static let selectActionButtonsBitIndex = 5
+    static let selectDirectionButtonsBitIndex = 4
+    static let joypadDownOrStartBitIndex = 3
+    static let joypadUpOrSelectBitIndex = 2
+    static let joypadLeftOrBBitIndex = 1
+    static let joypadRightOrABitIndex = 0
+}
+
+// MARK: - Timers
 
 extension MMU {
     

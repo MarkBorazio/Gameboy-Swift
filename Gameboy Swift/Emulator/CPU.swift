@@ -82,34 +82,61 @@ class CPU {
     }
     
     // Other Flags
-    private var imeFlag = false // Interrupt Master Enable
+    private var interruptMasterEnableFlag = false
     private var haltFlag = false
     private var stopFlag = false // TODO: Figure out when this should be reset.
     
+    // When interrupts are enabled (EI instruction), the flag is set after the next instruction is executed.
+    // Therefore, we need to use this "pending" flag instead of setting the `interruptMasterEnableFlag` instantly.
+    // Ref: https://gbdev.io/pandocs/Interrupts.html
+    private var pendingInterruptMasterEnable = true
+
+    func tick() -> Int {
+        var totalCyclesThisTick = 0
+        totalCyclesThisTick += executeInstruction()
+        totalCyclesThisTick += handleInterrupts()
+        
+        if pendingInterruptMasterEnable {
+            interruptMasterEnableFlag = true
+            pendingInterruptMasterEnable = false
+        }
+        
+        return totalCyclesThisTick
+    }
+    
     /// Execute the next instruction and returns the number of cycles it took.
-    func executeInstruction() -> Int {
+    private func executeInstruction() -> Int {
+        guard !haltFlag else { return 0 }
         
 //        print("--- PC: \(pc.hexString)")
         let opcode = fetchNextByte()
         
+        let value: Int
         if opcode == 0xCB {
 //            print("Byte was 0xCB")
-            return execute16BitInstruction()
+            value = execute16BitInstruction()
         } else {
-            return execute8BitInstruction(opcode: opcode)
+            value = execute8BitInstruction(opcode: opcode)
         }
+        
+        return value
     }
     
-    
-    
-    func handleInterrupts() {
-        if imeFlag { // Is master interrupt enable flag set?
-            if let interruptAddress = MMU.shared.checkForInterrupt() {
-                imeFlag = false
-                _ = pushOntoStack(address: pc)
-                pc = interruptAddress
+    /// Checks for any interrupts and returns the number of cycles the check took.
+    private func handleInterrupts() -> Int {
+        if MMU.shared.hasPendingAndEnabledInterrupt {
+            haltFlag = false
+            if interruptMasterEnableFlag {
+                guard let nextInterruptAddress = MMU.shared.getNextPendingAndEnabledInterrupt() else {
+                    fatalError("This should never be `nil` at this point")
+                }
+                interruptMasterEnableFlag = false
+                let cycles = pushOntoStack(address: pc)
+                pc = nextInterruptAddress
+                return cycles
             }
         }
+        return 0
     }
     
     private func fetchNextByte() -> UInt8 {
@@ -925,7 +952,7 @@ extension CPU {
     // 0xD9
     private func returnControlEnablingInterrupt() -> Int {
         pc = popStack()
-        imeFlag = true
+        interruptMasterEnableFlag = true
         return 4
     }
     
@@ -1006,14 +1033,14 @@ extension CPU {
     
     // 0xF3
     private func disableInterruptHandling() -> Int {
-        imeFlag = false
+        pendingInterruptMasterEnable = false
+        interruptMasterEnableFlag = false
         return 1
     }
     
     // 0xFB
     private func scheduleInterruptHandling() -> Int {
-        imeFlag = true
-        // TODO: Invesitgate this more
+        pendingInterruptMasterEnable = true
         return 1
     }
 }

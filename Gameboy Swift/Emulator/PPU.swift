@@ -19,7 +19,7 @@ class PPU {
         count: Int(pixelHeight) * Int(pixelWidth)
     )
     
-    func update(machineCycles: Int) {
+    func tick(cycles: Int) {
         guard MMU.shared.isLCDEnabled else {
             updateDisabledLCDStatus()
             return
@@ -27,7 +27,7 @@ class PPU {
         
         updateEnabledLCDStatus()
         
-        scanlineTimer += machineCycles
+        scanlineTimer += cycles
         if scanlineTimer >= Self.machineCyclesPerScanline {
             scanlineTimer = 0
             
