@@ -11,6 +11,7 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
     
     let testRoms: [String] = [
+        "cpu_instrs",
         "01-special", // Passes
         "02-interrupts", // Timer doesn't work
         "03-op sp,hl", // Passes
@@ -25,7 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     ]
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        let rom = try! ROM(fileName: testRoms[1])
+        let rom = try! ROM(fileName: "Tetris")
         MMU.shared.loadRom(rom: rom, skipBootRom: true)
         MasterClock.shared.startTicking()
     }

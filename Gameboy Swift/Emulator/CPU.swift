@@ -108,7 +108,7 @@ class CPU {
     private func executeInstruction() -> Int {
         guard !haltFlag else { return 0 }
         
-//        print("--- PC: \(pc.hexString)")
+//        print("--- PC: \(pc.hexString())")
         let opcode = fetchNextByte()
         
         let value: Int
@@ -169,7 +169,7 @@ extension CPU {
     
     /// Execute the instruction from the opcode and returns the number of cycles it took.
     private func execute8BitInstruction(opcode: UInt8) -> Int {
-//        print("Excuting 8-Bit Instruction: \(opcode.hexString)")
+//        print("Excuting 8-Bit Instruction: \(opcode.hexString())")
         switch opcode {
         case 0x00: return noOp()
         case 0x01: return loadImmediateShortIntoPair(&bc)
@@ -1051,7 +1051,7 @@ extension CPU {
     
     private func execute16BitInstruction() -> Int {
         let opcode = fetchNextByte()
-//        print("Executing 8-Bit Instruction: \(opcode.hexString)")
+//        print("Executing 8-Bit Instruction: \(opcode.hexString())")
         let registerId = opcode.lowNibble
         let usesHL = (registerId == 0x6) || (registerId == 0xE)
         

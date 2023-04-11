@@ -66,6 +66,8 @@ class MMU {
             memoryMap[0xFF4A] = 0x00
             memoryMap[0xFF4B] = 0x00
             memoryMap[0xFFFF] = 0x00
+            
+            memoryMap[Self.addressJoypad] = 0x0F
         } else {
             // Overlay BIOS/BootRom at beginning
             memoryMap.replaceSubrange(0..<Self.bios.count, with: Self.bios)
@@ -79,6 +81,7 @@ class MMU {
     func writeValue(_ value: UInt8, address: UInt16) {
         
         switch address {
+            
         case Self.readOnlyAddressRange:
             print("WARNING: Attempted to write to READ ONLY memory.")
             
@@ -96,6 +99,9 @@ class MMU {
             // Anything writted to this range (0xE000 - 0xFDFF) is also written to 0xC000-0xDDFF.
             memoryMap[address] = value
             writeValue(value, address: address - Self.echoRamOffset)
+            
+        case Self.addressJoypad:
+            Joypad.shared.updateJoypadByte(value)
             
         case Self.addressDIV:
             // If anything tries to write to this, then it should instead just be reset.
