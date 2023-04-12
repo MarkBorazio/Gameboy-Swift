@@ -253,10 +253,12 @@ class PPU {
             let flipX = attributes.checkBit(MMU.xFlipBitIndex)
             
             let spriteHeight: UInt8 = areLargeSprites ? Self.largeSpriteHeight : Self.smallSpriteHeight
+            let spriteBoundsLower = Int(yCo)
+            let spriteBoundsUpper = Int(yCo) + Int(spriteHeight)
+            let spriteBounds = spriteBoundsLower..<spriteBoundsUpper
             
             // Check if sprite intercepts with scanline
-            let spriteBounds = yCo..<(yCo + spriteHeight)
-            if spriteBounds ~= scanline {
+            if spriteBounds ~= Int(scanline) {
                 var spriteRowIndex = scanline &- yCo
                 
                 if flipY {
