@@ -19,12 +19,8 @@ class Joypad {
     // Source of truth for if a button is held down or not
     private var buttonsHeldDown: Set<Button> = []
     
-    // TODO: Maybe just override the read; that way, we don't need to write all of the time.
-    // Also override the writes so that we keep track of the selection as well
-    // What is in the memoryMap won't matter at that point.
-    func updateJoypadByte(_ newByte: UInt8) {
-    
-        var newJoypadByte = newByte | 0x0F // Set bottom 4 bits high as that means they not held down
+    func readJoypad() -> UInt8 {
+        var newJoypadByte = MMU.shared.memoryMap[MMU.addressJoypad] | 0x0F // Set bottom 4 bits high as that means they not held down
         
         let isDirectionSelected = !newJoypadByte.checkBit(MMU.selectDirectionButtonsBitIndex)
         let isActionSelected = !newJoypadByte.checkBit(MMU.selectActionButtonsBitIndex)
@@ -43,7 +39,7 @@ class Joypad {
             }
         }
         
-        MMU.shared.memoryMap[MMU.addressJoypad] = newJoypadByte
+        return newJoypadByte
     }
     
     enum Button: Equatable {
