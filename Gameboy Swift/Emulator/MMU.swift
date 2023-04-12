@@ -13,6 +13,7 @@ class MMU {
     
     var memoryMap: [UInt8]
     var rom: ROM?
+    var isBootRomOverlayed = false
     
     init() {
         memoryMap = Array(repeating: 0, count: Self.memorySizeBytes)
@@ -33,11 +34,14 @@ class MMU {
             memoryMap[index] = rom.data[index]
         }
         
+        // Initialise all button press bits to 1 (unpressed)
+        memoryMap[Self.addressJoypad] = 0x0F
+        
         if skipBootRom {
             CPU.shared.skipBootRom()
-            memoryMap[0xFF05] = 0x00
-            memoryMap[0xFF06] = 0x00
-            memoryMap[0xFF07] = 0x00
+            memoryMap[Self.addressTIMA] = 0x00
+            memoryMap[Self.addressTMA] = 0x00
+            memoryMap[Self.addressTAC] = 0x00
             memoryMap[0xFF10] = 0x80
             memoryMap[0xFF11] = 0xBF
             memoryMap[0xFF12] = 0xF3
@@ -56,26 +60,35 @@ class MMU {
             memoryMap[0xFF24] = 0x77
             memoryMap[0xFF25] = 0xF3
             memoryMap[0xFF26] = 0xF1
-            memoryMap[0xFF40] = 0x91
-            memoryMap[0xFF42] = 0x00
-            memoryMap[0xFF43] = 0x00
-            memoryMap[0xFF45] = 0x00
-            memoryMap[0xFF47] = 0xFC
-            memoryMap[0xFF48] = 0xFF
-            memoryMap[0xFF49] = 0xFF
-            memoryMap[0xFF4A] = 0x00
-            memoryMap[0xFF4B] = 0x00
-            memoryMap[0xFFFF] = 0x00
-            
-            memoryMap[Self.addressJoypad] = 0x0F
+            memoryMap[Self.addressLCDC] = 0x91
+            memoryMap[Self.addressScrollY] = 0x00
+            memoryMap[Self.addressScrollX] = 0x00
+            memoryMap[Self.addressLYC] = 0x00
+            memoryMap[Self.addressBgPalette] = 0xFC
+            memoryMap[Self.addressObjPalette1] = 0xFF
+            memoryMap[Self.addressObjPalette2] = 0xFF
+            memoryMap[Self.addressWindowY] = 0x00
+            memoryMap[Self.addressWindowX] = 0x00
+            memoryMap[Self.interruptRegisterAddress] = 0x00
         } else {
             // Overlay BIOS/BootRom at beginning
-            memoryMap.replaceSubrange(0..<Self.bios.count, with: Self.bios)
+            memoryMap.replaceSubrange(Self.biosAddressRange, with: Self.bios)
+            isBootRomOverlayed = true
         }
     }
     
+    private func removeBootRomOverlay() {
+        guard let rom else { return }
+        memoryMap.replaceSubrange(Self.biosAddressRange, with: rom.data[Self.biosAddressRange])
+    }
+    
     func readValue(address: UInt16) -> UInt8 {
-        return memoryMap[address]
+        switch address {
+        case Self.addressJoypad:
+            return Joypad.shared.readJoypad()
+        default:
+            return memoryMap[address]
+        }
     }
     
     func writeValue(_ value: UInt8, address: UInt16) {
@@ -88,6 +101,12 @@ class MMU {
         case Self.probitedAddressRange:
             print("WARNING: Attempted to write to PROHIBITED memory.")
             
+        case Self.biosDeactivateAddress:
+            if isBootRomOverlayed && value == 1 {
+                removeBootRomOverlay()
+            }
+            memoryMap[address] = value
+            
         case Self.addressLY:
             // If the current scanline is attempted to be manually changed, set it to zero instead
             memoryMap[address] = 0
@@ -99,9 +118,6 @@ class MMU {
             // Anything writted to this range (0xE000 - 0xFDFF) is also written to 0xC000-0xDDFF.
             memoryMap[address] = value
             writeValue(value, address: address - Self.echoRamOffset)
-            
-        case Self.addressJoypad:
-            Joypad.shared.updateJoypadByte(value)
             
         case Self.addressDIV:
             // If anything tries to write to this, then it should instead just be reset.
@@ -335,6 +351,13 @@ extension MMU {
 // MARK: - BIOS
 
 extension MMU {
+    
+    // Writing a value of `0x1` to the adderss 0xFF50 removes the bootrom/bios overlay
+    // and puts the orginial rom data back.
+    private static let biosDeactivateAddress: UInt16 = 0xFF50
+    private static let biosDeactivateValue: UInt8 = 0x1
+    
+    private static let biosAddressRange: Range<Int> = 0..<bios.count
     
     // BootRom
     private static let bios: [UInt8] = [ // 256 Bytes long
