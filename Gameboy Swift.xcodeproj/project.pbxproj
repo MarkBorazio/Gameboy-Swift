@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4D0BFAA829E59D100009164D /* Joypad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D0BFAA729E59D100009164D /* Joypad.swift */; };
 		4D106A7E29CFFB5500EBAAC1 /* MasterClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D106A7D29CFFB5500EBAAC1 /* MasterClock.swift */; };
+		4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9129E6E56B00E2E68F /* Memory.swift */; };
 		4DAEF4E329D98A1C00F41DFC /* GameBoyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DAEF4E229D98A1C00F41DFC /* GameBoyView.swift */; };
 		4DFF762E29E1258F00BE180F /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF762D29E1258F00BE180F /* README.md */; };
 		4DFF767E29E1269000BE180F /* cpu_instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765129E1269000BE180F /* cpu_instrs.gb */; };
@@ -62,6 +63,7 @@
 /* Begin PBXFileReference section */
 		4D0BFAA729E59D100009164D /* Joypad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Joypad.swift; sourceTree = "<group>"; };
 		4D106A7D29CFFB5500EBAAC1 /* MasterClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterClock.swift; sourceTree = "<group>"; };
+		4D7E7C9129E6E56B00E2E68F /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
 		4DAEF4E229D98A1C00F41DFC /* GameBoyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBoyView.swift; sourceTree = "<group>"; };
 		4DFF762D29E1258F00BE180F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
 		4DFF765129E1269000BE180F /* cpu_instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = cpu_instrs.gb; sourceTree = "<group>"; };
@@ -331,6 +333,7 @@
 				6001DE2726DA4A3500D399A7 /* PPU.swift */,
 				4D0BFAA729E59D100009164D /* Joypad.swift */,
 				6070725D26BFCDCC002E7119 /* ROM.swift */,
+				4D7E7C9129E6E56B00E2E68F /* Memory.swift */,
 				6055A78026E48E5400987457 /* ColourPalette.swift */,
 			);
 			path = Emulator;
@@ -490,6 +493,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */,
 				4D106A7E29CFFB5500EBAAC1 /* MasterClock.swift in Sources */,
 				605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */,
 				6070725C26BFC47E002E7119 /* MMU.swift in Sources */,

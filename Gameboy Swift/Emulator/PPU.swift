@@ -57,15 +57,15 @@ class PPU {
         scanlineTimer = 0
         MMU.shared.currentScanline = 0
         
-        var status = MMU.shared.readValue(address: MMU.addressLCDS)
+        var status = MMU.shared.readValue(address: Memory.addressLCDS)
         status &= ~Self.lcdModeMask
         status |= Self.vBlankMode
-        MMU.shared.writeValue(status, address: MMU.addressLCDS)
+        MMU.shared.writeValue(status, address: Memory.addressLCDS)
         return
     }
     
     private func updateEnabledLCDStatus() {
-        var status = MMU.shared.readValue(address: MMU.addressLCDS)
+        var status = MMU.shared.readValue(address: Memory.addressLCDS)
         let currentScanlineIndex = MMU.shared.currentScanline
         let currentLCDMode = status & Self.lcdModeMask
         
@@ -78,12 +78,12 @@ class PPU {
         if currentScanlineIndex > Self.lastVisibleScanlineIndex {
             newLCDMode = Self.vBlankMode
             status |= newLCDMode
-            interruptRequired = status.checkBit(MMU.vBlankInterruptEnabledBitIndex)
+            interruptRequired = status.checkBit(Memory.vBlankInterruptEnabledBitIndex)
         } else {
             if Self.searchingOAMPeriod ~= scanlineTimer { // First 20 M-Cycles / 80 Clock Cycles
                 newLCDMode = Self.searchingOAMMode
                 status |= newLCDMode
-                interruptRequired = status.checkBit(MMU.searchingOAMBitIndex)
+                interruptRequired = status.checkBit(Memory.searchingOAMBitIndex)
             } else if Self.transferringDataToLCDPeriod ~= scanlineTimer { // Next 43 M-Cycles / 172 Clock Cycles
                 newLCDMode = Self.transferringDataToLCDMode
                 status |= newLCDMode
@@ -91,7 +91,7 @@ class PPU {
             } else { // Remaining M-Cycles
                 newLCDMode = Self.hBlankMode
                 status |= newLCDMode
-                interruptRequired = status.checkBit(MMU.hBlankInterruptEnabledBitIndex)
+                interruptRequired = status.checkBit(Memory.hBlankInterruptEnabledBitIndex)
             }
         }
         
@@ -101,29 +101,29 @@ class PPU {
         }
         
         // Check the conicidence flag
-        let lyRegister = MMU.shared.readValue(address: MMU.addressLY)
-        let lycRegister = MMU.shared.readValue(address: MMU.addressLYC)
+        let lyRegister = MMU.shared.readValue(address: Memory.addressLY)
+        let lycRegister = MMU.shared.readValue(address: Memory.addressLYC)
         if lyRegister == lycRegister {
-            status.setBit(MMU.coincidenceBitIndex)
-            if status.checkBit(MMU.coincidenceInterruptEnabledBitIndex) {
+            status.setBit(Memory.coincidenceBitIndex)
+            if status.checkBit(Memory.coincidenceInterruptEnabledBitIndex) {
                 MMU.shared.requestLCDInterrupt()
             }
         } else {
-            status.clearBit(MMU.coincidenceBitIndex)
+            status.clearBit(Memory.coincidenceBitIndex)
         }
         
-        MMU.shared.writeValue(status, address: MMU.addressLCDS)
+        MMU.shared.writeValue(status, address: Memory.addressLCDS)
     }
     
     private func drawScanline() {
         let control = UInt8.max //MMU.shared.readValue(address: MMU.addressLCDC)
         
         // TODO: Consider rendering background layer, and then window layer separately over the top
-        if control.checkBit(MMU.bgAndWindowEnabledBitIndex) {
+        if control.checkBit(Memory.bgAndWindowEnabledBitIndex) {
             renderTiles()
         }
         
-        if control.checkBit(MMU.objectsEnabledBitIndex) {
+        if control.checkBit(Memory.objectsEnabledBitIndex) {
             renderSprites()
         }
     }
@@ -138,23 +138,23 @@ class PPU {
             return
         }
         
-        let scrollY = MMU.shared.readValue(address: MMU.addressScrollY)
-        let scrollX = MMU.shared.readValue(address: MMU.addressScrollX)
-        let windowY = MMU.shared.readValue(address: MMU.addressWindowY)
-        let windowX = MMU.shared.readValue(address: MMU.addressWindowX) &- Self.windowXOffset
-        let control = MMU.shared.readValue(address: MMU.addressLCDC)
+        let scrollY = MMU.shared.readValue(address: Memory.addressScrollY)
+        let scrollX = MMU.shared.readValue(address: Memory.addressScrollX)
+        let windowY = MMU.shared.readValue(address: Memory.addressWindowY)
+        let windowX = MMU.shared.readValue(address: Memory.addressWindowX) &- Self.windowXOffset
+        let control = MMU.shared.readValue(address: Memory.addressLCDC)
         
         // Check if we are rendering the window
-        let windowEnabled = control.checkBit(MMU.windowEnabledBitIndex)
+        let windowEnabled = control.checkBit(Memory.windowEnabledBitIndex)
         let isScanlineWithinWindowBounds = windowY <= currentScanline
         let isRenderingWindow = windowEnabled && isScanlineWithinWindowBounds
         
         // Check which area of tile data we are using
-        let isUsingTileDataAddress1 = control.checkBit(MMU.bgAndWindowTileDataAreaBitIndex)
+        let isUsingTileDataAddress1 = control.checkBit(Memory.bgAndWindowTileDataAreaBitIndex)
         
         // Check which area of background data we are using
-        let addressBgAndWindowBitIndex = isRenderingWindow ? MMU.windowTileMapAreaBitIndex : MMU.bgTileMapAreaBitIndex
-        let addressBgAndWindowArea = control.checkBit(addressBgAndWindowBitIndex) ? MMU.addressBgAndWindowArea1 : MMU.addressBgAndWindowArea2
+        let addressBgAndWindowBitIndex = isRenderingWindow ? Memory.windowTileMapAreaBitIndex : Memory.bgTileMapAreaBitIndex
+        let addressBgAndWindowArea = control.checkBit(addressBgAndWindowBitIndex) ? Memory.addressBgAndWindowArea1 : Memory.addressBgAndWindowArea2
         
         // Get Y coordinate relative to window or background space
         let relativeYCo = isRenderingWindow ? (currentScanline &- windowY) : (currentScanline &+ scrollY)
@@ -188,14 +188,14 @@ class PPU {
             if isUsingTileDataAddress1 {
                 // Tile Data Address 1 indexes using unsigned integer
                 let tileAddressOffset = UInt16(tileIndex) &* Self.bytesPerTile
-                tileAddress = MMU.addressTileArea1 &+ tileAddressOffset
+                tileAddress = Memory.addressTileArea1 &+ tileAddressOffset
             } else {
                 // Tile Data Address 2 indexes using signed integer
                 let signedTileIndex = Int8(bitPattern: tileIndex)
                 // Originates from UInt8 so guaranteed to be positive after adding 128
                 let convertedTileIndex = Int16(signedTileIndex) &+ 128
                 let tileAddressOffset = convertedTileIndex.magnitude &* Self.bytesPerTile
-                tileAddress = MMU.addressTileArea2 &+ tileAddressOffset
+                tileAddress = Memory.addressTileArea2 &+ tileAddressOffset
             }
             
             // Find which of the tile's pixel rows we are on and get the pixel row data from memory
@@ -227,7 +227,7 @@ class PPU {
             let colourID = (rowData2.getBitValue(adjustedBitIndex) << 1) | rowData1.getBitValue(adjustedBitIndex)
             
             // Use colour ID to get colour from palette
-            let palette = MMU.shared.readValue(address: MMU.addressBgPalette)
+            let palette = MMU.shared.readValue(address: Memory.addressBgPalette)
             let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
             
             let globalPixelIndex = Int(currentScanline) * Int(Self.pixelWidth) + Int(scanlinePixelIndex)
@@ -238,19 +238,19 @@ class PPU {
     
     private func renderSprites() {
         let scanline = MMU.shared.currentScanline
-        let control = MMU.shared.readValue(address: MMU.addressLCDC)
-        let areLargeSprites = control.checkBit(MMU.objectSizeBitIndex)
+        let control = MMU.shared.readValue(address: Memory.addressLCDC)
+        let areLargeSprites = control.checkBit(Memory.objectSizeBitIndex)
         
         for spriteIndex in 0..<Self.maxNumberOfSprites {
             let spriteIndexOffset = spriteIndex &* Self.bytesPerSprite
-            let spriteDataAddress = MMU.addressOAM &+ UInt16(spriteIndexOffset)
+            let spriteDataAddress = Memory.addressOAM &+ UInt16(spriteIndexOffset)
             let yCo = MMU.shared.readValue(address: spriteDataAddress) &- Self.spriteYOffset
             let xCo = MMU.shared.readValue(address: spriteDataAddress &+ 1) &- Self.spriteXOffset
             let tileIndex = MMU.shared.readValue(address: spriteDataAddress &+ 2)
             let attributes = MMU.shared.readValue(address: spriteDataAddress &+ 3)
             
-            let flipY = attributes.checkBit(MMU.yFlipBitIndex)
-            let flipX = attributes.checkBit(MMU.xFlipBitIndex)
+            let flipY = attributes.checkBit(Memory.yFlipBitIndex)
+            let flipX = attributes.checkBit(Memory.xFlipBitIndex)
             
             let spriteHeight: UInt8 = areLargeSprites ? Self.largeSpriteHeight : Self.smallSpriteHeight
             let spriteBoundsLower = Int(yCo)
@@ -266,7 +266,7 @@ class PPU {
                 }
 
                 spriteRowIndex &*= Self.bytesPerPixelRow
-                let dataAddress = MMU.addressTileArea1
+                let dataAddress = Memory.addressTileArea1
                     &+ (UInt16(tileIndex) &* Self.bytesPerTile)
                     &+ UInt16(spriteRowIndex)
                 let data1 = MMU.shared.readValue(address: dataAddress)
@@ -282,7 +282,7 @@ class PPU {
                     }
                     
                     let colourID = (data2.getBitValue(colourBitIndex) << 1) | data1.getBitValue(colourBitIndex)
-                    let colourAddress = attributes.checkBit(MMU.paletteNumberBitIndex) ? MMU.addressObjPalette2 : MMU.addressObjPalette1
+                    let colourAddress = attributes.checkBit(Memory.paletteNumberBitIndex) ? Memory.addressObjPalette2 : Memory.addressObjPalette1
                     let palette = MMU.shared.readValue(address: colourAddress)
                     let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
                     
@@ -330,6 +330,7 @@ extension PPU {
     // Tiles
     private static let bytesPerTile: UInt16 = 16
     private static let bytesPerPixelRow: UInt8 = 2
+    private static let tilesPerRow: UInt16 = 32
     
     // Sprites
     private static let maxNumberOfSprites = 40
@@ -340,6 +341,5 @@ extension PPU {
     private static let largeSpriteHeight: UInt8 = 16
     
     // Miscellaneous
-    private static let tilesPerRow: UInt16 = 32
     private static let windowXOffset: UInt8 = 7
 }

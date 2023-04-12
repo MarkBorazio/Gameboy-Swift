@@ -62,28 +62,28 @@ class MasterClock {
         let (newDivTimer, overflow) = divTimer.addingReportingOverflow(UInt8(cycles))
         divTimer = newDivTimer
         if overflow {
-            MMU.shared.memoryMap[MMU.addressDIV] &+= 1
+            MMU.shared.memoryMap[Memory.addressDIV] &+= 1
         }
     }
     
     // This thing is pretty complicated: https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour
     // TODO: The rest of the complexity.
     private func incrementTimaRegister(cycles: Int) {
-        let isClockEnabled = MMU.shared.memoryMap[MMU.addressTAC].checkBit(MMU.timaEnabledBitIndex)
+        let isClockEnabled = MMU.shared.memoryMap[Memory.addressTAC].checkBit(Memory.timaEnabledBitIndex)
         guard isClockEnabled else { return }
         
         timaTimer += cycles
         if timaTimer >= clockCyclesPerTimaCycle {
             timaTimer -= Int(clockCyclesPerTimaCycle) // Keep overflowed values instead of just resetting to zero
             
-            let timaValue = MMU.shared.memoryMap[MMU.addressTIMA]
+            let timaValue = MMU.shared.memoryMap[Memory.addressTIMA]
             
             if timaValue == .max {
                 // TODO: The following actually needs to be done after 1 cycle from this point.
-                MMU.shared.memoryMap[MMU.addressTIMA] = MMU.shared.memoryMap[MMU.addressTMA]
+                MMU.shared.memoryMap[Memory.addressTIMA] = MMU.shared.memoryMap[Memory.addressTMA]
                 MMU.shared.requestTimerInterrupt()
             } else {
-                MMU.shared.memoryMap[MMU.addressTIMA] = timaValue &+ 1
+                MMU.shared.memoryMap[Memory.addressTIMA] = timaValue &+ 1
             }
         }
     }
@@ -94,7 +94,7 @@ class MasterClock {
     
     // If the game changes this value via the writeMemory function, do we need to reset the timaTimer?
     var clockCyclesPerTimaCycle: UInt32 {
-        let rawValue = MMU.shared.memoryMap[MMU.addressTAC] & 0b11
+        let rawValue = MMU.shared.memoryMap[Memory.addressTAC] & 0b11
         switch rawValue {
         case 0b00: return 1024 // 4096 Hz
         case 0b01: return 16 // 262144 Hz

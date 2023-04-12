@@ -16,32 +16,32 @@ class MMU {
     var isBootRomOverlayed = false
     
     init() {
-        memoryMap = Array(repeating: 0, count: Self.memorySizeBytes)
+        memoryMap = Array(repeating: 0, count: Memory.memorySizeBytes)
     }
     
     func loadRom(rom: ROM, skipBootRom: Bool) {
-        memoryMap = Array(repeating: 0, count: Self.memorySizeBytes)
+        memoryMap = Array(repeating: 0, count: Memory.memorySizeBytes)
         self.rom = rom
         
         // First 16kB of memory map is fixed to first 16kB of ROM data.
-        Self.fixedRomBankAddressRange.forEach { index in
+        Memory.fixedRomBankAddressRange.forEach { index in
             memoryMap[index] = rom.data[index]
         }
         
         // Second 16kB of memory map can be set and swapped between ROM banks.
         // The default is simply the second 16kB of ROM data.
-        Self.switchableRomBankAddressRange.forEach { index in
+        Memory.switchableRomBankAddressRange.forEach { index in
             memoryMap[index] = rom.data[index]
         }
         
         // Initialise all button press bits to 1 (unpressed)
-        memoryMap[Self.addressJoypad] = 0x0F
+        memoryMap[Memory.addressJoypad] = 0x0F
         
         if skipBootRom {
             CPU.shared.skipBootRom()
-            memoryMap[Self.addressTIMA] = 0x00
-            memoryMap[Self.addressTMA] = 0x00
-            memoryMap[Self.addressTAC] = 0x00
+            memoryMap[Memory.addressTIMA] = 0x00
+            memoryMap[Memory.addressTMA] = 0x00
+            memoryMap[Memory.addressTAC] = 0x00
             memoryMap[0xFF10] = 0x80
             memoryMap[0xFF11] = 0xBF
             memoryMap[0xFF12] = 0xF3
@@ -60,16 +60,16 @@ class MMU {
             memoryMap[0xFF24] = 0x77
             memoryMap[0xFF25] = 0xF3
             memoryMap[0xFF26] = 0xF1
-            memoryMap[Self.addressLCDC] = 0x91
-            memoryMap[Self.addressScrollY] = 0x00
-            memoryMap[Self.addressScrollX] = 0x00
-            memoryMap[Self.addressLYC] = 0x00
-            memoryMap[Self.addressBgPalette] = 0xFC
-            memoryMap[Self.addressObjPalette1] = 0xFF
-            memoryMap[Self.addressObjPalette2] = 0xFF
-            memoryMap[Self.addressWindowY] = 0x00
-            memoryMap[Self.addressWindowX] = 0x00
-            memoryMap[Self.interruptRegisterAddress] = 0x00
+            memoryMap[Memory.addressLCDC] = 0x91
+            memoryMap[Memory.addressScrollY] = 0x00
+            memoryMap[Memory.addressScrollX] = 0x00
+            memoryMap[Memory.addressLYC] = 0x00
+            memoryMap[Memory.addressBgPalette] = 0xFC
+            memoryMap[Memory.addressObjPalette1] = 0xFF
+            memoryMap[Memory.addressObjPalette2] = 0xFF
+            memoryMap[Memory.addressWindowY] = 0x00
+            memoryMap[Memory.addressWindowX] = 0x00
+            memoryMap[Memory.interruptRegisterAddress] = 0x00
         } else {
             // Overlay BIOS/BootRom at beginning
             memoryMap.replaceSubrange(Self.biosAddressRange, with: Self.bios)
@@ -80,11 +80,12 @@ class MMU {
     private func removeBootRomOverlay() {
         guard let rom else { return }
         memoryMap.replaceSubrange(Self.biosAddressRange, with: rom.data[Self.biosAddressRange])
+        isBootRomOverlayed = false
     }
     
     func readValue(address: UInt16) -> UInt8 {
         switch address {
-        case Self.addressJoypad:
+        case Memory.addressJoypad:
             return Joypad.shared.readJoypad()
         default:
             return memoryMap[address]
@@ -95,35 +96,35 @@ class MMU {
         
         switch address {
             
-        case Self.readOnlyAddressRange:
-            print("WARNING: Attempted to write to READ ONLY memory.")
+        case Memory.readOnlyAddressRange:
+            return
             
-        case Self.probitedAddressRange:
-            print("WARNING: Attempted to write to PROHIBITED memory.")
+        case Memory.probitedAddressRange:
+            return
             
-        case Self.biosDeactivateAddress:
+        case Memory.biosDeactivateAddress:
             if isBootRomOverlayed && value == 1 {
                 removeBootRomOverlay()
             }
             memoryMap[address] = value
             
-        case Self.addressLY:
+        case Memory.addressLY:
             // If the current scanline is attempted to be manually changed, set it to zero instead
             memoryMap[address] = 0
             
-        case Self.addressDMATransferTrigger:
+        case Memory.addressDMATransferTrigger:
             dmaTransfer(byte: value)
             
-        case Self.echoRamAddressRange:
+        case Memory.echoRamAddressRange:
             // Anything writted to this range (0xE000 - 0xFDFF) is also written to 0xC000-0xDDFF.
             memoryMap[address] = value
-            writeValue(value, address: address - Self.echoRamOffset)
+            writeValue(value, address: address - Memory.echoRamOffset)
             
-        case Self.addressDIV:
+        case Memory.addressDIV:
             // If anything tries to write to this, then it should instead just be reset.
             memoryMap[address] = 0
             
-        case Self.addressTAC:
+        case Memory.addressTAC:
             // If we change the clock frequency, we need to reset it.
             let previousFrequency = MasterClock.shared.clockCyclesPerTimaCycle
             memoryMap[address] = value
@@ -146,216 +147,97 @@ class MMU {
 
 extension MMU {
     
-    private static let addressIE: UInt16 = 0xFFFF
-    private static let addressIF: UInt16 = 0xFF0F
-    
-    private static let addressVBlankInterrupt: UInt16 = 0x0040
-    private static let addressLcdInterrupt: UInt16 = 0x0048
-    private static let addressTimerInterrupt: UInt16 = 0x0050
-    private static let addressSerialInterrupt: UInt16 = 0x0058
-    private static let addressJoypadInterrupt: UInt16 = 0x0060
-    
-    private static let vBlankInterruptBitIndex = 0
-    private static let lcdInterruptBitIndex = 1
-    private static let timerInterruptBitIndex = 2
-    private static let serialInterruptBitIndex = 3
-    private static let joypadInterruptBitIndex = 4
-    
     var hasPendingAndEnabledInterrupt: Bool {
-        let interruptByte = memoryMap[Self.addressIE] & memoryMap[Self.addressIF]
+        let interruptByte = memoryMap[Memory.addressIE] & memoryMap[Memory.addressIF]
         return interruptByte & 0b0001_1111 != 0 // First five bits correspond to pending interrupts as per static definitions above
     }
     
     func getNextPendingAndEnabledInterrupt() -> UInt16? {
-        let interruptByte = memoryMap[Self.addressIE] & memoryMap[Self.addressIF]
+        let interruptByte = memoryMap[Memory.addressIE] & memoryMap[Memory.addressIF]
         
         // Priority is simply the bit order
 
-        if interruptByte.checkBit(Self.vBlankInterruptBitIndex) {
-            memoryMap[Self.addressIF].clearBit(Self.vBlankInterruptBitIndex)
-            return Self.addressVBlankInterrupt
+        if interruptByte.checkBit(Memory.vBlankInterruptBitIndex) {
+            memoryMap[Memory.addressIF].clearBit(Memory.vBlankInterruptBitIndex)
+            return Memory.addressVBlankInterrupt
         }
         
-        if interruptByte.checkBit(Self.lcdInterruptBitIndex) {
-            memoryMap[Self.addressIF].clearBit(Self.lcdInterruptBitIndex)
-            return Self.addressLcdInterrupt
+        if interruptByte.checkBit(Memory.lcdInterruptBitIndex) {
+            memoryMap[Memory.addressIF].clearBit(Memory.lcdInterruptBitIndex)
+            return Memory.addressLcdInterrupt
         }
         
-        if interruptByte.checkBit(Self.timerInterruptBitIndex) {
-            memoryMap[Self.addressIF].clearBit(Self.timerInterruptBitIndex)
-            return Self.addressTimerInterrupt
+        if interruptByte.checkBit(Memory.timerInterruptBitIndex) {
+            memoryMap[Memory.addressIF].clearBit(Memory.timerInterruptBitIndex)
+            return Memory.addressTimerInterrupt
         }
         
-        if interruptByte.checkBit(Self.serialInterruptBitIndex) {
-            memoryMap[Self.addressIF].clearBit(Self.serialInterruptBitIndex)
-            return Self.addressSerialInterrupt
+        if interruptByte.checkBit(Memory.serialInterruptBitIndex) {
+            memoryMap[Memory.addressIF].clearBit(Memory.serialInterruptBitIndex)
+            return Memory.addressSerialInterrupt
         }
 
-        if interruptByte.checkBit(Self.joypadInterruptBitIndex) {
-            memoryMap[Self.addressIF].clearBit(Self.joypadInterruptBitIndex)
-            return Self.addressJoypadInterrupt
+        if interruptByte.checkBit(Memory.joypadInterruptBitIndex) {
+            memoryMap[Memory.addressIF].clearBit(Memory.joypadInterruptBitIndex)
+            return Memory.addressJoypadInterrupt
         }
         
         return nil
     }
     
     func requestVBlankInterrupt() {
-        memoryMap[Self.addressIF].setBit(Self.vBlankInterruptBitIndex)
+        memoryMap[Memory.addressIF].setBit(Memory.vBlankInterruptBitIndex)
     }
     
     func requestLCDInterrupt() {
-        memoryMap[Self.addressIF].setBit(Self.lcdInterruptBitIndex)
+        memoryMap[Memory.addressIF].setBit(Memory.lcdInterruptBitIndex)
     }
     
     func requestTimerInterrupt() {
-        memoryMap[Self.addressIF].setBit(Self.timerInterruptBitIndex)
+        memoryMap[Memory.addressIF].setBit(Memory.timerInterruptBitIndex)
     }
     
     func requestSerialInterrupt() {
-        memoryMap[Self.addressIF].setBit(Self.serialInterruptBitIndex)
+        memoryMap[Memory.addressIF].setBit(Memory.serialInterruptBitIndex)
     }
     
     func requestJoypadInterrupt() {
-        memoryMap[Self.addressIF].setBit(Self.joypadInterruptBitIndex)
+        memoryMap[Memory.addressIF].setBit(Memory.joypadInterruptBitIndex)
     }
-}
-
-// MARK: - Joypad
-
-extension MMU {
-    
-    static let addressJoypad: UInt16 = 0xFF00
-    
-    static let selectActionButtonsBitIndex = 5
-    static let selectDirectionButtonsBitIndex = 4
-    static let joypadDownOrStartBitIndex = 3
-    static let joypadUpOrSelectBitIndex = 2
-    static let joypadLeftOrBBitIndex = 1
-    static let joypadRightOrABitIndex = 0
-}
-
-// MARK: - Timers
-
-extension MMU {
-    
-    static let addressDIV: UInt16 = 0xFF04
-    static let addressTIMA: UInt16 = 0xFF05
-    static let addressTMA: UInt16 = 0xFF06
-    static let addressTAC: UInt16 = 0xFF07
-    
-    static let timaEnabledBitIndex = 2
 }
 
 // MARK: - LCD Registers
 
 extension MMU {
     
-    static let addressLCDC: UInt16 = 0xFF40 // LCD Control
-    static let addressLCDS: UInt16 = 0xFF41 // LCD Status
-    static let addressLY: UInt16 = 0xFF44 // Current Scanline
-    static let addressBgPalette: UInt16 = 0xFF47 // Background Colour Palette
-    static let addressObjPalette1: UInt16 = 0xFF48 // Object Colour Palette 1
-    static let addressObjPalette2: UInt16 = 0xFF49 // Object Colour Palette 2
-    static let addressLYC: UInt16 = 0xFF45
-    
-    // LCDC Bit Indices
-    static let bgAndWindowEnabledBitIndex = 0
-    static let objectsEnabledBitIndex = 1
-    static let objectSizeBitIndex = 2
-    static let bgTileMapAreaBitIndex = 3
-    static let bgAndWindowTileDataAreaBitIndex = 4
-    static let windowEnabledBitIndex = 5
-    static let windowTileMapAreaBitIndex = 6
-    static let lcdAndPpuEnabledBitIndex = 7
-    
-    // LCDS Bit Indices
-    static let coincidenceBitIndex = 2
-    static let hBlankInterruptEnabledBitIndex = 3
-    static let vBlankInterruptEnabledBitIndex = 4
-    static let searchingOAMBitIndex = 5
-    static let coincidenceInterruptEnabledBitIndex = 6
-    
     // Use this instead of writing memory via writeValue(...) since that function
     // deliberately sets the scanline to 0 when any value is written to it.
     var currentScanline: UInt8 {
-        get { memoryMap[Self.addressLY] }
-        set { memoryMap[Self.addressLY] = newValue }
+        get { memoryMap[Memory.addressLY] }
+        set { memoryMap[Memory.addressLY] = newValue }
     }
     
     var isLCDEnabled: Bool {
-        memoryMap[Self.addressLCDC].checkBit(Self.lcdAndPpuEnabledBitIndex)
+        memoryMap[Memory.addressLCDC].checkBit(Memory.lcdAndPpuEnabledBitIndex)
     }
-}
-
-// MARK: - Tile And Sprite Data
-
-extension MMU {
-    
-    static let addressTileArea1: UInt16 = 0x8000
-    static let addressTileArea2: UInt16 = 0x8800
-    static let addressBgAndWindowArea1: UInt16 = 0x9C00
-    static let addressBgAndWindowArea2: UInt16 = 0x9800
-    static let addressScrollY: UInt16 = 0xFF42
-    static let addressScrollX: UInt16 = 0xFF43
-    static let addressWindowY: UInt16 = 0xFF4A
-    static let addressWindowX: UInt16 = 0xFF4B
-    static let addressOAM: UInt16 = 0xFE00
-    
-    // Sprite Attributes Bit Indices
-    // Bits 0-3 are used in CGB mode only
-    static let paletteNumberBitIndex = 4
-    static let xFlipBitIndex = 5
-    static let yFlipBitIndex = 6
-    static let bgAndWindowOverObjBitIndex = 7
 }
 
 // MARK: - DMA Transfer
 
 extension MMU {
     
-    private static let addressDMATransferTrigger: UInt16 = 0xFF46 // Writing to this address launches a DMA transfer
-    private static let dmaTransferSize: UInt16 = 0xA0
-    private static let addressDMADestination: UInt16 = 0xFE00
-    
     private func dmaTransfer(byte: UInt8) {
         let sourceAddress = UInt16(byte) << 8
-        (0..<Self.dmaTransferSize).forEach { addressOffset in
+        (0..<Memory.dmaTransferSize).forEach { addressOffset in
             let value = readValue(address: sourceAddress + addressOffset)
-            writeValue(value, address: Self.addressDMADestination + addressOffset)
+            writeValue(value, address: Memory.addressDMADestination + addressOffset)
         }
     }
-}
-
-// MARK: - Address Spaces
-
-extension MMU {
-    
-    private static let memorySizeBytes = 64 * 1024 // 64KB
-    
-    private static let fixedRomBankAddressRange: ClosedRange<UInt16> = 0x0000...0x3FFF // Read-only
-    private static let switchableRomBankAddressRange: ClosedRange<UInt16> = 0x4000...0x7FFF // Read-only
-    private static let videoRamAddressRange: ClosedRange<UInt16> = 0x8000...0x9FFF
-    private static let switchableRamBankAddressRange: ClosedRange<UInt16> = 0xA000...0xBFFF
-    private static let internalRamAddressRange: ClosedRange<UInt16> = 0xC000...0xDFFF
-    private static let echoRamAddressRange: ClosedRange<UInt16> = 0xE000...0xFDFF
-    private static let spriteAttributesAddressRange: ClosedRange<UInt16> = 0xFE00...0xFE9F
-    private static let probitedAddressRange: ClosedRange<UInt16> = 0xFEA0...0xFEFF // Prohibited
-    private static let ioAddressRange: ClosedRange<UInt16> = 0xFF00...0xFF7F // or is the upper bound 0xFF4B?
-    private static let highRamAddressRange: ClosedRange<UInt16> = 0xFF80...0xFFFE
-    private static let interruptRegisterAddress: UInt16 = 0xFFFF // Duplicate, here for completeness.
-    
-    private static let readOnlyAddressRange: ClosedRange<UInt16> = 0x0000...0x7FFF
-    private static let echoRamOffset: UInt16 = 0x2000
 }
 
 // MARK: - BIOS
 
 extension MMU {
-    
-    // Writing a value of `0x1` to the adderss 0xFF50 removes the bootrom/bios overlay
-    // and puts the orginial rom data back.
-    private static let biosDeactivateAddress: UInt16 = 0xFF50
-    private static let biosDeactivateValue: UInt8 = 0x1
     
     private static let biosAddressRange: Range<Int> = 0..<bios.count
     

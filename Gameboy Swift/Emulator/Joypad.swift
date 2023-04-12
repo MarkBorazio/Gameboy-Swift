@@ -20,20 +20,20 @@ class Joypad {
     private var buttonsHeldDown: Set<Button> = []
     
     func readJoypad() -> UInt8 {
-        var newJoypadByte = MMU.shared.memoryMap[MMU.addressJoypad] | 0x0F // Set bottom 4 bits high as that means they not held down
+        var newJoypadByte = MMU.shared.memoryMap[Memory.addressJoypad] | 0x0F // Set bottom 4 bits high as that means they not held down
         
-        let isDirectionSelected = !newJoypadByte.checkBit(MMU.selectDirectionButtonsBitIndex)
-        let isActionSelected = !newJoypadByte.checkBit(MMU.selectActionButtonsBitIndex)
+        let isDirectionSelected = !newJoypadByte.checkBit(Memory.selectDirectionButtonsBitIndex)
+        let isActionSelected = !newJoypadByte.checkBit(Memory.selectActionButtonsBitIndex)
         
         if isDirectionSelected {
-            let heldDirectionButtons = buttonsHeldDown.filter { $0.selectionBitIndex == MMU.selectDirectionButtonsBitIndex }
+            let heldDirectionButtons = buttonsHeldDown.filter { $0.selectionBitIndex == Memory.selectDirectionButtonsBitIndex }
             heldDirectionButtons.forEach {
                 newJoypadByte.clearBit($0.bitIndex)
             }
         }
         
         if isActionSelected {
-            let heldDirectionButtons = buttonsHeldDown.filter { $0.selectionBitIndex == MMU.selectActionButtonsBitIndex }
+            let heldDirectionButtons = buttonsHeldDown.filter { $0.selectionBitIndex == Memory.selectActionButtonsBitIndex }
             heldDirectionButtons.forEach {
                 newJoypadByte.clearBit($0.bitIndex)
             }
@@ -54,17 +54,17 @@ class Joypad {
         
         var bitIndex: Int {
             switch self {
-            case .down, .start: return MMU.joypadDownOrStartBitIndex
-            case .up, .select: return MMU.joypadUpOrSelectBitIndex
-            case .left, .b: return MMU.joypadLeftOrBBitIndex
-            case .right, .a: return MMU.joypadRightOrABitIndex
+            case .down, .start: return Memory.joypadDownOrStartBitIndex
+            case .up, .select: return Memory.joypadUpOrSelectBitIndex
+            case .left, .b: return Memory.joypadLeftOrBBitIndex
+            case .right, .a: return Memory.joypadRightOrABitIndex
             }
         }
         
         var selectionBitIndex: Int {
             switch self {
-            case .a, .b, .start, .select: return MMU.selectActionButtonsBitIndex
-            case .up, .down, .left, .right: return MMU.selectDirectionButtonsBitIndex
+            case .a, .b, .start, .select: return Memory.selectActionButtonsBitIndex
+            case .up, .down, .left, .right: return Memory.selectDirectionButtonsBitIndex
             }
         }
     }
@@ -75,7 +75,7 @@ extension Joypad: JoypadDelegate {
     func buttonDown(_ button: Button) {
         buttonsHeldDown.insert(button)
         
-        var joypadByte = MMU.shared.readValue(address: MMU.addressJoypad)
+        var joypadByte = MMU.shared.readValue(address: Memory.addressJoypad)
         let isButtonTypeSelected = !joypadByte.checkBit(button.selectionBitIndex) // 0 means selected, 1 means unselected
         if isButtonTypeSelected {
             MMU.shared.requestJoypadInterrupt()
