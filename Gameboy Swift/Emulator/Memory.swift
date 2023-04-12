@@ -31,6 +31,13 @@ enum Memory {
     static let echoRamOffset: UInt16 = 0x2000
     
     
+    // MARK: - Cartridge
+    
+    static let headerAddressRange: ClosedRange<UInt16> = 0x0100...0x014F
+    static let cartridgeTypeAddress: UInt16 = 0x0147
+    static let ramBanksAddress: UInt16 = 0x0148
+    
+    
     // MARK: - Interrupts
     
     static let addressIE: UInt16 = 0xFFFF
