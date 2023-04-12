@@ -77,21 +77,12 @@ extension Joypad: JoypadDelegate {
         
         var joypadByte = MMU.shared.readValue(address: MMU.addressJoypad)
         let isButtonTypeSelected = !joypadByte.checkBit(button.selectionBitIndex) // 0 means selected, 1 means unselected
-        guard isButtonTypeSelected else { return }
-
-        joypadByte.clearBit(button.bitIndex)
-        MMU.shared.writeValue(joypadByte, address: MMU.addressJoypad)
-        MMU.shared.requestJoypadInterrupt()
+        if isButtonTypeSelected {
+            MMU.shared.requestJoypadInterrupt()
+        }
     }
     
     func buttonUp(_ button: Button) {
         buttonsHeldDown.remove(button)
-        
-        var joypadByte = MMU.shared.readValue(address: MMU.addressJoypad)
-        let isButtonTypeSelected = !joypadByte.checkBit(button.selectionBitIndex) // 0 means selected, 1 means unselected
-        guard isButtonTypeSelected else { return }
-        
-        joypadByte.setBit(button.bitIndex)
-        MMU.shared.writeValue(joypadByte, address: MMU.addressJoypad)
     }
 }
