@@ -35,7 +35,13 @@ enum Memory {
     
     static let headerAddressRange: ClosedRange<UInt16> = 0x0100...0x014F
     static let cartridgeTypeAddress: UInt16 = 0x0147
-    static let ramBanksAddress: UInt16 = 0x0148
+    static let numberOfRomBanksAddress: UInt16 = 0x0148
+    static let numberOfRamBanksAddress: UInt16 = 0x0149
+    
+    static let ramEnableAddressRange: ClosedRange<UInt16> = 0x0000...0x1FFF // Write only
+    static let romBankSelectAddressRange: ClosedRange<UInt16> = 0x2000...0x3FFF // Write only
+    static let ramBankOrSecondaryRomBankSelectAddressRange: ClosedRange<UInt16> = 0x4000...0x5FFF // Write only
+    static let bankModeSelectAddressRange: ClosedRange<UInt16> = 0x6000...0x7FFF // Write only
     
     
     // MARK: - Interrupts
