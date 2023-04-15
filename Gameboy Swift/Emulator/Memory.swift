@@ -27,7 +27,6 @@ enum Memory {
     static let highRamAddressRange: ClosedRange<UInt16> = 0xFF80...0xFFFE
     static let interruptRegisterAddress: UInt16 = 0xFFFF // Duplicate, here for completeness.
     
-    static let readOnlyAddressRange: ClosedRange<UInt16> = 0x0000...0x7FFF
     static let echoRamOffset: UInt16 = 0x2000
     
     
@@ -39,9 +38,9 @@ enum Memory {
     static let numberOfRamBanksAddress: UInt16 = 0x0149
     
     static let ramEnableAddressRange: ClosedRange<UInt16> = 0x0000...0x1FFF // Write only
-    static let romBankSelectAddressRange: ClosedRange<UInt16> = 0x2000...0x3FFF // Write only
-    static let ramBankOrSecondaryRomBankSelectAddressRange: ClosedRange<UInt16> = 0x4000...0x5FFF // Write only
-    static let bankModeSelectAddressRange: ClosedRange<UInt16> = 0x6000...0x7FFF // Write only
+    static let setBankRegister1AddressRange: ClosedRange<UInt16> = 0x2000...0x3FFF // Write only
+    static let setBankRegister2AddressRange: ClosedRange<UInt16> = 0x4000...0x5FFF // Write only
+    static let setBankModeAddressRange: ClosedRange<UInt16> = 0x6000...0x7FFF // Write only
     
     
     // MARK: - Interrupts

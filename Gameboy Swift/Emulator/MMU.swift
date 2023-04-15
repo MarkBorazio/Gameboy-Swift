@@ -23,20 +23,6 @@ class MMU {
         memoryMap = Array(repeating: 0, count: Memory.memorySizeBytes)
         self.rom = rom
         
-        // First 16kB of memory map is fixed to first 16kB of ROM data.
-        Memory.fixedRomBankAddressRange.forEach { index in
-            memoryMap[index] = rom.data[index]
-        }
-        
-        // Second 16kB of memory map can be set and swapped between ROM banks.
-        // The default is simply the second 16kB of ROM data.
-        Memory.switchableRomBankAddressRange.forEach { index in
-            memoryMap[index] = rom.data[index]
-        }
-        
-        // Initialise all button press bits to 1 (unpressed)
-        memoryMap[Memory.addressJoypad] = 0x0F
-        
         if skipBootRom {
             CPU.shared.skipBootRom()
             memoryMap[Memory.addressTIMA] = 0x00
@@ -87,6 +73,10 @@ class MMU {
         switch address {
         case Memory.addressJoypad:
             return Joypad.shared.readJoypad()
+        case Memory.fixedRomBankAddressRange,
+            Memory.switchableRomBankAddressRange,
+            Memory.switchableRamBankAddressRange:
+            return rom!.read(address: address) // TODO: Fixo.
         default:
             return memoryMap[address]
         }
@@ -96,10 +86,12 @@ class MMU {
         
         switch address {
             
-        case Memory.readOnlyAddressRange:
-            return
-            
-        case Memory.probitedAddressRange:
+        case Memory.ramEnableAddressRange,
+            Memory.setBankRegister1AddressRange,
+            Memory.setBankRegister2AddressRange,
+            Memory.switchableRamBankAddressRange,
+            Memory.setBankModeAddressRange:
+            rom?.write(value, address: address)
             return
             
         case Memory.biosDeactivateAddress:
@@ -132,6 +124,9 @@ class MMU {
             if previousFrequency != newFrequency {
                 MasterClock.shared.resetTimaCycle()
             }
+            
+        case Memory.probitedAddressRange:
+            return
             
         default:
             // Standard write

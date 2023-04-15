@@ -11,13 +11,16 @@ struct ROM {
     
     let data: [UInt8]
     private let mbcType: MBCType
-    private let numberOfRomBanks: UInt8
-    private let ramBanks: [[UInt8]]
+    private let numberOfRomBanks: Int
+    private var ram: [UInt8]
     
-    private var bankMode: BankMode = .ramBank
+    private var bankMode: BankMode = .mode0
     private var ramEnabled = false
     private var selectedRomBankIndex: UInt8 = 1
     private var selectedRamBankIndex: UInt8 = 0
+    
+    private var bankRegister1: UInt8 = 1
+    private var bankRegister2: UInt8 = 0
     
     
     init(fileName: String) throws {
@@ -71,20 +74,20 @@ struct ROM {
             numberOfRamBanks = 0
         }
         
-        let emptyRamBank = Array(repeating: UInt8.min, count: Self.ramBankSize)
-        ramBanks = Array(repeating: emptyRamBank, count: numberOfRamBanks)
+        let totalRam = numberOfRamBanks * Self.ramBankSize
+        ram = Array(repeating: UInt8.min, count: totalRam)
     }
     
     func read(address: UInt16) -> UInt8 {
         switch address {
         case Memory.fixedRomBankAddressRange:
-            return data[address]
+            return readFromFixedRomBank(address: address)
         case Memory.switchableRomBankAddressRange:
             return readFromSwitchableRomBank(address: address)
         case Memory.switchableRamBankAddressRange:
-            return readFromSwitchableRamBank(address: address)
+            return readRamBank(address: address)
         default:
-            fatalError("Tried to read invalid address from ROM")
+            fatalError("Unhandled read address sent to cartridge. Got \(address.hexString()).")
         }
     }
     
@@ -92,63 +95,125 @@ struct ROM {
         switch address {
         case Memory.ramEnableAddressRange:
             enableDisableRam(value: value)
-        case Memory.romBankSelectAddressRange:
-            selectedRomBankIndex(value: value)
+        case Memory.setBankRegister1AddressRange:
+            setBankRegister1(value: value)
+        case Memory.setBankRegister2AddressRange:
+            setBankRegister2(value: value)
+        case Memory.switchableRamBankAddressRange:
+            writeRamBank(value, address: address)
+        case Memory.setBankModeAddressRange:
+            setBankMode(value: value)
+        default:
+            fatalError("Unhandled write address sent to cartridge. Got \(address.hexString()).")
         }
     }
-}
-
-// MARK: - Rom Banking
-
-extension ROM {
     
-    private func readFromSwitchableRomBank(address: UInt16) -> UInt8 {
-        // Address is confirmed in range of 0x4000...0x7FFF at this point
-        let adjustedAddress = address - Memory.switchableRomBankAddressRange.lowerBound // Get address in range of 0x0000...0x3FFF
-        let offset = Self.romBankSize * UInt16(selectedRomBankIndex)
-        let romAddress = adjustedAddress + offset
-        return data[romAddress]
+    private mutating func setBankMode(value: UInt8) {
+        let newValue = value & 0b0000_0001
+        switch newValue {
+        case Self.bankMode0: bankMode = .mode0
+        case Self.bankMode1: bankMode = .mode1
+        default:
+            fatalError("Unhandled bank mode value set. Got \(newValue.hexString()).")
+        }
     }
     
-    // None of this will make sense unless you read the following: https://gbdev.io/pandocs/MBC1.html
-    private mutating func selectRomBankIndex(value: UInt8) {
-        let currentValueUpperTwoBits: UInt8 = selectedRomBankIndex & 0b0110_0000
-        let newValueLowerFiveBits = value & 0b0001_1111
-        
-        var newValue = newValueLowerFiveBits
-        
-        // If the ROM Bank Number is set to a higher value than the number of banks in the cart, the bank number is masked to the required number of bits.
-        // e.g. a 256 KiB cart only needs a 4-bit bank number to address all of its 16 banks, so this register is masked to 4 bits.
-        if (newValue > numberOfRomBanks) {
-            newValue = (newValue << numberOfRomBanks.leadingZeroBitCount) >> numberOfRomBanks.leadingZeroBitCount
-        }
-        
-        // Yes, we check `newValueLowerFiveBits` to see if we need to set `newValue`.
-        // This is deliberate.
-        if newValueLowerFiveBits == 0 {
+    private mutating func setBankRegister1(value: UInt8) {
+        var newValue = value & 0b0001_1111
+
+        if newValue == 0 {
             newValue = 1
         }
         
-        newValue |= currentValueUpperTwoBits
-        
-        return selectedRomBankIndex = newValue
+        bankRegister1 = newValue
+    }
+    
+    private mutating func setBankRegister2(value: UInt8) {
+        bankRegister2 = value & 0b0000_0011
     }
 }
 
-// MARK: - Ram Banking
+// MARK: - ROM Banking
 
 extension ROM {
     
-    private func readFromSwitchableRamBank(address: UInt16) -> UInt8 {
-        guard ramEnabled else { return 0xFF } // Most likely return value
-        // Address is confirmed in range of 0xA000...0xBFFF at this point
-        let adjustedAddress = address - Memory.switchableRamBankAddressRange.lowerBound // Get address in range of 0x0000...0x1FFF
-        return ramBanks[selectedRamBankIndex][adjustedAddress]
+    // Ref: https://gekkio.fi/files/gb-docs/gbctr.pdf
+    // Chapter 8
+    private func readFromFixedRomBank(address: UInt16) -> UInt8 {
+        let effectiveRomBankIndex: UInt8 // Bits 0 - 6
+        switch bankMode {
+        case .mode0: effectiveRomBankIndex = 0
+        case .mode1: effectiveRomBankIndex = bankRegister2 << 5
+        }
+        
+        return readRomBank(address: address, effectiveRomBankIndex: effectiveRomBankIndex)
     }
     
+    private func readFromSwitchableRomBank(address: UInt16) -> UInt8 {
+        let effectiveRomBankIndex: UInt8 = (bankRegister2 << 5) | bankRegister1 // Bits 0 - 6
+        return readRomBank(address: address, effectiveRomBankIndex: effectiveRomBankIndex)
+    }
+    
+    private func readRomBank(address: UInt16, effectiveRomBankIndex: UInt8) -> UInt8 {
+        let addressWithinBank = address & 0b0011_1111_1111_1111 // Bits 0 - 13
+        
+        // If the ROM Bank Number is set to a higher value than the number of banks in the cart, the bank number is masked to the required number of bits.
+        // e.g. a 256 KiB cart only needs a 4-bit bank number to address all of its 16 banks, so this register is masked to 4 bits.
+        var adjustedEffectiveRomBankIndex = effectiveRomBankIndex
+        let maximumBitWidth = UInt8(numberOfRomBanks.minimumBitWidth)
+        if (effectiveRomBankIndex.minimumBitWidth > maximumBitWidth) {
+            let mask = 2^maximumBitWidth - 1
+            adjustedEffectiveRomBankIndex &= mask
+        }
+        
+        
+        let romAddress = (UInt32(adjustedEffectiveRomBankIndex) << 14) | UInt32(addressWithinBank)
+        return data[romAddress]
+    }
+}
+
+// MARK: - RAM Banking
+
+extension ROM {
+    
     private mutating func enableDisableRam(value: UInt8) {
-        let maskedValue = value & Self.ramEnableDisableMask
+        let maskedValue = value & 0b0000_1111
         ramEnabled = maskedValue == Self.ramEnable
+    }
+    
+    private func readRamBank(address: UInt16) -> UInt8 {
+        guard ramEnabled else { return 0xFF } // In practice, this is not guaranteed to be 0xFF, but it is the most likely return value.
+        
+        let ramAddress = convertToRamAddress(address: address)
+        guard ramAddress <= ram.count else {
+            print("ERROR: Invalid read RAM address")
+            return 0xFF
+        }
+        return ram[ramAddress]
+    }
+    
+    private mutating func writeRamBank(_ value: UInt8, address: UInt16) {
+        guard ramEnabled else { return }
+        
+        let ramAddress = convertToRamAddress(address: address)
+        guard ramAddress <= ram.count else {
+            print("ERROR: Invalid write RAM address")
+            return
+        }
+        ram[ramAddress] = value
+    }
+    
+    private func convertToRamAddress(address: UInt16) -> UInt32 {
+        let addressWithinBank = address & 0b0001_1111_1111_1111 // Bits 0 - 12
+        
+        let effectiveRamBankIndex: UInt8 // Bits 0 - 1
+        switch bankMode {
+        case .mode0: effectiveRamBankIndex = 0
+        case .mode1: effectiveRamBankIndex = bankRegister2
+        }
+        
+        let ramAddress = (UInt32(effectiveRamBankIndex) << 13) | UInt32(addressWithinBank)
+        return ramAddress
     }
 }
 
@@ -165,8 +230,8 @@ extension ROM {
     }
     
     private enum BankMode {
-        case romBank
-        case ramBank
+        case mode0 // Commonly referred to as ROM banking mode
+        case mode1 // Commonly referred to as RAM banking mode
     }
 }
 
@@ -183,6 +248,10 @@ extension ROM {
     private static let mbcType5: ClosedRange<UInt8> = 0x19...0x1E
     private static let mbcType6: UInt8 = 0x20
     private static let mbcType7: UInt8 = 0x22
+    
+    private static let bankMode0: UInt8 = 0
+    private static let bankMode1: UInt8 = 1
+    
     
     // MARK: - Rom Bank
     
@@ -203,6 +272,7 @@ extension ROM {
     // MARK: - Ram Bank
     
     private static let ramBankSize:Int = 8 * 1024 // 8KB
+    
     private static let validRamBankIndices: ClosedRange<UInt8> = 0x00...0x03
     
     private static let noRamBanks: UInt8 = 0x0
@@ -210,7 +280,10 @@ extension ROM {
     private static let fourRamBanks: UInt8 = 0x3
     private static let sixteenRamBanks: UInt8 = 0x4
     private static let eightRamBanks: UInt8 = 0x5
-    
-    private static let ramEnableDisableMask: UInt8 = 0b1111
+
     private static let ramEnable: UInt8 = 0xA // Any value other than this disables RAM
+    
+    // MARK: - Miscellaneous
+    
+    private static let romBankUpperBitsAndRamBankMask: UInt8 = 0b11
 }

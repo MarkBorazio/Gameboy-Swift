@@ -8,6 +8,18 @@
 import Foundation
 
 extension FixedWidthInteger {
+    
+    /// Returns the minimum number of bits required to represent the number.
+    /// This is simply the total bit width minus the leading zero bit count.
+    ///
+    /// ```
+    /// let value = 0b0001_0010
+    /// print(value.minimumBitWidth) // 5
+    /// ```
+    var minimumBitWidth: Int {
+        return bitWidth - leadingZeroBitCount
+    }
+    
     /// Chains together multiple `addingReportingOverflow` calls to detect if there was an overflow at least once
     /// over the multiple additions.
     func addingMultipleReportingOverflow(_ others: Self...) -> (partialValue: Self, overflow: Bool) {

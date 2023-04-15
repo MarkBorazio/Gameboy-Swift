@@ -296,6 +296,10 @@ class PPU {
                     
                     // Sanity check... cbf
                     let index = Int(scanline) * Int(Self.pixelWidth) + Int(globalXco)
+                    guard index <= screenData.count else {
+                        print("uhhh")
+                        return
+                    }
                     screenData[index] = pixelData
                 }
             }
