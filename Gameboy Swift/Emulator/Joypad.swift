@@ -25,6 +25,7 @@ class Joypad {
         let isDirectionSelected = !newJoypadByte.checkBit(Memory.selectDirectionButtonsBitIndex)
         let isActionSelected = !newJoypadByte.checkBit(Memory.selectActionButtonsBitIndex)
         
+        let buttonsHeldDown = buttonsHeldDown // Create copy to reading during a write
         if isDirectionSelected {
             let heldDirectionButtons = buttonsHeldDown.filter { $0.selectionBitIndex == Memory.selectDirectionButtonsBitIndex }
             heldDirectionButtons.forEach {
@@ -75,7 +76,7 @@ extension Joypad: JoypadDelegate {
     func buttonDown(_ button: Button) {
         buttonsHeldDown.insert(button)
         
-        var joypadByte = MMU.shared.readValue(address: Memory.addressJoypad)
+        let joypadByte = MMU.shared.readValue(address: Memory.addressJoypad)
         let isButtonTypeSelected = !joypadByte.checkBit(button.selectionBitIndex) // 0 means selected, 1 means unselected
         if isButtonTypeSelected {
             MMU.shared.requestJoypadInterrupt()

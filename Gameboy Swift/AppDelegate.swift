@@ -26,8 +26,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     ]
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        let rom = try! ROM(fileName: "Tetris")
-        MMU.shared.loadRom(rom: rom, skipBootRom: true)
+        let rom = try! Cartridge(fileName: "Pokemon Blue")
+        MMU.shared.loadCartridge(cartridge: rom, skipBootRom: true)
         MasterClock.shared.startTicking()
     }
 

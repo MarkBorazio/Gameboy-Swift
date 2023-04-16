@@ -39,7 +39,7 @@
 		6070724B26BFA815002E7119 /* Gameboy_SwiftUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6070724A26BFA815002E7119 /* Gameboy_SwiftUITests.swift */; };
 		6070725A26BFB650002E7119 /* CPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6070725926BFB650002E7119 /* CPU.swift */; };
 		6070725C26BFC47E002E7119 /* MMU.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6070725B26BFC47E002E7119 /* MMU.swift */; };
-		6070725E26BFCDCC002E7119 /* ROM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6070725D26BFCDCC002E7119 /* ROM.swift */; };
+		6070725E26BFCDCC002E7119 /* Cartridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6070725D26BFCDCC002E7119 /* Cartridge.swift */; };
 		6070726126BFCFA5002E7119 /* Array+UIntSubscript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6070726026BFCFA5002E7119 /* Array+UIntSubscript.swift */; };
 /* End PBXBuildFile section */
 
@@ -64,6 +64,10 @@
 		4D0BFAA729E59D100009164D /* Joypad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Joypad.swift; sourceTree = "<group>"; };
 		4D106A7D29CFFB5500EBAAC1 /* MasterClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterClock.swift; sourceTree = "<group>"; };
 		4D7E7C9129E6E56B00E2E68F /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
+		4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryBankController.swift; sourceTree = "<group>"; };
+		4D7E7C9829EBA93100E2E68F /* MBC1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBC1.swift; sourceTree = "<group>"; };
+		4D7E7C9A29EBB24400E2E68F /* MBC0.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBC0.swift; sourceTree = "<group>"; };
+		4D7E7C9C29EBB88000E2E68F /* MBC3.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBC3.swift; sourceTree = "<group>"; };
 		4DAEF4E229D98A1C00F41DFC /* GameBoyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBoyView.swift; sourceTree = "<group>"; };
 		4DFF762D29E1258F00BE180F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
 		4DFF765129E1269000BE180F /* cpu_instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = cpu_instrs.gb; sourceTree = "<group>"; };
@@ -131,7 +135,7 @@
 		6070724C26BFA815002E7119 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6070725926BFB650002E7119 /* CPU.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPU.swift; sourceTree = "<group>"; };
 		6070725B26BFC47E002E7119 /* MMU.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MMU.swift; sourceTree = "<group>"; };
-		6070725D26BFCDCC002E7119 /* ROM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ROM.swift; sourceTree = "<group>"; };
+		6070725D26BFCDCC002E7119 /* Cartridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cartridge.swift; sourceTree = "<group>"; };
 		6070726026BFCFA5002E7119 /* Array+UIntSubscript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+UIntSubscript.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -176,6 +180,17 @@
 				6070723526BFA814002E7119 /* Info.plist */,
 			);
 			path = Configuration;
+			sourceTree = "<group>";
+		};
+		4D7E7C9529EBA63C00E2E68F /* Memory Bank Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */,
+				4D7E7C9A29EBB24400E2E68F /* MBC0.swift */,
+				4D7E7C9829EBA93100E2E68F /* MBC1.swift */,
+				4D7E7C9C29EBB88000E2E68F /* MBC3.swift */,
+			);
+			path = "Memory Bank Controllers";
 			sourceTree = "<group>";
 		};
 		4DAEF4DD29D884C100F41DFC /* Test ROMS */ = {
@@ -327,12 +342,13 @@
 		6070725826BFB63C002E7119 /* Emulator */ = {
 			isa = PBXGroup;
 			children = (
+				4D7E7C9529EBA63C00E2E68F /* Memory Bank Controllers */,
 				4D106A7D29CFFB5500EBAAC1 /* MasterClock.swift */,
 				6070725B26BFC47E002E7119 /* MMU.swift */,
 				6070725926BFB650002E7119 /* CPU.swift */,
 				6001DE2726DA4A3500D399A7 /* PPU.swift */,
 				4D0BFAA729E59D100009164D /* Joypad.swift */,
-				6070725D26BFCDCC002E7119 /* ROM.swift */,
+				6070725D26BFCDCC002E7119 /* Cartridge.swift */,
 				4D7E7C9129E6E56B00E2E68F /* Memory.swift */,
 				6055A78026E48E5400987457 /* ColourPalette.swift */,
 			);
@@ -494,21 +510,25 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */,
+				4D7E7C9B29EBB24400E2E68F /* MBC0.swift in Sources */,
 				4D106A7E29CFFB5500EBAAC1 /* MasterClock.swift in Sources */,
 				605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */,
 				6070725C26BFC47E002E7119 /* MMU.swift in Sources */,
 				4D0BFAA829E59D100009164D /* Joypad.swift in Sources */,
 				6070726126BFCFA5002E7119 /* Array+UIntSubscript.swift in Sources */,
+				4D7E7C9729EBA66300E2E68F /* MemoryBankController.swift in Sources */,
 				4DAEF4E329D98A1C00F41DFC /* GameBoyView.swift in Sources */,
+				4D7E7C9929EBA93100E2E68F /* MBC1.swift in Sources */,
 				6070722F26BFA814002E7119 /* ViewController.swift in Sources */,
 				4DFF76AD29E17CB200BE180F /* FixedWidthInteger+Extensions.swift in Sources */,
 				6001DE2826DA4A3500D399A7 /* PPU.swift in Sources */,
 				605AFBAE26C8FE580040E608 /* UInt8+Extensions.swift in Sources */,
+				4D7E7C9D29EBB88000E2E68F /* MBC3.swift in Sources */,
 				6070722D26BFA814002E7119 /* AppDelegate.swift in Sources */,
 				605AFBA626C810680040E608 /* BinaryInteger+Extensions.swift in Sources */,
 				6070725A26BFB650002E7119 /* CPU.swift in Sources */,
 				6055A78126E48E5400987457 /* ColourPalette.swift in Sources */,
-				6070725E26BFCDCC002E7119 /* ROM.swift in Sources */,
+				6070725E26BFCDCC002E7119 /* Cartridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

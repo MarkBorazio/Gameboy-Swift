@@ -12,16 +12,16 @@ class MMU {
     static let shared = MMU()
     
     var memoryMap: [UInt8]
-    var rom: ROM?
+    var cartridge: Cartridge?
     var isBootRomOverlayed = false
     
     init() {
         memoryMap = Array(repeating: 0, count: Memory.memorySizeBytes)
     }
     
-    func loadRom(rom: ROM, skipBootRom: Bool) {
+    func loadCartridge(cartridge: Cartridge, skipBootRom: Bool) {
         memoryMap = Array(repeating: 0, count: Memory.memorySizeBytes)
-        self.rom = rom
+        self.cartridge = cartridge
         
         if skipBootRom {
             CPU.shared.skipBootRom()
@@ -64,8 +64,6 @@ class MMU {
     }
     
     private func removeBootRomOverlay() {
-        guard let rom else { return }
-        memoryMap.replaceSubrange(Self.biosAddressRange, with: rom.data[Self.biosAddressRange])
         isBootRomOverlayed = false
     }
     
@@ -76,7 +74,7 @@ class MMU {
         case Memory.fixedRomBankAddressRange,
             Memory.switchableRomBankAddressRange,
             Memory.switchableRamBankAddressRange:
-            return rom!.read(address: address) // TODO: Fixo.
+            return cartridge!.read(address: address) // TODO: Fixo.
         default:
             return memoryMap[address]
         }
@@ -91,12 +89,12 @@ class MMU {
             Memory.setBankRegister2AddressRange,
             Memory.switchableRamBankAddressRange,
             Memory.setBankModeAddressRange:
-            rom?.write(value, address: address)
+            cartridge?.write(value, address: address)
             return
             
         case Memory.biosDeactivateAddress:
-            if isBootRomOverlayed && value == 1 {
-                removeBootRomOverlay()
+            if value == 1 {
+                isBootRomOverlayed = false
             }
             memoryMap[address] = value
             
