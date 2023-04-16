@@ -18,12 +18,10 @@ extension BinaryInteger {
     }
     
     mutating func setBit(_ n: Int) {
-        guard n < bitWidth else { return }
         self |= (0b1 << n)
     }
     
     mutating func clearBit(_ n: Int) {
-        guard n < bitWidth else { return }
         self &= ~(0b1 << n)
     }
     

@@ -25,7 +25,7 @@ class Joypad {
         let isDirectionSelected = !newJoypadByte.checkBit(Memory.selectDirectionButtonsBitIndex)
         let isActionSelected = !newJoypadByte.checkBit(Memory.selectActionButtonsBitIndex)
         
-        let buttonsHeldDown = buttonsHeldDown // Create copy to reading during a write
+        let buttonsHeldDown = buttonsHeldDown // Create copy to avoid reading during a write
         if isDirectionSelected {
             let heldDirectionButtons = buttonsHeldDown.filter { $0.selectionBitIndex == Memory.selectDirectionButtonsBitIndex }
             heldDirectionButtons.forEach {

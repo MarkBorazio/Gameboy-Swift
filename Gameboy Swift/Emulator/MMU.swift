@@ -203,11 +203,14 @@ extension MMU {
 
 extension MMU {
     
+    func getScanline() -> UInt8 {
+        memoryMap[Memory.addressLY]
+    }
+    
     // Use this instead of writing memory via writeValue(...) since that function
     // deliberately sets the scanline to 0 when any value is written to it.
-    var currentScanline: UInt8 {
-        get { memoryMap[Memory.addressLY] }
-        set { memoryMap[Memory.addressLY] = newValue }
+    func setScanline(_ value: UInt8) {
+        memoryMap[Memory.addressLY] = value
     }
     
     var isLCDEnabled: Bool {

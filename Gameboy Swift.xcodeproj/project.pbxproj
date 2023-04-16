@@ -10,6 +10,10 @@
 		4D0BFAA829E59D100009164D /* Joypad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D0BFAA729E59D100009164D /* Joypad.swift */; };
 		4D106A7E29CFFB5500EBAAC1 /* MasterClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D106A7D29CFFB5500EBAAC1 /* MasterClock.swift */; };
 		4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9129E6E56B00E2E68F /* Memory.swift */; };
+		4D7E7C9729EBA66300E2E68F /* MemoryBankController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */; };
+		4D7E7C9929EBA93100E2E68F /* MBC1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9829EBA93100E2E68F /* MBC1.swift */; };
+		4D7E7C9B29EBB24400E2E68F /* MBC0.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9A29EBB24400E2E68F /* MBC0.swift */; };
+		4D7E7C9D29EBB88000E2E68F /* MBC3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9C29EBB88000E2E68F /* MBC3.swift */; };
 		4DAEF4E329D98A1C00F41DFC /* GameBoyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DAEF4E229D98A1C00F41DFC /* GameBoyView.swift */; };
 		4DFF762E29E1258F00BE180F /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF762D29E1258F00BE180F /* README.md */; };
 		4DFF767E29E1269000BE180F /* cpu_instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4DFF765129E1269000BE180F /* cpu_instrs.gb */; };
