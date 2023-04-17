@@ -62,14 +62,17 @@ class MasterClock {
         let (newDivTimer, overflow) = divTimer.addingReportingOverflow(UInt8(cycles))
         divTimer = newDivTimer
         if overflow {
-            MMU.shared.memoryMap[Memory.addressDIV] &+= 1
+            var div = MMU.shared.memoryMap[Memory.addressDIV]
+            div &+= 1
+            MMU.shared.memoryMap[Memory.addressDIV] = div
         }
     }
     
     // This thing is pretty complicated: https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour
     // TODO: The rest of the complexity.
     private func incrementTimaRegister(cycles: Int) {
-        let isClockEnabled = MMU.shared.memoryMap[Memory.addressTAC].checkBit(Memory.timaEnabledBitIndex)
+        let tac = MMU.shared.memoryMap[Memory.addressTAC]
+        let isClockEnabled = tac.checkBit(Memory.timaEnabledBitIndex)
         guard isClockEnabled else { return }
         
         timaTimer += cycles

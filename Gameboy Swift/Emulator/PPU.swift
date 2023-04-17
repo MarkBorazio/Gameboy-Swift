@@ -186,7 +186,7 @@ class PPU {
             
             // Get the row data from cache, and if it's not in the cache, read it from memory and then store it in the cache.
             let rowData: TileRowData
-            var optionalRowData = rowDataCache[tileColumnIndex]
+            let optionalRowData = rowDataCache[tileColumnIndex]
             if let optionalRowData {
                 rowData = optionalRowData
             } else {

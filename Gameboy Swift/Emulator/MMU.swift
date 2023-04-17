@@ -146,32 +146,39 @@ extension MMU {
     }
     
     func getNextPendingAndEnabledInterrupt() -> UInt16? {
-        let interruptByte = memoryMap[Memory.addressIE] & memoryMap[Memory.addressIF]
+        var interruptFlags = memoryMap[Memory.addressIF]
+        let interuptEnable = memoryMap[Memory.addressIE]
+        let interruptByte = interuptEnable & interruptFlags
         
         // Priority is simply the bit order
 
         if interruptByte.checkBit(Memory.vBlankInterruptBitIndex) {
-            memoryMap[Memory.addressIF].clearBit(Memory.vBlankInterruptBitIndex)
+            interruptFlags.clearBit(Memory.vBlankInterruptBitIndex)
+            memoryMap[Memory.addressIF] = interruptFlags
             return Memory.addressVBlankInterrupt
         }
         
         if interruptByte.checkBit(Memory.lcdInterruptBitIndex) {
-            memoryMap[Memory.addressIF].clearBit(Memory.lcdInterruptBitIndex)
+            interruptFlags.clearBit(Memory.lcdInterruptBitIndex)
+            memoryMap[Memory.addressIF] = interruptFlags
             return Memory.addressLcdInterrupt
         }
         
         if interruptByte.checkBit(Memory.timerInterruptBitIndex) {
-            memoryMap[Memory.addressIF].clearBit(Memory.timerInterruptBitIndex)
+            interruptFlags.clearBit(Memory.timerInterruptBitIndex)
+            memoryMap[Memory.addressIF] = interruptFlags
             return Memory.addressTimerInterrupt
         }
         
         if interruptByte.checkBit(Memory.serialInterruptBitIndex) {
-            memoryMap[Memory.addressIF].clearBit(Memory.serialInterruptBitIndex)
+            interruptFlags.clearBit(Memory.serialInterruptBitIndex)
+            memoryMap[Memory.addressIF] = interruptFlags
             return Memory.addressSerialInterrupt
         }
 
         if interruptByte.checkBit(Memory.joypadInterruptBitIndex) {
-            memoryMap[Memory.addressIF].clearBit(Memory.joypadInterruptBitIndex)
+            interruptFlags.clearBit(Memory.joypadInterruptBitIndex)
+            memoryMap[Memory.addressIF] = interruptFlags
             return Memory.addressJoypadInterrupt
         }
         
@@ -179,23 +186,33 @@ extension MMU {
     }
     
     func requestVBlankInterrupt() {
-        memoryMap[Memory.addressIF].setBit(Memory.vBlankInterruptBitIndex)
+        var interruptFlags = memoryMap[Memory.addressIF]
+        interruptFlags.setBit(Memory.vBlankInterruptBitIndex)
+        memoryMap[Memory.addressIF] = interruptFlags
     }
     
     func requestLCDInterrupt() {
-        memoryMap[Memory.addressIF].setBit(Memory.lcdInterruptBitIndex)
+        var interruptFlags = memoryMap[Memory.addressIF]
+        interruptFlags.setBit(Memory.lcdInterruptBitIndex)
+        memoryMap[Memory.addressIF] = interruptFlags
     }
     
     func requestTimerInterrupt() {
-        memoryMap[Memory.addressIF].setBit(Memory.timerInterruptBitIndex)
+        var interruptFlags = memoryMap[Memory.addressIF]
+        interruptFlags.setBit(Memory.timerInterruptBitIndex)
+        memoryMap[Memory.addressIF] = interruptFlags
     }
     
     func requestSerialInterrupt() {
-        memoryMap[Memory.addressIF].setBit(Memory.serialInterruptBitIndex)
+        var interruptFlags = memoryMap[Memory.addressIF]
+        interruptFlags.setBit(Memory.serialInterruptBitIndex)
+        memoryMap[Memory.addressIF] = interruptFlags
     }
     
     func requestJoypadInterrupt() {
-        memoryMap[Memory.addressIF].setBit(Memory.joypadInterruptBitIndex)
+        var interruptFlags = memoryMap[Memory.addressIF]
+        interruptFlags.setBit(Memory.joypadInterruptBitIndex)
+        memoryMap[Memory.addressIF] = interruptFlags
     }
 }
 
@@ -214,7 +231,8 @@ extension MMU {
     }
     
     var isLCDEnabled: Bool {
-        memoryMap[Memory.addressLCDC].checkBit(Memory.lcdAndPpuEnabledBitIndex)
+        let lcdc = memoryMap[Memory.addressLCDC]
+        return lcdc.checkBit(Memory.lcdAndPpuEnabledBitIndex)
     }
 }
 
