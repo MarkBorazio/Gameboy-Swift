@@ -163,75 +163,169 @@ class PPU {
         let tileRowIndex = relativeYCo >> 3 // Equivalent to `relativeYCo/8`
         let tileRowIndexAddress: UInt16 = addressBgAndWindowArea &+ (UInt16(tileRowIndex) &* Self.tilesPerRow)
         
-        let pixelRowIndex = (relativeYCo & 7) &* Self.bytesPerPixelRow // Equivalent to `Int(relativeYCo % 8) &* Self.bytesPerPixelRow`
+        let pixelRowIndex = (relativeYCo & 7) &* Self.bytesPerPixelRow // Equivalent to `Int(relativeYCo % 8) &* Self.bytesPerPixelRow
         
-        // TODO: Get rid of this cache. It speeds things up a bit, but is still the biggest bottle neck. I need to figure out how to load a tile only once, and then draw each of it's pixels that are on screen given the scroll offset.
-        typealias TileRowData = (byte1: UInt8, byte2: UInt8)
-        var rowDataCache: [UInt8: TileRowData] = [:]
+        let renderedPixelsRange = Int(scrollX)..<(Int(scrollX) + Int(Self.pixelWidth)) // Use Ints to prevent overflow
         
-        // Draw 160 horizontal pixels for scanline
-        for scanlinePixelIndex in 0..<Self.pixelWidth {
-
-            // Get X coordinate relative to window or background space
-            // TODO: Confirm if this is correct. It seems that we can have a y-coordinate relative to the window
-            // space, but an x-coordinate relative to the background space. That seems wrong.
-            // Update: It's probably correct, actually. The window is rendered on top of the background, so
-            // we could move from drawing a background pixel to drawing a window pixel in the same scanline.
-            let isPixelIndexWithinWindowXBounds = scanlinePixelIndex >= windowX
-            let shouldUseWindowSpaceForXCo = isRenderingWindow && isPixelIndexWithinWindowXBounds
-            let relativeXCo = shouldUseWindowSpaceForXCo ? (scanlinePixelIndex &- windowX) : (scanlinePixelIndex &+ scrollX)
-
-            // Get column index of tile from column of 32 tiles
-            let tileColumnIndex = relativeXCo >> 3 // Equivalent to `relativeXCo/8`
+        // 160 horizontal pixels for scanline
+        for firstTilePixel in stride(from: 0, to: Self.pixelWidth, by: Self.pixelsPerTileRow) {
             
-            // Get the row data from cache, and if it's not in the cache, read it from memory and then store it in the cache.
-            let rowData: TileRowData
-            let optionalRowData = rowDataCache[tileColumnIndex]
-            if let optionalRowData {
-                rowData = optionalRowData
-            } else {
-                // Get memory address of tile
-                let tileIndexAddress: UInt16 = tileRowIndexAddress &+ UInt16(tileColumnIndex)
-                let tileAddress: UInt16 = getTileAddress(tileIndexAddress: tileIndexAddress, isUsingTileDataAddress1: isUsingTileDataAddress1)
+            
+            // TODO: First, fix horiztonal scrolling issue.
+            // TODO: Then, re-implement window rendering.
+            
+//            // Get X coordinate relative to window or background space
+//            // TODO: Confirm if this is correct. It seems that we can have a y-coordinate relative to the window
+//            // space, but an x-coordinate relative to the background space. That seems wrong.
+//            // Update: It's probably correct, actually. The window is rendered on top of the background, so
+//            // we could move from drawing a background pixel to drawing a window pixel in the same scanline.
+//            let isPixelIndexWithinWindowXBounds = scanlinePixelIndex >= windowX
+//            let shouldUseWindowSpaceForXCo = isRenderingWindow && isPixelIndexWithinWindowXBounds
+//            let relativeXCo = shouldUseWindowSpaceForXCo ? (scanlinePixelIndex &- windowX) : (scanlinePixelIndex &+ scrollX)
+            
+            let relativeTilePixel = firstTilePixel &+ scrollX
+            let tileColumnIndex = relativeTilePixel >> 3 // Equivalent to `relativeTilePixel / Self.pixelsPerTileRow`
+            
+            // Get memory address of tile
+            let tileIndexAddress: UInt16 = tileRowIndexAddress &+ UInt16(tileColumnIndex)
+            let tileAddress: UInt16 = getTileAddress(tileIndexAddress: tileIndexAddress, isUsingTileDataAddress1: isUsingTileDataAddress1)
+            
+            // Find which of the tile's pixel rows we are on and get the pixel row data from memory
+            let pixelRowAddress = tileAddress &+ UInt16(pixelRowIndex)
+            let rowData1 = MMU.shared.readValue(address: pixelRowAddress)
+            let rowData2 = MMU.shared.readValue(address: pixelRowAddress &+ 1)
+            
+            let pixelIndices = 0...UInt8.bitWidth-1
+            for pixelIndex in pixelIndices {
+                let renderedPixelIndex = Int(firstTilePixel) + Int(scrollX) + pixelIndex
+                guard renderedPixelsRange.contains(renderedPixelIndex) else { continue }
                 
-                // Find which of the tile's pixel rows we are on and get the pixel row data from memory
-                let pixelRowAddress = tileAddress &+ UInt16(pixelRowIndex)
-                let rowData1 = MMU.shared.readValue(address: pixelRowAddress)
-                let rowData2 = MMU.shared.readValue(address: pixelRowAddress &+ 1)
-                rowData = (rowData1, rowData2)
-                rowDataCache[tileColumnIndex] = rowData
+                let adjustedBitIndex: Int
+                switch pixelIndex {
+                case 0: adjustedBitIndex = 7
+                case 1: adjustedBitIndex = 6
+                case 2: adjustedBitIndex = 5
+                case 3: adjustedBitIndex = 4
+                case 4: adjustedBitIndex = 3
+                case 5: adjustedBitIndex = 2
+                case 6: adjustedBitIndex = 1
+                case 7: adjustedBitIndex = 0
+                default: fatalError()
+                }
+                let colourID = (rowData2.getBitValue(adjustedBitIndex) << 1) | rowData1.getBitValue(adjustedBitIndex)
+
+                // Use colour ID to get colour from palette
+                let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
+
+                let scanlinePixelIndex = Int(firstTilePixel) + pixelIndex
+                let globalPixelIndex = Int(scanlineIndex) * Int(Self.pixelWidth) + Int(scanlinePixelIndex)
+
+                screenData[globalPixelIndex] = pixelData
             }
-
-            // Get the colour ID of the pixel
-            let bitIndex = Int(relativeXCo & 7) // Equivalent to `Int(relativeXCo % 8)`
-
-            // Adjust pixel row data to align bit indices with pixel indices.
-            // Pixel 0 corresponds to bit 7 of rowData1 and rowData2,
-            // pixel 1 corresponds to bit 6 of rowData1 and rowData2,
-            // etc.
-            // I could reverse the bits, but that isn't performant.
-            let adjustedBitIndex: Int
-            switch bitIndex {
-            case 0: adjustedBitIndex = 7
-            case 1: adjustedBitIndex = 6
-            case 2: adjustedBitIndex = 5
-            case 3: adjustedBitIndex = 4
-            case 4: adjustedBitIndex = 3
-            case 5: adjustedBitIndex = 2
-            case 6: adjustedBitIndex = 1
-            case 7: adjustedBitIndex = 0
-            default: adjustedBitIndex = 0
-            }
-            let colourID = (rowData.byte2.getBitValue(adjustedBitIndex) << 1) | rowData.byte1.getBitValue(adjustedBitIndex)
-
-            // Use colour ID to get colour from palette
-            let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
-
-            let globalPixelIndex = Int(scanlineIndex) * Int(Self.pixelWidth) + Int(scanlinePixelIndex)
-
-            screenData[globalPixelIndex] = pixelData
         }
     }
+    
+//    // Ref: http://www.codeslinger.co.uk/pages/projects/gameboy/graphics.html
+//    private func renderTiles(scanlineIndex: UInt8, control: UInt8) {
+//        // Don't bother rendering if scanline is off screen
+//        guard (scanlineIndex < Self.pixelHeight) else {
+//            return
+//        }
+//
+//        let scrollY = MMU.shared.readValue(address: Memory.addressScrollY)
+//        let scrollX = MMU.shared.readValue(address: Memory.addressScrollX)
+//        let windowY = MMU.shared.readValue(address: Memory.addressWindowY)
+//        let windowX = MMU.shared.readValue(address: Memory.addressWindowX) &- Self.windowXOffset
+//        let palette = MMU.shared.readValue(address: Memory.addressBgPalette)
+//
+//        // Check if we are rendering the window
+//        let windowEnabled = control.checkBit(Memory.windowEnabledBitIndex)
+//        let isScanlineWithinWindowBounds = windowY <= scanlineIndex
+//        let isRenderingWindow = windowEnabled && isScanlineWithinWindowBounds
+//
+//        // Check which area of tile data we are using
+//        let isUsingTileDataAddress1 = control.checkBit(Memory.bgAndWindowTileDataAreaBitIndex)
+//
+//        // Check which area of background data we are using
+//        let addressBgAndWindowBitIndex = isRenderingWindow ? Memory.windowTileMapAreaBitIndex : Memory.bgTileMapAreaBitIndex
+//        let addressBgAndWindowArea = control.checkBit(addressBgAndWindowBitIndex) ? Memory.addressBgAndWindowArea1 : Memory.addressBgAndWindowArea2
+//
+//        // Get Y coordinate relative to window or background space
+//        let relativeYCo = isRenderingWindow ? (scanlineIndex &- windowY) : (scanlineIndex &+ scrollY)
+//
+//        // Get row index of tile from row of 32 tiles
+//        let tileRowIndex = relativeYCo >> 3 // Equivalent to `relativeYCo/8`
+//        let tileRowIndexAddress: UInt16 = addressBgAndWindowArea &+ (UInt16(tileRowIndex) &* Self.tilesPerRow)
+//
+//        let pixelRowIndex = (relativeYCo & 7) &* Self.bytesPerPixelRow // Equivalent to `Int(relativeYCo % 8) &* Self.bytesPerPixelRow`
+//
+//        // TODO: Get rid of this cache. It speeds things up a bit, but is still the biggest bottle neck. I need to figure out how to load a tile only once, and then draw each of it's pixels that are on screen given the scroll offset.
+//        typealias TileRowData = (byte1: UInt8, byte2: UInt8)
+//        var rowDataCache: [UInt8: TileRowData] = [:]
+//
+//        // Draw 160 horizontal pixels for scanline
+//        for scanlinePixelIndex in 0..<Self.pixelWidth {
+//
+//            // Get X coordinate relative to window or background space
+//            // TODO: Confirm if this is correct. It seems that we can have a y-coordinate relative to the window
+//            // space, but an x-coordinate relative to the background space. That seems wrong.
+//            // Update: It's probably correct, actually. The window is rendered on top of the background, so
+//            // we could move from drawing a background pixel to drawing a window pixel in the same scanline.
+//            let isPixelIndexWithinWindowXBounds = scanlinePixelIndex >= windowX
+//            let shouldUseWindowSpaceForXCo = isRenderingWindow && isPixelIndexWithinWindowXBounds
+//            let relativeXCo = shouldUseWindowSpaceForXCo ? (scanlinePixelIndex &- windowX) : (scanlinePixelIndex &+ scrollX)
+//
+//            // Get column index of tile from column of 32 tiles
+//            let tileColumnIndex = relativeXCo >> 3 // Equivalent to `relativeXCo/8`
+//
+//            // Get the row data from cache, and if it's not in the cache, read it from memory and then store it in the cache.
+//            let rowData: TileRowData
+//            let optionalRowData = rowDataCache[tileColumnIndex]
+//            if let optionalRowData {
+//                rowData = optionalRowData
+//            } else {
+//                // Get memory address of tile
+//                let tileIndexAddress: UInt16 = tileRowIndexAddress &+ UInt16(tileColumnIndex)
+//                let tileAddress: UInt16 = getTileAddress(tileIndexAddress: tileIndexAddress, isUsingTileDataAddress1: isUsingTileDataAddress1)
+//
+//                // Find which of the tile's pixel rows we are on and get the pixel row data from memory
+//                let pixelRowAddress = tileAddress &+ UInt16(pixelRowIndex)
+//                let rowData1 = MMU.shared.readValue(address: pixelRowAddress)
+//                let rowData2 = MMU.shared.readValue(address: pixelRowAddress &+ 1)
+//                rowData = (rowData1, rowData2)
+//                rowDataCache[tileColumnIndex] = rowData
+//            }
+//
+//            // Get the colour ID of the pixel
+//            let bitIndex = Int(relativeXCo & 7) // Equivalent to `Int(relativeXCo % 8)`
+//
+//            // Adjust pixel row data to align bit indices with pixel indices.
+//            // Pixel 0 corresponds to bit 7 of rowData1 and rowData2,
+//            // pixel 1 corresponds to bit 6 of rowData1 and rowData2,
+//            // etc.
+//            // I could reverse the bits, but that isn't performant.
+//            let adjustedBitIndex: Int
+//            switch bitIndex {
+//            case 0: adjustedBitIndex = 7
+//            case 1: adjustedBitIndex = 6
+//            case 2: adjustedBitIndex = 5
+//            case 3: adjustedBitIndex = 4
+//            case 4: adjustedBitIndex = 3
+//            case 5: adjustedBitIndex = 2
+//            case 6: adjustedBitIndex = 1
+//            case 7: adjustedBitIndex = 0
+//            default: adjustedBitIndex = 0
+//            }
+//            let colourID = (rowData.byte2.getBitValue(adjustedBitIndex) << 1) | rowData.byte1.getBitValue(adjustedBitIndex)
+//
+//            // Use colour ID to get colour from palette
+//            let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
+//
+//            let globalPixelIndex = Int(scanlineIndex) * Int(Self.pixelWidth) + Int(scanlinePixelIndex)
+//
+//            screenData[globalPixelIndex] = pixelData
+//        }
+//    }
     
     private func getTileAddress(tileIndexAddress: UInt16, isUsingTileDataAddress1: Bool) -> UInt16 {
         let tileIndex = MMU.shared.readValue(address: tileIndexAddress)
