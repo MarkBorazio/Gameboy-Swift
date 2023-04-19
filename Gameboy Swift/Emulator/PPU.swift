@@ -168,8 +168,9 @@ class PPU {
         let renderedPixelsRange = Int(scrollX)..<(Int(scrollX) + Int(Self.pixelWidth)) // Use Ints to prevent overflow
         
         // 160 horizontal pixels for scanline
-        for firstTilePixel in stride(from: 0, to: Self.pixelWidth, by: Self.pixelsPerTileRow) {
-            
+        // 8 horiztonal pixels per tile
+        // Either 20 full tiles per scanline, or 19 full tiles + parts of two other tiles (due to scroll)
+        for firstTilePixel in stride(from: 0, through: Self.pixelWidth, by: Self.pixelsPerTileRow) {
             
             // TODO: First, fix horiztonal scrolling issue.
             // TODO: Then, re-implement window rendering.
@@ -195,31 +196,33 @@ class PPU {
             let rowData1 = MMU.shared.readValue(address: pixelRowAddress)
             let rowData2 = MMU.shared.readValue(address: pixelRowAddress &+ 1)
             
+            let firstTilePixelOffset = Int(scrollX) & 7
+            let isFirstTile = firstTilePixel == 0
             let pixelIndices = 0...UInt8.bitWidth-1
+            
             for pixelIndex in pixelIndices {
-                let renderedPixelIndex = Int(firstTilePixel) + Int(scrollX) + pixelIndex
-                guard renderedPixelsRange.contains(renderedPixelIndex) else { continue }
                 
-                let adjustedBitIndex: Int
-                switch pixelIndex {
-                case 0: adjustedBitIndex = 7
-                case 1: adjustedBitIndex = 6
-                case 2: adjustedBitIndex = 5
-                case 3: adjustedBitIndex = 4
-                case 4: adjustedBitIndex = 3
-                case 5: adjustedBitIndex = 2
-                case 6: adjustedBitIndex = 1
-                case 7: adjustedBitIndex = 0
-                default: fatalError()
+                let scanlinePixelIndex: Int
+                let tilePixelIndex: Int
+                
+                if isFirstTile { // First tile may be half rendered due to scrollX.
+                    tilePixelIndex = pixelIndex + firstTilePixelOffset
+                    scanlinePixelIndex = pixelIndex
+                } else {
+                    tilePixelIndex = pixelIndex
+                    scanlinePixelIndex = Int(firstTilePixel) + pixelIndex - firstTilePixelOffset
                 }
-                let colourID = (rowData2.getBitValue(adjustedBitIndex) << 1) | rowData1.getBitValue(adjustedBitIndex)
+                
+                let scrolledPixelIndex: Int = scanlinePixelIndex + Int(scrollX)
+                
+                guard tilePixelIndex < 8 else { continue }
+                guard renderedPixelsRange.contains(scrolledPixelIndex) else { continue }
 
                 // Use colour ID to get colour from palette
+                let colourID = getColourId(tilePixelIndex: tilePixelIndex, rowData1: rowData1, rowData2: rowData2)
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
 
-                let scanlinePixelIndex = Int(firstTilePixel) + pixelIndex
                 let globalPixelIndex = Int(scanlineIndex) * Int(Self.pixelWidth) + Int(scanlinePixelIndex)
-
                 screenData[globalPixelIndex] = pixelData
             }
         }
@@ -341,6 +344,23 @@ class PPU {
             let tileAddressOffset = convertedTileIndex.magnitude &* Self.bytesPerTile
             return Memory.addressTileArea2 &+ tileAddressOffset
         }
+    }
+    
+    private func getColourId(tilePixelIndex: Int, rowData1: UInt8, rowData2: UInt8) -> UInt8 {
+        let adjustedBitIndex: Int
+        switch tilePixelIndex {
+        case 0: adjustedBitIndex = 7
+        case 1: adjustedBitIndex = 6
+        case 2: adjustedBitIndex = 5
+        case 3: adjustedBitIndex = 4
+        case 4: adjustedBitIndex = 3
+        case 5: adjustedBitIndex = 2
+        case 6: adjustedBitIndex = 1
+        case 7: adjustedBitIndex = 0
+        default: fatalError()
+        }
+        let colourID = (rowData2.getBitValue(adjustedBitIndex) << 1) | rowData1.getBitValue(adjustedBitIndex)
+        return colourID
     }
     
     private func renderSprites(scanlineIndex: UInt8, control: UInt8) {
