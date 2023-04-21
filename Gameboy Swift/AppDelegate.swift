@@ -24,9 +24,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         "10-bit ops", // Passes
         "11-op a,(hl)" // Passes
     ]
+    
+    let games = [
+        "Tetris",
+        "Super Mario Land",
+        "Pokemon Blue"
+    ]
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        let rom = try! Cartridge(fileName: "Pokemon Blue")
+        let rom = try! Cartridge(fileName: games[2])
         MMU.shared.loadCartridge(cartridge: rom, skipBootRom: true)
         MasterClock.shared.startTicking()
     }

@@ -13,10 +13,12 @@ struct ColourPalette {
         let id: UInt8
         let palette: UInt8
         
-        var colourId: UInt8 {
+        lazy var colourId: UInt8 = {
             let bitShiftLength = id * bitsPerColourID
             return (palette >> bitShiftLength) & bitMask
-        }
+        }()
+        
+        var debug = false
     }
 
     // First bit pair is for colour ID 0
@@ -25,6 +27,10 @@ struct ColourPalette {
     // Fourth bit pair is for colour ID 3
     // We can use the value of the colour ID to index each bit pair
     static func getColour(pixelData: PixelData) -> UInt32 {
+        if pixelData.debug {
+            return UInt32(bytes: [0xA0, 0xB0, 0xC0, 0x0B])!
+        }
+        
         let bitShiftLength = pixelData.id * bitsPerColourID
         let rawColour = (pixelData.palette >> bitShiftLength) & bitMask
         switch rawColour {

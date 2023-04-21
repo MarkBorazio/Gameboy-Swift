@@ -121,47 +121,42 @@ class PPU {
     private func drawScanline(scanlineIndex: UInt8) {
         let control = MMU.shared.readValue(address: Memory.addressLCDC)
         
-        // TODO: Consider rendering background layer, and then window layer separately over the top
-        if control.checkBit(Memory.bgAndWindowEnabledBitIndex) {
-            renderTiles(scanlineIndex: scanlineIndex, control: control)
+        let renderTilesAndWindowEnabled = control.checkBit(Memory.bgAndWindowEnabledBitIndex)
+        let renderSpritesEnabled = control.checkBit(Memory.objectsEnabledBitIndex)
+        
+        if renderTilesAndWindowEnabled {
+            renderBackground(scanlineIndex: scanlineIndex, control: control)
         }
         
-        if control.checkBit(Memory.objectsEnabledBitIndex) {
+        if renderTilesAndWindowEnabled {
+            renderWindow(scanlineIndex: scanlineIndex, control: control)
+        }
+        
+        if renderSpritesEnabled {
             renderSprites(scanlineIndex: scanlineIndex, control: control)
         }
     }
     
-    // Ref: http://www.codeslinger.co.uk/pages/projects/gameboy/graphics.html
-    private func renderTiles(scanlineIndex: UInt8, control: UInt8) {
+    private func renderBackground(scanlineIndex: UInt8, control: UInt8) {
         // Don't bother rendering if scanline is off screen
-        guard (scanlineIndex < Self.pixelHeight) else {
-            return
-        }
+        guard (scanlineIndex < Self.pixelHeight) else { return }
         
         let scrollY = MMU.shared.readValue(address: Memory.addressScrollY)
         let scrollX = MMU.shared.readValue(address: Memory.addressScrollX)
-        let windowY = MMU.shared.readValue(address: Memory.addressWindowY)
-        let windowX = MMU.shared.readValue(address: Memory.addressWindowX) &- Self.windowXOffset
         let palette = MMU.shared.readValue(address: Memory.addressBgPalette)
-        
-        // Check if we are rendering the window
-        let windowEnabled = control.checkBit(Memory.windowEnabledBitIndex)
-        let isScanlineWithinWindowBounds = windowY <= scanlineIndex
-        let isRenderingWindow = windowEnabled && isScanlineWithinWindowBounds
-        
+
         // Check which area of tile data we are using
         let isUsingTileDataAddress1 = control.checkBit(Memory.bgAndWindowTileDataAreaBitIndex)
         
         // Check which area of background data we are using
-        let addressBgAndWindowBitIndex = isRenderingWindow ? Memory.windowTileMapAreaBitIndex : Memory.bgTileMapAreaBitIndex
-        let addressBgAndWindowArea = control.checkBit(addressBgAndWindowBitIndex) ? Memory.addressBgAndWindowArea1 : Memory.addressBgAndWindowArea2
+        let addressBgArea = control.checkBit(Memory.bgTileMapAreaBitIndex) ? Memory.addressBgAndWindowArea1 : Memory.addressBgAndWindowArea2
         
-        // Get Y coordinate relative to window or background space
-        let relativeYCo = isRenderingWindow ? (scanlineIndex &- windowY) : (scanlineIndex &+ scrollY)
+        // Get Y coordinate relative to background space
+        let relativeYCo = scanlineIndex &+ scrollY
         
         // Get row index of tile from row of 32 tiles
         let tileRowIndex = relativeYCo >> 3 // Equivalent to `relativeYCo/8`
-        let tileRowIndexAddress: UInt16 = addressBgAndWindowArea &+ (UInt16(tileRowIndex) &* Self.tilesPerRow)
+        let tileRowIndexAddress: UInt16 = addressBgArea &+ (UInt16(tileRowIndex) &* Self.tilesPerRow)
         
         // Convenience
         let pixelRowIndex = (relativeYCo & 7) &* Self.bytesPerPixelRow // Equivalent to `Int(relativeYCo % 8) &* Self.bytesPerPixelRow
@@ -169,21 +164,6 @@ class PPU {
         
         // Iterate through minimum amount of tiles that we need to grab from memory
         for scanlineTileIndex in 0..<Self.maxTilesPerScanline {
-            
-            // TODO: Then, re-implement window rendering.
-            
-//            // Get X coordinate relative to window or background space
-//            // TODO: Confirm if this is correct. It seems that we can have a y-coordinate relative to the window
-//            // space, but an x-coordinate relative to the background space. That seems wrong.
-//            // Update: It's probably correct, actually. The window is rendered on top of the background, so
-//            // we could move from drawing a background pixel to drawing a window pixel in the same scanline.
-//            let isPixelIndexWithinWindowXBounds = scanlinePixelIndex >= windowX
-//            let shouldUseWindowSpaceForXCo = isRenderingWindow && isPixelIndexWithinWindowXBounds
-//            let relativeXCo = shouldUseWindowSpaceForXCo ? (scanlinePixelIndex &- windowX) : (scanlinePixelIndex &+ scrollX)
-            
-//            let firstTilePixel = tileColumnIndex * Self.pixelsPerTileRow
-//            let relativeTilePixel = firstTilePixel &+ scrollX
-//            let tileColumnIndex = relativeTilePixel >> 3 // Equivalent to `relativeTilePixel / Self.pixelsPerTileRow`
             
             // Get memory address of tile
             let firstPixelIndexOfTile = scanlineTileIndex &* Self.pixelsPerTileRow
@@ -201,11 +181,142 @@ class PPU {
                 guard Self.visibleScanlinePixelsRange.contains(scanlinePixelIndex) else { continue }
                 
                 // Use colour ID to get colour from palette
-                let colourID = getColourId(tilePixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2)
+                let colourID = getColourId(pixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2, flipX: false)
+                
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
-
                 let globalPixelIndex = Int(scanlineIndex) * Self.pixelWidth + scanlinePixelIndex
                 screenData[globalPixelIndex] = pixelData
+            }
+        }
+    }
+    
+    private func renderWindow(scanlineIndex: UInt8, control: UInt8) {
+        // Don't bother rendering if scanline is off screen
+        guard (scanlineIndex < Self.pixelHeight) else { return }
+        
+        let windowEnabled = control.checkBit(Memory.windowEnabledBitIndex)
+        guard windowEnabled else { return }
+        
+        let windowY = MMU.shared.readValue(address: Memory.addressWindowY)
+        let isScanlineWithinWindowBounds = scanlineIndex >= windowY
+        guard isScanlineWithinWindowBounds else { return }
+    
+        // Check which area of tile data we are using
+        let isUsingTileDataAddress1 = control.checkBit(Memory.bgAndWindowTileDataAreaBitIndex)
+        
+        // Check which area of window data we are using
+        let addressWindowArea = control.checkBit(Memory.windowTileMapAreaBitIndex) ? Memory.addressBgAndWindowArea1 : Memory.addressBgAndWindowArea2
+        
+        // Get Y coordinate relative to window space
+        let relativeYCo = scanlineIndex &- windowY
+        
+        // Get row index of tile from row of 32 tiles
+        let tileRowIndex = relativeYCo >> 3 // Equivalent to `relativeYCo/8`
+        let tileRowIndexAddress: UInt16 = addressWindowArea &+ (UInt16(tileRowIndex) &* Self.tilesPerRow)
+        
+        let pixelRowIndex = (relativeYCo & 7) &* Self.bytesPerPixelRow // Equivalent to `Int(relativeYCo % 8) &* Self.bytesPerPixelRow
+        let palette = MMU.shared.readValue(address: Memory.addressBgPalette)
+        let windowX = MMU.shared.readValue(address: Memory.addressWindowX) &- Self.windowXOffset
+        
+        // Iterate through minimum amount of tiles that we need to grab from memory
+        for scanlineTileIndex in 0..<Self.maxTilesPerScanline {
+            
+            let firstPixelIndexOfTile = scanlineTileIndex &* Self.pixelsPerTileRow + windowX
+
+            // Get memory address of tile
+            let tileIndexAddress: UInt16 = tileRowIndexAddress &+ UInt16(scanlineTileIndex)
+            let tileAddress: UInt16 = getTileAddress(tileIndexAddress: tileIndexAddress, isUsingTileDataAddress1: isUsingTileDataAddress1)
+            
+            // Find which of the tile's pixel rows we are on and get the pixel row data from memory
+            let pixelRowAddress = tileAddress &+ UInt16(pixelRowIndex)
+            let rowData1 = MMU.shared.readValue(address: pixelRowAddress)
+            let rowData2 = MMU.shared.readValue(address: pixelRowAddress &+ 1)
+            
+            for pixelIndex in Self.tileRowPixelIndices {
+                let scanlinePixelIndex = Int(firstPixelIndexOfTile) + pixelIndex
+                guard Self.visibleScanlinePixelsRange.contains(scanlinePixelIndex) else { continue }
+                
+                // Use colour ID to get colour from palette
+                let colourID = getColourId(pixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2, flipX: false)
+                let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
+                let globalPixelIndex = Int(scanlineIndex) * Self.pixelWidth + scanlinePixelIndex
+                screenData[globalPixelIndex] = pixelData
+            }
+        }
+    }
+    
+    private func renderSprites(scanlineIndex: UInt8, control: UInt8) {
+        let areLargeSprites = control.checkBit(Memory.objectSizeBitIndex)
+        let spriteHeight = areLargeSprites ? Self.largeSpriteHeight : Self.smallSpriteHeight
+        
+        // TODO: Implement sprite priority
+        // DMG: Sprite with lower xCo is drawn over the top of the others
+        // GBC: Sprite with higher? OAM index is drawn over the top of the others
+        
+        for spriteIndex in 0..<Self.maxNumberOfSprites {
+            let spriteIndexOffset = spriteIndex &* Self.bytesPerSprite
+            let spriteDataAddress = Memory.addressOAM &+ spriteIndexOffset
+            
+            // Sprite Data Property Addresses
+            let spriteDataYCoAddress = spriteDataAddress
+            let spriteDataXCoAddress = spriteDataAddress &+ 1
+            let spriteDataTileIndexAddress = spriteDataAddress &+ 2
+            let spriteDataAttributesAddress = spriteDataAddress &+ 3
+            
+            let yCo = MMU.shared.readValue(address: spriteDataYCoAddress) &- Self.spriteYOffset
+            let xCo = MMU.shared.readValue(address: spriteDataXCoAddress) &- Self.spriteXOffset
+            
+            let spriteBoundsLower = Int(yCo)
+            let spriteBoundsUpper = spriteBoundsLower + spriteHeight
+            let spriteBounds = spriteBoundsLower..<spriteBoundsUpper
+            
+            // Check if sprite intercepts with scanline
+            guard spriteBounds.contains(Int(scanlineIndex)) else { continue }
+                
+            let attributes = MMU.shared.readValue(address: spriteDataAttributesAddress)
+            let renderAboveBackground = !attributes.checkBit(Memory.bgAndWindowOverObjBitIndex)
+            let flipY = attributes.checkBit(Memory.yFlipBitIndex)
+            let flipX = attributes.checkBit(Memory.xFlipBitIndex)
+            let colourAddress = attributes.checkBit(Memory.paletteNumberBitIndex) ? Memory.addressObjPalette2 : Memory.addressObjPalette1
+            
+            let palette = MMU.shared.readValue(address: colourAddress)
+            
+            var spriteRowIndex = scanlineIndex &- yCo
+            if flipY {
+                spriteRowIndex = 7 - spriteRowIndex
+            }
+
+            spriteRowIndex &*= Self.bytesPerPixelRow
+            let tileIndex = MMU.shared.readValue(address: spriteDataTileIndexAddress)
+            let tileIndexAddress = Memory.addressTileArea1 &+ (UInt16(tileIndex) &* Self.bytesPerTile)
+            let dataAddress = tileIndexAddress &+ UInt16(spriteRowIndex)
+            let rowData1 = MMU.shared.readValue(address: dataAddress)
+            let rowData2 = MMU.shared.readValue(address: dataAddress &+ 1)
+            
+            let pixelIndices = 0...UInt8.bitWidth-1
+            for pixelIndex in pixelIndices {
+
+                let colourID = getColourId(pixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2, flipX: flipX)
+                
+                // Colour ID 0 is transparent for sprites
+                guard colourID != 0 else { continue }
+
+                let globalXco = Int(xCo) &+ pixelIndex
+                let screenDataIndex = Int(scanlineIndex) * Self.pixelWidth + Int(globalXco)
+                guard screenDataIndex <= screenData.count else { return }
+                
+                let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
+                
+                if renderAboveBackground {
+                    screenData[screenDataIndex] = pixelData
+                } else {
+                    // If not rendering above background, then sprite can only show through where the background pixel colour id is 0.
+                    // NOTE: The window is currently being rendered before the sprites, so I am not sure if that affects this.
+                    let backgroundPixelData = screenData[screenDataIndex]
+                    if backgroundPixelData.id == 0 {
+                        screenData[screenDataIndex] = pixelData
+                    }
+                }
             }
         }
     }
@@ -226,96 +337,24 @@ class PPU {
         }
     }
     
-    private func getColourId(tilePixelIndex: Int, rowData1: UInt8, rowData2: UInt8) -> UInt8 {
-        let adjustedBitIndex: Int
-        switch tilePixelIndex {
-        case 0: adjustedBitIndex = 7
-        case 1: adjustedBitIndex = 6
-        case 2: adjustedBitIndex = 5
-        case 3: adjustedBitIndex = 4
-        case 4: adjustedBitIndex = 3
-        case 5: adjustedBitIndex = 2
-        case 6: adjustedBitIndex = 1
-        case 7: adjustedBitIndex = 0
-        default: fatalError()
-        }
-        let colourID = (rowData2.getBitValue(adjustedBitIndex) << 1) | rowData1.getBitValue(adjustedBitIndex)
-        return colourID
-    }
-    
-    private func renderSprites(scanlineIndex: UInt8, control: UInt8) {
-        let areLargeSprites = control.checkBit(Memory.objectSizeBitIndex)
+    private func getColourId(pixelIndex: Int, rowData1: UInt8, rowData2: UInt8, flipX: Bool) -> UInt8 {
+        var adjustedPixelIndex = pixelIndex
         
-        for spriteIndex in 0..<Self.maxNumberOfSprites {
-            let spriteIndexOffset = spriteIndex &* Self.bytesPerSprite
-            let spriteDataAddress = Memory.addressOAM &+ spriteIndexOffset
-            
-            // Sprite Data Property Addresses
-            let spriteDataYCoAddress = spriteDataAddress
-            let spriteDataXCoAddress = spriteDataAddress &+ 1
-            let spriteDataTileIndexAddress = spriteDataAddress &+ 2
-            let spriteDataAttributesAddress = spriteDataAddress &+ 3
-            
-            let yCo = MMU.shared.readValue(address: spriteDataYCoAddress) &- Self.spriteYOffset
-            let spriteHeight = areLargeSprites ? Self.largeSpriteHeight : Self.smallSpriteHeight
-            let spriteBoundsLower = Int(yCo)
-            let spriteBoundsUpper = spriteBoundsLower + spriteHeight
-            let spriteBounds = spriteBoundsLower..<spriteBoundsUpper
-            
-            // Check if sprite intercepts with scanline
-            guard spriteBounds.contains(Int(scanlineIndex)) else { continue }
-                
-            let attributes = MMU.shared.readValue(address: spriteDataAttributesAddress)
-            let flipY = attributes.checkBit(Memory.yFlipBitIndex)
-            let flipX = attributes.checkBit(Memory.xFlipBitIndex)
-            
-            var spriteRowIndex = scanlineIndex &- yCo
-            if flipY {
-                spriteRowIndex = 7 - spriteRowIndex
-            }
-
-            spriteRowIndex &*= Self.bytesPerPixelRow
-            let tileIndex = MMU.shared.readValue(address: spriteDataTileIndexAddress)
-            let tileIndexAddress = Memory.addressTileArea1 &+ (UInt16(tileIndex) &* Self.bytesPerTile)
-            let dataAddress = tileIndexAddress &+ UInt16(spriteRowIndex)
-            let data1 = MMU.shared.readValue(address: dataAddress)
-            let data2 = MMU.shared.readValue(address: dataAddress &+ 1)
-            
-            let pixelIndices = 0...UInt8.bitWidth-1
-            for pixelIndex in pixelIndices {
-
-                var colourBitIndex: Int = pixelIndex
-                
-                if !flipX {
-                    switch colourBitIndex {
-                    case 0: colourBitIndex = 7
-                    case 1: colourBitIndex = 6
-                    case 2: colourBitIndex = 5
-                    case 3: colourBitIndex = 4
-                    case 4: colourBitIndex = 3
-                    case 5: colourBitIndex = 2
-                    case 6: colourBitIndex = 1
-                    case 7: colourBitIndex = 0
-                    default: colourBitIndex = 0
-                    }
-                }
-                
-                let colourID = (data2.getBitValue(colourBitIndex) << 1) | data1.getBitValue(colourBitIndex)
-                let colourAddress = attributes.checkBit(Memory.paletteNumberBitIndex) ? Memory.addressObjPalette2 : Memory.addressObjPalette1
-                let palette = MMU.shared.readValue(address: colourAddress)
-                let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
-                
-                // White is transparent for sprites (supposedly...)
-                guard pixelData.colourId != ColourPalette.whiteColourId else { continue }
-                
-                let xCo = MMU.shared.readValue(address: spriteDataXCoAddress) &- Self.spriteXOffset
-                let globalXco = Int(xCo) &+ pixelIndex
-                
-                let index = Int(scanlineIndex) * Self.pixelWidth + Int(globalXco)
-                guard index <= screenData.count else { return }
-                screenData[index] = pixelData
+        if !flipX {
+            switch adjustedPixelIndex {
+            case 0: adjustedPixelIndex = 7
+            case 1: adjustedPixelIndex = 6
+            case 2: adjustedPixelIndex = 5
+            case 3: adjustedPixelIndex = 4
+            case 4: adjustedPixelIndex = 3
+            case 5: adjustedPixelIndex = 2
+            case 6: adjustedPixelIndex = 1
+            case 7: adjustedPixelIndex = 0
+            default: fatalError()
             }
         }
+        let colourID = (rowData2.getBitValue(adjustedPixelIndex) << 1) | rowData1.getBitValue(adjustedPixelIndex)
+        return colourID
     }
 }
 
