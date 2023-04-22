@@ -137,6 +137,9 @@ class PPU {
 extension PPU {
     
     private func drawScanline() {
+        // Don't bother rendering if scanline is off screen
+        guard (currentScanlineIndex < Self.pixelHeight) else { return }
+        
         let control = MMU.shared.safeReadValue(globalAddress: Memory.addressLCDC)
         
         let renderTilesAndWindowEnabled = control.checkBit(Memory.bgAndWindowEnabledBitIndex)
@@ -156,9 +159,6 @@ extension PPU {
     }
     
     private func renderBackground(control: UInt8) {
-        // Don't bother rendering if scanline is off screen
-        guard (currentScanlineIndex < Self.pixelHeight) else { return }
-        
         let scrollY = MMU.shared.safeReadValue(globalAddress: Memory.addressScrollY)
         let scrollX = MMU.shared.safeReadValue(globalAddress: Memory.addressScrollX)
         let palette = MMU.shared.safeReadValue(globalAddress: Memory.addressBgPalette)
@@ -209,9 +209,6 @@ extension PPU {
     }
     
     private func renderWindow(control: UInt8) {
-        // Don't bother rendering if scanline is off screen
-        guard (currentScanlineIndex < Self.pixelHeight) else { return }
-        
         let windowEnabled = control.checkBit(Memory.windowEnabledBitIndex)
         guard windowEnabled else { return }
         
