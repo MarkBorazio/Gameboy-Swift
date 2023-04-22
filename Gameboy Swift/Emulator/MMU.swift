@@ -49,7 +49,7 @@ class MMU {
             unsafeWriteValue(0x91, globalAddress: Memory.addressLCDC)
             unsafeWriteValue(0x00, globalAddress: Memory.addressScrollY)
             unsafeWriteValue(0x00, globalAddress: Memory.addressScrollX)
-            unsafeWriteValue(0x00, globalAddress: Memory.addressLYC)
+            PPU.shared.coincidenceRegister = 0x00 // LYC
             unsafeWriteValue(0xFC, globalAddress: Memory.addressBgPalette)
             unsafeWriteValue(0xFF, globalAddress: Memory.addressObjPalette1)
             unsafeWriteValue(0xFF, globalAddress: Memory.addressObjPalette2)
@@ -75,6 +75,12 @@ class MMU {
             
         case Memory.videoRamAddressRange:
             return PPU.shared.readVRAM(globalAddress: globalAddress)
+            
+        case Memory.addressLY:
+            return PPU.shared.currentScanlineIndex
+            
+        case Memory.addressLYC:
+            return PPU.shared.coincidenceRegister
             
         case Memory.addressJoypad:
             return Joypad.shared.readJoypad()
@@ -108,7 +114,11 @@ class MMU {
             
         case Memory.addressLY:
             // If the current scanline is attempted to be manually changed, set it to zero instead
-            unsafeWriteValue(0, globalAddress: globalAddress)
+            PPU.shared.currentScanlineIndex = 0
+            
+        case Memory.addressLYC:
+            // If the current scanline is attempted to be manually changed, set it to zero instead
+            PPU.shared.coincidenceRegister = value
             
         case Memory.addressDMATransferTrigger:
             dmaTransfer(byte: value)
@@ -232,16 +242,6 @@ extension MMU {
 // MARK: - LCD Registers
 
 extension MMU {
-    
-    func getScanline() -> UInt8 {
-        unsafeReadValue(globalAddress: Memory.addressLY)
-    }
-    
-    // Use this instead of writing memory via writeValue(...) since that function
-    // deliberately sets the scanline to 0 when any value is written to it.
-    func setScanline(_ value: UInt8) {
-        unsafeWriteValue(value, globalAddress: Memory.addressLY)
-    }
     
     var isLCDEnabled: Bool {
         let lcdc = unsafeReadValue(globalAddress: Memory.addressLCDC)

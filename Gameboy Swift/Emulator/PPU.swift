@@ -12,7 +12,10 @@ class PPU {
     
     static let shared = PPU()
     
+    // These were moved here to improve performance
     private var scanlineTimer = 0
+    var currentScanlineIndex: UInt8 = 0 // LY
+    var coincidenceRegister: UInt8 = 0 // LYC
     
     private var vRam = Array(repeating: UInt8.min, count: vRamSize)
     
@@ -39,8 +42,7 @@ class PPU {
             return
         }
         
-        var currentScanlineIndex = MMU.shared.getScanline()
-        updateEnabledLCDStatus(currentScanlineIndex: currentScanlineIndex, currentStatus: status)
+        updateEnabledLCDStatus(currentStatus: status)
         
         scanlineTimer += cycles
         if scanlineTimer >= Self.machineCyclesPerScanline {
@@ -48,7 +50,7 @@ class PPU {
             
             switch currentScanlineIndex {
             case ...Self.lastVisibleScanlineIndex:
-                drawScanline(scanlineIndex: currentScanlineIndex)
+                drawScanline()
                 
             case Self.lastVisibleScanlineIndex &+ 1:
                 MMU.shared.requestVBlankInterrupt()
@@ -57,18 +59,17 @@ class PPU {
                 break
             }
             
-            currentScanlineIndex &+= 1
+            currentScanlineIndex += 1
             if currentScanlineIndex > Self.lastAbsoluteScanlineIndex {
                 currentScanlineIndex = 0
             }
-            MMU.shared.setScanline(currentScanlineIndex)
         }
     }
     
     private func updateDisabledLCDStatus(currentStatus: UInt8) {
         // LCD is disabled, so reset scanline and set mode to vBlank.
         scanlineTimer = 0
-        MMU.shared.setScanline(0)
+        currentScanlineIndex = 0
         
         var status = currentStatus
         status &= ~Self.lcdModeMask
@@ -77,7 +78,7 @@ class PPU {
         return
     }
     
-    private func updateEnabledLCDStatus(currentScanlineIndex: UInt8, currentStatus: UInt8) {
+    private func updateEnabledLCDStatus(currentStatus: UInt8) {
         var status = currentStatus
         let currentLCDMode = status & Self.lcdModeMask
         
@@ -116,9 +117,7 @@ class PPU {
         }
         
         // Check the conicidence flag
-        let lyRegister = MMU.shared.safeReadValue(globalAddress: Memory.addressLY)
-        let lycRegister = MMU.shared.safeReadValue(globalAddress: Memory.addressLYC)
-        if lyRegister == lycRegister {
+        if currentScanlineIndex == coincidenceRegister {
             status.setBit(Memory.coincidenceBitIndex)
             if status.checkBit(Memory.coincidenceInterruptEnabledBitIndex) {
                 MMU.shared.requestLCDInterrupt()
@@ -127,7 +126,9 @@ class PPU {
             status.clearBit(Memory.coincidenceBitIndex)
         }
         
-        MMU.shared.safeWriteValue(status, globalAddress: Memory.addressLCDS)
+        if status != currentStatus {
+            MMU.shared.safeWriteValue(status, globalAddress: Memory.addressLCDS)
+        }
     }
 }
 
@@ -135,28 +136,28 @@ class PPU {
 
 extension PPU {
     
-    private func drawScanline(scanlineIndex: UInt8) {
+    private func drawScanline() {
         let control = MMU.shared.safeReadValue(globalAddress: Memory.addressLCDC)
         
         let renderTilesAndWindowEnabled = control.checkBit(Memory.bgAndWindowEnabledBitIndex)
         let renderSpritesEnabled = control.checkBit(Memory.objectsEnabledBitIndex)
         
         if renderTilesAndWindowEnabled {
-            renderBackground(scanlineIndex: scanlineIndex, control: control)
+            renderBackground(control: control)
         }
         
         if renderTilesAndWindowEnabled {
-            renderWindow(scanlineIndex: scanlineIndex, control: control)
+            renderWindow(control: control)
         }
         
         if renderSpritesEnabled {
-            renderSprites(scanlineIndex: scanlineIndex, control: control)
+            renderSprites(control: control)
         }
     }
     
-    private func renderBackground(scanlineIndex: UInt8, control: UInt8) {
+    private func renderBackground(control: UInt8) {
         // Don't bother rendering if scanline is off screen
-        guard (scanlineIndex < Self.pixelHeight) else { return }
+        guard (currentScanlineIndex < Self.pixelHeight) else { return }
         
         let scrollY = MMU.shared.safeReadValue(globalAddress: Memory.addressScrollY)
         let scrollX = MMU.shared.safeReadValue(globalAddress: Memory.addressScrollX)
@@ -169,7 +170,7 @@ extension PPU {
         let addressBgArea = control.checkBit(Memory.bgTileMapAreaBitIndex) ? Memory.addressBgAndWindowArea1 : Memory.addressBgAndWindowArea2
         
         // Get Y coordinate relative to background space
-        let relativeYCo = scanlineIndex &+ scrollY
+        let relativeYCo = currentScanlineIndex &+ scrollY
         
         // Get row index of tile from row of 32 tiles
         let tileRowIndex = relativeYCo >> 3 // Equivalent to `relativeYCo/8`
@@ -201,21 +202,21 @@ extension PPU {
                 let colourID = getColourId(pixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2, flipX: false)
                 
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
-                let globalPixelIndex = Int(scanlineIndex) * Self.pixelWidth + scanlinePixelIndex
+                let globalPixelIndex = Int(currentScanlineIndex) * Self.pixelWidth + scanlinePixelIndex
                 screenData[globalPixelIndex] = pixelData
             }
         }
     }
     
-    private func renderWindow(scanlineIndex: UInt8, control: UInt8) {
+    private func renderWindow(control: UInt8) {
         // Don't bother rendering if scanline is off screen
-        guard (scanlineIndex < Self.pixelHeight) else { return }
+        guard (currentScanlineIndex < Self.pixelHeight) else { return }
         
         let windowEnabled = control.checkBit(Memory.windowEnabledBitIndex)
         guard windowEnabled else { return }
         
         let windowY = MMU.shared.safeReadValue(globalAddress: Memory.addressWindowY)
-        let isScanlineWithinWindowBounds = scanlineIndex >= windowY
+        let isScanlineWithinWindowBounds = currentScanlineIndex >= windowY
         guard isScanlineWithinWindowBounds else { return }
     
         // Check which area of tile data we are using
@@ -225,7 +226,7 @@ extension PPU {
         let addressWindowArea = control.checkBit(Memory.windowTileMapAreaBitIndex) ? Memory.addressBgAndWindowArea1 : Memory.addressBgAndWindowArea2
         
         // Get Y coordinate relative to window space
-        let relativeYCo = scanlineIndex &- windowY
+        let relativeYCo = currentScanlineIndex &- windowY
         
         // Get row index of tile from row of 32 tiles
         let tileRowIndex = relativeYCo >> 3 // Equivalent to `relativeYCo/8`
@@ -256,13 +257,13 @@ extension PPU {
                 // Use colour ID to get colour from palette
                 let colourID = getColourId(pixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2, flipX: false)
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
-                let globalPixelIndex = Int(scanlineIndex) * Self.pixelWidth + scanlinePixelIndex
+                let globalPixelIndex = Int(currentScanlineIndex) * Self.pixelWidth + scanlinePixelIndex
                 screenData[globalPixelIndex] = pixelData
             }
         }
     }
     
-    private func renderSprites(scanlineIndex: UInt8, control: UInt8) {
+    private func renderSprites(control: UInt8) {
         let areLargeSprites = control.checkBit(Memory.objectSizeBitIndex)
         let spriteHeight = areLargeSprites ? Self.largeSpriteHeight : Self.smallSpriteHeight
         
@@ -288,7 +289,7 @@ extension PPU {
             let spriteBounds = spriteBoundsLower..<spriteBoundsUpper
             
             // Check if sprite intercepts with scanline
-            guard spriteBounds.contains(Int(scanlineIndex)) else { continue }
+            guard spriteBounds.contains(Int(currentScanlineIndex)) else { continue }
                 
             let attributes = MMU.shared.safeReadValue(globalAddress: spriteDataAttributesAddress)
             let renderAboveBackground = !attributes.checkBit(Memory.bgAndWindowOverObjBitIndex)
@@ -298,7 +299,7 @@ extension PPU {
             
             let palette = MMU.shared.safeReadValue(globalAddress: colourAddress)
             
-            var spriteRowIndex = scanlineIndex &- yCo
+            var spriteRowIndex = currentScanlineIndex &- yCo
             if flipY {
                 spriteRowIndex = 7 - spriteRowIndex
             }
@@ -319,7 +320,7 @@ extension PPU {
                 guard colourID != 0 else { continue }
 
                 let globalXco = Int(xCo) &+ pixelIndex
-                let screenDataIndex = Int(scanlineIndex) * Self.pixelWidth + Int(globalXco)
+                let screenDataIndex = Int(currentScanlineIndex) * Self.pixelWidth + Int(globalXco)
                 guard screenDataIndex <= screenData.count else { return }
                 
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
