@@ -11,7 +11,7 @@ extension BinaryInteger {
     
     static var byteWidth: Int { MemoryLayout<Self>.size }
     
-    public init?(bytes: [UInt8], endianness: Endianness = .littleEndian) {
+    init?(bytes: [UInt8], endianness: Endianness = .littleEndian) {
         guard bytes.count <= Self.byteWidth else { return nil }
 
         let adjustedBytes = endianness.matchesPlatform ? bytes : bytes.reversed()
@@ -24,7 +24,7 @@ extension BinaryInteger {
         self = value
     }
     
-    public func asBytes(endianness: Endianness = .littleEndian) -> [UInt8] {
+    func asBytes(endianness: Endianness = .littleEndian) -> [UInt8] {
         let width = Self.byteWidth
         var bytes = [UInt8](repeating: 0, count: width)
 
@@ -36,6 +36,12 @@ extension BinaryInteger {
 
         let adjustedBytes = endianness.matchesPlatform ? bytes : bytes.reversed()
         return adjustedBytes
+    }
+    
+    func getByte(_ index: Int) -> UInt8 {
+        let shiftLength = 8 * index
+        let value = (self >> shiftLength) & 0xFF
+        return UInt8(value)
     }
 }
 

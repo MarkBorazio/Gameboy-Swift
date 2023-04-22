@@ -28,33 +28,29 @@ class CPU {
     private var af: UInt16 {
         get { UInt16(bytes: [f, a])! }
         set {
-            let bytes = newValue.asBytes()
-            a = bytes[1]
-            f = bytes[0]
+            a = UInt8(newValue >> 8)
+            f = UInt8(newValue & 0xFF)
         }
     }
     private var bc: UInt16 {
         get { UInt16(bytes: [c, b])! }
         set {
-            let bytes = newValue.asBytes()
-            b = bytes[1]
-            c = bytes[0]
+            b = UInt8(newValue >> 8)
+            c = UInt8(newValue & 0xFF)
         }
     }
     private var de: UInt16 {
         get { UInt16(bytes: [e, d])! }
         set {
-            let bytes = newValue.asBytes()
-            d = bytes[1]
-            e = bytes[0]
+            d = UInt8(newValue >> 8)
+            e = UInt8(newValue & 0xFF)
         }
     }
     private var hl: UInt16 {
         get { UInt16(bytes: [l, h])! }
         set {
-            let bytes = newValue.asBytes()
-            h = bytes[1]
-            l = bytes[0]
+            h = UInt8(newValue >> 8)
+            l = UInt8(newValue & 0xFF)
         }
     }
     private var sp: UInt16 = 0
@@ -468,8 +464,8 @@ extension CPU {
     /// 0x08
     private func loadSPIntoAddress() -> Int {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        MMU.shared.safeWriteValue(sp.asBytes()[0], globalAddress: address)
-        MMU.shared.safeWriteValue(sp.asBytes()[1], globalAddress: address+1)
+        MMU.shared.safeWriteValue(sp.getByte(0), globalAddress: address)
+        MMU.shared.safeWriteValue(sp.getByte(1), globalAddress: address+1)
         return 5
     }
     
@@ -755,8 +751,8 @@ extension CPU {
         let oldZflag = zFlag
         var discardableH = h
         var discardableL = l
-        _ = addOperation(lhs: &discardableL, rhs: value.asBytes()[0], carry: false)
-        _ = addOperation(lhs: &discardableH, rhs: value.asBytes()[1], carry: cFlag)
+        _ = addOperation(lhs: &discardableL, rhs: value.getByte(0), carry: false)
+        _ = addOperation(lhs: &discardableH, rhs: value.getByte(1), carry: cFlag)
         
         // Update remaining values
         zFlag = oldZflag // ZFlag state remains unchanged
@@ -964,9 +960,8 @@ extension CPU {
     
     // 0xC5, 0xD5, 0xE5, 0xF5
     private func pushOntoStack(address: UInt16) -> Int {
-        let bytes = address.asBytes()
-        let lowerByte = bytes[0]
-        let upperByte = bytes[1]
+        let lowerByte = address.getByte(0)
+        let upperByte = address.getByte(1)
         
         sp &-= 1
         MMU.shared.safeWriteValue(upperByte, globalAddress: sp)
@@ -1182,8 +1177,8 @@ extension CPU {
     private func addOperation(lhs: UInt16, rhs: Int8) -> UInt16 {
         // Carry and Half-Carry flags are calculated on lower byte as if it were an 8-bit operation.
         let unsignedRhs = UInt8(bitPattern: rhs)
-        let (_, carry) = lhs.asBytes()[0].addingReportingOverflow(unsignedRhs)
-        let halfCarry = calculateHalfCarryFromAddition(lhs: lhs.asBytes()[0], rhs: unsignedRhs, carry: false)
+        let (_, carry) = lhs.getByte(0).addingReportingOverflow(unsignedRhs)
+        let halfCarry = calculateHalfCarryFromAddition(lhs: lhs.getByte(0), rhs: unsignedRhs, carry: false)
         
         // Flag are calculated by this point, so we calculate result normally
         let value = lhs &+ UInt16(bitPattern: Int16(rhs))
