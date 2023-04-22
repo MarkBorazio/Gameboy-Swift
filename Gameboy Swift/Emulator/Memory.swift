@@ -10,10 +10,10 @@ import Foundation
 // Static definitions for addresses and bit indices
 enum Memory {
     
-    static let memorySizeBytes = 64 * 1024 // 64KB
     
     
-    // MARK: - Address Spaces
+    
+    // MARK: - Memory Map
     
     static let fixedRomBankAddressRange: ClosedRange<UInt16> = 0x0000...0x3FFF // Read-only
     static let switchableRomBankAddressRange: ClosedRange<UInt16> = 0x4000...0x7FFF // Read-only
@@ -27,8 +27,18 @@ enum Memory {
     static let highRamAddressRange: ClosedRange<UInt16> = 0xFF80...0xFFFE
     static let interruptRegisterAddress: UInt16 = 0xFFFF // Duplicate, here for completeness.
     
-    static let echoRamOffset: UInt16 = 0x2000
     
+    // MARK: - Address Spaces (Similar to above, just grouping things by component Responsibility)
+    
+    static let cartridgeRomAddressRange: ClosedRange<UInt16> = 0x0000...0x7FFF
+    static let cartridgeRamAddressRange: ClosedRange<UInt16> = 0xA000...0xBFFF
+    // VRAM already defined above
+    static let internalMemoryAddressRange: ClosedRange<UInt16> = 0xC000...0xFFFF
+    
+    
+    // MARK: - Internal Memory
+    
+    static let internalMemorySize = internalMemoryAddressRange.count
     
     // MARK: - Cartridge
     
@@ -137,6 +147,9 @@ enum Memory {
     static let dmaTransferSize: UInt16 = 0xA0
     static let addressDMADestination: UInt16 = 0xFE00
     
+    
+    // MARK: - Misc.
+    static let echoRamOffset: UInt16 = 0x2000
     
     // MARK: - BIOS
     

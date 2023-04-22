@@ -13,14 +13,26 @@ class PPU {
     static let shared = PPU()
     
     private var scanlineTimer = 0
-  
+    
+    private var vRam = Array(repeating: UInt8.min, count: vRamSize)
+    
     var screenData: [ColourPalette.PixelData] = Array(
         repeating: .init(id: 0, palette: 0),
         count: pixelHeight * pixelWidth
     )
     
+    func readVRAM(globalAddress: UInt16) -> UInt8 {
+        let vRamAddress = globalAddress &- Memory.videoRamAddressRange.lowerBound
+        return vRam[vRamAddress]
+    }
+    
+    func writeVRAM(globalAddress: UInt16, value: UInt8) {
+        let vRamAddress = globalAddress &- Memory.videoRamAddressRange.lowerBound
+        vRam[vRamAddress] = value
+    }
+    
     func tick(cycles: Int) {
-        let status = MMU.shared.readValue(address: Memory.addressLCDS)
+        let status = MMU.shared.safeReadValue(globalAddress: Memory.addressLCDS)
         
         guard MMU.shared.isLCDEnabled else {
             updateDisabledLCDStatus(currentStatus: status)
@@ -61,7 +73,7 @@ class PPU {
         var status = currentStatus
         status &= ~Self.lcdModeMask
         status |= Self.vBlankMode
-        MMU.shared.writeValue(status, address: Memory.addressLCDS)
+        MMU.shared.safeWriteValue(status, globalAddress: Memory.addressLCDS)
         return
     }
     
@@ -104,8 +116,8 @@ class PPU {
         }
         
         // Check the conicidence flag
-        let lyRegister = MMU.shared.readValue(address: Memory.addressLY)
-        let lycRegister = MMU.shared.readValue(address: Memory.addressLYC)
+        let lyRegister = MMU.shared.safeReadValue(globalAddress: Memory.addressLY)
+        let lycRegister = MMU.shared.safeReadValue(globalAddress: Memory.addressLYC)
         if lyRegister == lycRegister {
             status.setBit(Memory.coincidenceBitIndex)
             if status.checkBit(Memory.coincidenceInterruptEnabledBitIndex) {
@@ -115,11 +127,16 @@ class PPU {
             status.clearBit(Memory.coincidenceBitIndex)
         }
         
-        MMU.shared.writeValue(status, address: Memory.addressLCDS)
+        MMU.shared.safeWriteValue(status, globalAddress: Memory.addressLCDS)
     }
+}
+
+// MARK: - Scanline Rendering
+
+extension PPU {
     
     private func drawScanline(scanlineIndex: UInt8) {
-        let control = MMU.shared.readValue(address: Memory.addressLCDC)
+        let control = MMU.shared.safeReadValue(globalAddress: Memory.addressLCDC)
         
         let renderTilesAndWindowEnabled = control.checkBit(Memory.bgAndWindowEnabledBitIndex)
         let renderSpritesEnabled = control.checkBit(Memory.objectsEnabledBitIndex)
@@ -141,9 +158,9 @@ class PPU {
         // Don't bother rendering if scanline is off screen
         guard (scanlineIndex < Self.pixelHeight) else { return }
         
-        let scrollY = MMU.shared.readValue(address: Memory.addressScrollY)
-        let scrollX = MMU.shared.readValue(address: Memory.addressScrollX)
-        let palette = MMU.shared.readValue(address: Memory.addressBgPalette)
+        let scrollY = MMU.shared.safeReadValue(globalAddress: Memory.addressScrollY)
+        let scrollX = MMU.shared.safeReadValue(globalAddress: Memory.addressScrollX)
+        let palette = MMU.shared.safeReadValue(globalAddress: Memory.addressBgPalette)
 
         // Check which area of tile data we are using
         let isUsingTileDataAddress1 = control.checkBit(Memory.bgAndWindowTileDataAreaBitIndex)
@@ -173,8 +190,8 @@ class PPU {
             
             // Find which of the tile's pixel rows we are on and get the pixel row data from memory
             let pixelRowAddress = tileAddress &+ UInt16(pixelRowIndex)
-            let rowData1 = MMU.shared.readValue(address: pixelRowAddress)
-            let rowData2 = MMU.shared.readValue(address: pixelRowAddress &+ 1)
+            let rowData1 = readVRAM(globalAddress: pixelRowAddress)
+            let rowData2 = readVRAM(globalAddress: pixelRowAddress &+ 1)
             
             for pixelIndex in Self.tileRowPixelIndices {
                 let scanlinePixelIndex = Int(firstPixelIndexOfTile) + pixelIndex - tilePixelOffset
@@ -197,7 +214,7 @@ class PPU {
         let windowEnabled = control.checkBit(Memory.windowEnabledBitIndex)
         guard windowEnabled else { return }
         
-        let windowY = MMU.shared.readValue(address: Memory.addressWindowY)
+        let windowY = MMU.shared.safeReadValue(globalAddress: Memory.addressWindowY)
         let isScanlineWithinWindowBounds = scanlineIndex >= windowY
         guard isScanlineWithinWindowBounds else { return }
     
@@ -215,8 +232,8 @@ class PPU {
         let tileRowIndexAddress: UInt16 = addressWindowArea &+ (UInt16(tileRowIndex) &* Self.tilesPerRow)
         
         let pixelRowIndex = (relativeYCo & 7) &* Self.bytesPerPixelRow // Equivalent to `Int(relativeYCo % 8) &* Self.bytesPerPixelRow
-        let palette = MMU.shared.readValue(address: Memory.addressBgPalette)
-        let windowX = MMU.shared.readValue(address: Memory.addressWindowX) &- Self.windowXOffset
+        let palette = MMU.shared.safeReadValue(globalAddress: Memory.addressBgPalette)
+        let windowX = MMU.shared.safeReadValue(globalAddress: Memory.addressWindowX) &- Self.windowXOffset
         
         // Iterate through minimum amount of tiles that we need to grab from memory
         for scanlineTileIndex in 0..<Self.maxTilesPerScanline {
@@ -229,8 +246,8 @@ class PPU {
             
             // Find which of the tile's pixel rows we are on and get the pixel row data from memory
             let pixelRowAddress = tileAddress &+ UInt16(pixelRowIndex)
-            let rowData1 = MMU.shared.readValue(address: pixelRowAddress)
-            let rowData2 = MMU.shared.readValue(address: pixelRowAddress &+ 1)
+            let rowData1 = readVRAM(globalAddress: pixelRowAddress)
+            let rowData2 = readVRAM(globalAddress: pixelRowAddress &+ 1)
             
             for pixelIndex in Self.tileRowPixelIndices {
                 let scanlinePixelIndex = Int(firstPixelIndexOfTile) + pixelIndex
@@ -263,8 +280,8 @@ class PPU {
             let spriteDataTileIndexAddress = spriteDataAddress &+ 2
             let spriteDataAttributesAddress = spriteDataAddress &+ 3
             
-            let yCo = MMU.shared.readValue(address: spriteDataYCoAddress) &- Self.spriteYOffset
-            let xCo = MMU.shared.readValue(address: spriteDataXCoAddress) &- Self.spriteXOffset
+            let yCo = MMU.shared.safeReadValue(globalAddress: spriteDataYCoAddress) &- Self.spriteYOffset
+            let xCo = MMU.shared.safeReadValue(globalAddress: spriteDataXCoAddress) &- Self.spriteXOffset
             
             let spriteBoundsLower = Int(yCo)
             let spriteBoundsUpper = spriteBoundsLower + spriteHeight
@@ -273,13 +290,13 @@ class PPU {
             // Check if sprite intercepts with scanline
             guard spriteBounds.contains(Int(scanlineIndex)) else { continue }
                 
-            let attributes = MMU.shared.readValue(address: spriteDataAttributesAddress)
+            let attributes = MMU.shared.safeReadValue(globalAddress: spriteDataAttributesAddress)
             let renderAboveBackground = !attributes.checkBit(Memory.bgAndWindowOverObjBitIndex)
             let flipY = attributes.checkBit(Memory.yFlipBitIndex)
             let flipX = attributes.checkBit(Memory.xFlipBitIndex)
             let colourAddress = attributes.checkBit(Memory.paletteNumberBitIndex) ? Memory.addressObjPalette2 : Memory.addressObjPalette1
             
-            let palette = MMU.shared.readValue(address: colourAddress)
+            let palette = MMU.shared.safeReadValue(globalAddress: colourAddress)
             
             var spriteRowIndex = scanlineIndex &- yCo
             if flipY {
@@ -287,11 +304,11 @@ class PPU {
             }
 
             spriteRowIndex &*= Self.bytesPerPixelRow
-            let tileIndex = MMU.shared.readValue(address: spriteDataTileIndexAddress)
+            let tileIndex = MMU.shared.safeReadValue(globalAddress: spriteDataTileIndexAddress)
             let tileIndexAddress = Memory.addressTileArea1 &+ (UInt16(tileIndex) &* Self.bytesPerTile)
             let dataAddress = tileIndexAddress &+ UInt16(spriteRowIndex)
-            let rowData1 = MMU.shared.readValue(address: dataAddress)
-            let rowData2 = MMU.shared.readValue(address: dataAddress &+ 1)
+            let rowData1 = readVRAM(globalAddress: dataAddress)
+            let rowData2 = readVRAM(globalAddress: dataAddress &+ 1)
             
             let pixelIndices = 0...UInt8.bitWidth-1
             for pixelIndex in pixelIndices {
@@ -322,7 +339,7 @@ class PPU {
     }
     
     private func getTileAddress(tileIndexAddress: UInt16, isUsingTileDataAddress1: Bool) -> UInt16 {
-        let tileIndex = MMU.shared.readValue(address: tileIndexAddress)
+        let tileIndex = readVRAM(globalAddress: tileIndexAddress)
         if isUsingTileDataAddress1 {
             // Tile Data Address 1 indexes using unsigned integer
             let tileAddressOffset = UInt16(tileIndex) &* Self.bytesPerTile
@@ -361,6 +378,9 @@ class PPU {
 // MARK: - Constants
 
 extension PPU {
+    
+    // VRAM
+    private static let vRamSize = 8 * 1024 // 8KB
     
     // Resolution
     private static let pixelWidth = 160

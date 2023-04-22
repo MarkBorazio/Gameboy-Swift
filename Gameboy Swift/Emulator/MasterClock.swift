@@ -62,16 +62,16 @@ class MasterClock {
         let (newDivTimer, overflow) = divTimer.addingReportingOverflow(UInt8(cycles))
         divTimer = newDivTimer
         if overflow {
-            var div = MMU.shared.memoryMap[Memory.addressDIV]
+            var div = MMU.shared.unsafeReadValue(globalAddress: Memory.addressDIV)
             div &+= 1
-            MMU.shared.memoryMap[Memory.addressDIV] = div
+            MMU.shared.unsafeWriteValue(div, globalAddress: Memory.addressDIV)
         }
     }
     
     // This thing is pretty complicated: https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour
     // TODO: The rest of the complexity.
     private func incrementTimaRegister(cycles: Int) {
-        let tac = MMU.shared.memoryMap[Memory.addressTAC]
+        let tac = MMU.shared.unsafeReadValue(globalAddress: Memory.addressTAC)
         let isClockEnabled = tac.checkBit(Memory.timaEnabledBitIndex)
         guard isClockEnabled else { return }
         
@@ -79,14 +79,15 @@ class MasterClock {
         if timaTimer >= clockCyclesPerTimaCycle {
             timaTimer -= Int(clockCyclesPerTimaCycle) // Keep overflowed values instead of just resetting to zero
             
-            let timaValue = MMU.shared.memoryMap[Memory.addressTIMA]
+            let timaValue = MMU.shared.unsafeReadValue(globalAddress: Memory.addressTIMA)
             
             if timaValue == .max {
                 // TODO: The following actually needs to be done after 1 cycle from this point.
-                MMU.shared.memoryMap[Memory.addressTIMA] = MMU.shared.memoryMap[Memory.addressTMA]
+                let tma = MMU.shared.unsafeReadValue(globalAddress: Memory.addressTMA)
+                MMU.shared.unsafeWriteValue(tma, globalAddress: Memory.addressTIMA)
                 MMU.shared.requestTimerInterrupt()
             } else {
-                MMU.shared.memoryMap[Memory.addressTIMA] = timaValue &+ 1
+                MMU.shared.unsafeWriteValue(timaValue &+ 1, globalAddress: Memory.addressTIMA)
             }
         }
     }
@@ -97,7 +98,7 @@ class MasterClock {
     
     // If the game changes this value via the writeMemory function, do we need to reset the timaTimer?
     var clockCyclesPerTimaCycle: UInt32 {
-        let rawValue = MMU.shared.memoryMap[Memory.addressTAC] & 0b11
+        let rawValue = MMU.shared.unsafeReadValue(globalAddress: Memory.addressTAC) & 0b11
         switch rawValue {
         case 0b00: return 1024 // 4096 Hz
         case 0b01: return 16 // 262144 Hz

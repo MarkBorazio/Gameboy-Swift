@@ -11,51 +11,51 @@ class MMU {
     
     static let shared = MMU()
     
-    var memoryMap: [UInt8]
-    var cartridge: Cartridge?
-    var isBootRomOverlayed = false
+    private var memoryMap: [UInt8]
+    private var cartridge: Cartridge?
+    private var isBootRomOverlayed = false
     
     init() {
-        memoryMap = Array(repeating: 0, count: Memory.memorySizeBytes)
+        memoryMap = Array(repeating: 0, count: Memory.internalMemorySize)
     }
     
     func loadCartridge(cartridge: Cartridge, skipBootRom: Bool) {
-        memoryMap = Array(repeating: 0, count: Memory.memorySizeBytes)
+        memoryMap = Array(repeating: 0, count: Memory.internalMemorySize)
         self.cartridge = cartridge
         
         if skipBootRom {
             CPU.shared.skipBootRom()
-            memoryMap[Memory.addressTIMA] = 0x00
-            memoryMap[Memory.addressTMA] = 0x00
-            memoryMap[Memory.addressTAC] = 0x00
-            memoryMap[0xFF10] = 0x80
-            memoryMap[0xFF11] = 0xBF
-            memoryMap[0xFF12] = 0xF3
-            memoryMap[0xFF14] = 0xBF
-            memoryMap[0xFF16] = 0x3F
-            memoryMap[0xFF17] = 0x00
-            memoryMap[0xFF19] = 0xBF
-            memoryMap[0xFF1A] = 0x7F
-            memoryMap[0xFF1B] = 0xFF
-            memoryMap[0xFF1C] = 0x9F
-            memoryMap[0xFF1E] = 0xBF
-            memoryMap[0xFF20] = 0xFF
-            memoryMap[0xFF21] = 0x00
-            memoryMap[0xFF22] = 0x00
-            memoryMap[0xFF23] = 0xBF
-            memoryMap[0xFF24] = 0x77
-            memoryMap[0xFF25] = 0xF3
-            memoryMap[0xFF26] = 0xF1
-            memoryMap[Memory.addressLCDC] = 0x91
-            memoryMap[Memory.addressScrollY] = 0x00
-            memoryMap[Memory.addressScrollX] = 0x00
-            memoryMap[Memory.addressLYC] = 0x00
-            memoryMap[Memory.addressBgPalette] = 0xFC
-            memoryMap[Memory.addressObjPalette1] = 0xFF
-            memoryMap[Memory.addressObjPalette2] = 0xFF
-            memoryMap[Memory.addressWindowY] = 0x00
-            memoryMap[Memory.addressWindowX] = 0x00
-            memoryMap[Memory.interruptRegisterAddress] = 0x00
+            unsafeWriteValue(0x00, globalAddress: Memory.addressTIMA)
+            unsafeWriteValue(0x00, globalAddress: Memory.addressTMA)
+            unsafeWriteValue(0x00, globalAddress: Memory.addressTAC)
+            unsafeWriteValue(0x80, globalAddress: 0xFF10)
+            unsafeWriteValue(0xBF, globalAddress: 0xFF11)
+            unsafeWriteValue(0xF3, globalAddress: 0xFF12)
+            unsafeWriteValue(0xBF, globalAddress: 0xFF14)
+            unsafeWriteValue(0x3F, globalAddress: 0xFF16)
+            unsafeWriteValue(0x00, globalAddress: 0xFF17)
+            unsafeWriteValue(0xBF, globalAddress: 0xFF19)
+            unsafeWriteValue(0x7F, globalAddress: 0xFF1A)
+            unsafeWriteValue(0xFF, globalAddress: 0xFF1B)
+            unsafeWriteValue(0x9F, globalAddress: 0xFF1C)
+            unsafeWriteValue(0xBF, globalAddress: 0xFF1E)
+            unsafeWriteValue(0xFF, globalAddress: 0xFF20)
+            unsafeWriteValue(0x00, globalAddress: 0xFF21)
+            unsafeWriteValue(0x00, globalAddress: 0xFF22)
+            unsafeWriteValue(0xBF, globalAddress: 0xFF23)
+            unsafeWriteValue(0x77, globalAddress: 0xFF24)
+            unsafeWriteValue(0xF3, globalAddress: 0xFF25)
+            unsafeWriteValue(0xF1, globalAddress: 0xFF26)
+            unsafeWriteValue(0x91, globalAddress: Memory.addressLCDC)
+            unsafeWriteValue(0x00, globalAddress: Memory.addressScrollY)
+            unsafeWriteValue(0x00, globalAddress: Memory.addressScrollX)
+            unsafeWriteValue(0x00, globalAddress: Memory.addressLYC)
+            unsafeWriteValue(0xFC, globalAddress: Memory.addressBgPalette)
+            unsafeWriteValue(0xFF, globalAddress: Memory.addressObjPalette1)
+            unsafeWriteValue(0xFF, globalAddress: Memory.addressObjPalette2)
+            unsafeWriteValue(0x00, globalAddress: Memory.addressWindowY)
+            unsafeWriteValue(0x00, globalAddress: Memory.addressWindowX)
+            unsafeWriteValue(0x00, globalAddress: Memory.interruptRegisterAddress)
         } else {
             // Overlay BIOS/BootRom at beginning
             memoryMap.replaceSubrange(Self.biosAddressRange, with: Self.bios)
@@ -67,57 +67,65 @@ class MMU {
         isBootRomOverlayed = false
     }
     
-    func readValue(address: UInt16) -> UInt8 {
-        switch address {
+    func safeReadValue(globalAddress: UInt16) -> UInt8 {
+        switch globalAddress {
+            
+        case Memory.cartridgeRomAddressRange, Memory.cartridgeRamAddressRange:
+            return cartridge!.read(address: globalAddress) // TODO: Fixo.
+            
+        case Memory.videoRamAddressRange:
+            return PPU.shared.readVRAM(globalAddress: globalAddress)
+            
         case Memory.addressJoypad:
             return Joypad.shared.readJoypad()
-        case Memory.fixedRomBankAddressRange,
-            Memory.switchableRomBankAddressRange,
-            Memory.switchableRamBankAddressRange:
-            return cartridge!.read(address: address) // TODO: Fixo.
+            
         default:
-            return memoryMap[address]
+            return unsafeReadValue(globalAddress: globalAddress)
         }
     }
     
-    func writeValue(_ value: UInt8, address: UInt16) {
+    func unsafeReadValue(globalAddress: UInt16) -> UInt8 {
+        let localAddress = globalAddress - Memory.internalMemoryAddressRange.lowerBound
+        return memoryMap[localAddress]
+    }
+    
+    func safeWriteValue(_ value: UInt8, globalAddress: UInt16) {
         
-        switch address {
+        switch globalAddress {
             
-        case Memory.ramEnableAddressRange,
-            Memory.setBankRegister1AddressRange,
-            Memory.setBankRegister2AddressRange,
-            Memory.switchableRamBankAddressRange,
-            Memory.setBankModeAddressRange:
-            cartridge?.write(value, address: address)
+        case Memory.cartridgeRomAddressRange, Memory.cartridgeRamAddressRange:
+            cartridge?.write(value, address: globalAddress)
             return
+            
+        case Memory.videoRamAddressRange:
+            PPU.shared.writeVRAM(globalAddress: globalAddress, value: value)
             
         case Memory.biosDeactivateAddress:
             if value == 1 {
                 isBootRomOverlayed = false
             }
-            memoryMap[address] = value
+            unsafeWriteValue(value, globalAddress: globalAddress)
             
         case Memory.addressLY:
             // If the current scanline is attempted to be manually changed, set it to zero instead
-            memoryMap[address] = 0
+            unsafeWriteValue(0, globalAddress: globalAddress)
             
         case Memory.addressDMATransferTrigger:
             dmaTransfer(byte: value)
             
         case Memory.echoRamAddressRange:
             // Anything writted to this range (0xE000 - 0xFDFF) is also written to 0xC000-0xDDFF.
-            memoryMap[address] = value
-            writeValue(value, address: address - Memory.echoRamOffset)
+            unsafeWriteValue(value, globalAddress: globalAddress)
+            safeWriteValue(value, globalAddress: globalAddress &- Memory.echoRamOffset)
             
         case Memory.addressDIV:
             // If anything tries to write to this, then it should instead just be reset.
-            memoryMap[address] = 0
+            unsafeWriteValue(0, globalAddress: globalAddress)
             
         case Memory.addressTAC:
             // If we change the clock frequency, we need to reset it.
             let previousFrequency = MasterClock.shared.clockCyclesPerTimaCycle
-            memoryMap[address] = value
+            unsafeWriteValue(value, globalAddress: globalAddress)
             let newFrequency = MasterClock.shared.clockCyclesPerTimaCycle
             if previousFrequency != newFrequency {
                 MasterClock.shared.resetTimaCycle()
@@ -128,11 +136,16 @@ class MMU {
             
         default:
             // Standard write
-            memoryMap[address] = value
+            unsafeWriteValue(value, globalAddress: globalAddress)
         }
         
         // TODO: "When writing to DIV, the whole counter is reseted, so the timer is also affected."
         // REF: https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour
+    }
+    
+    func unsafeWriteValue(_ value: UInt8, globalAddress: UInt16) {
+        let localAddress = globalAddress - Memory.internalMemoryAddressRange.lowerBound
+        memoryMap[localAddress] = value
     }
 }
 
@@ -141,44 +154,44 @@ class MMU {
 extension MMU {
     
     var hasPendingAndEnabledInterrupt: Bool {
-        let interruptByte = memoryMap[Memory.addressIE] & memoryMap[Memory.addressIF]
+        let interruptByte = unsafeReadValue(globalAddress: Memory.addressIE) & unsafeReadValue(globalAddress: Memory.addressIF)
         return interruptByte & 0b0001_1111 != 0 // First five bits correspond to pending interrupts as per static definitions above
     }
     
     func getNextPendingAndEnabledInterrupt() -> UInt16? {
-        var interruptFlags = memoryMap[Memory.addressIF]
-        let interuptEnable = memoryMap[Memory.addressIE]
+        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
+        let interuptEnable = unsafeReadValue(globalAddress: Memory.addressIE)
         let interruptByte = interuptEnable & interruptFlags
         
         // Priority is simply the bit order
 
         if interruptByte.checkBit(Memory.vBlankInterruptBitIndex) {
             interruptFlags.clearBit(Memory.vBlankInterruptBitIndex)
-            memoryMap[Memory.addressIF] = interruptFlags
+            unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
             return Memory.addressVBlankInterrupt
         }
         
         if interruptByte.checkBit(Memory.lcdInterruptBitIndex) {
             interruptFlags.clearBit(Memory.lcdInterruptBitIndex)
-            memoryMap[Memory.addressIF] = interruptFlags
+            unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
             return Memory.addressLcdInterrupt
         }
         
         if interruptByte.checkBit(Memory.timerInterruptBitIndex) {
             interruptFlags.clearBit(Memory.timerInterruptBitIndex)
-            memoryMap[Memory.addressIF] = interruptFlags
+            unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
             return Memory.addressTimerInterrupt
         }
         
         if interruptByte.checkBit(Memory.serialInterruptBitIndex) {
             interruptFlags.clearBit(Memory.serialInterruptBitIndex)
-            memoryMap[Memory.addressIF] = interruptFlags
+            unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
             return Memory.addressSerialInterrupt
         }
 
         if interruptByte.checkBit(Memory.joypadInterruptBitIndex) {
             interruptFlags.clearBit(Memory.joypadInterruptBitIndex)
-            memoryMap[Memory.addressIF] = interruptFlags
+            unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
             return Memory.addressJoypadInterrupt
         }
         
@@ -186,33 +199,33 @@ extension MMU {
     }
     
     func requestVBlankInterrupt() {
-        var interruptFlags = memoryMap[Memory.addressIF]
+        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
         interruptFlags.setBit(Memory.vBlankInterruptBitIndex)
-        memoryMap[Memory.addressIF] = interruptFlags
+        unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
     }
     
     func requestLCDInterrupt() {
-        var interruptFlags = memoryMap[Memory.addressIF]
+        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
         interruptFlags.setBit(Memory.lcdInterruptBitIndex)
-        memoryMap[Memory.addressIF] = interruptFlags
+        unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
     }
     
     func requestTimerInterrupt() {
-        var interruptFlags = memoryMap[Memory.addressIF]
+        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
         interruptFlags.setBit(Memory.timerInterruptBitIndex)
-        memoryMap[Memory.addressIF] = interruptFlags
+        unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
     }
     
     func requestSerialInterrupt() {
-        var interruptFlags = memoryMap[Memory.addressIF]
+        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
         interruptFlags.setBit(Memory.serialInterruptBitIndex)
-        memoryMap[Memory.addressIF] = interruptFlags
+        unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
     }
     
     func requestJoypadInterrupt() {
-        var interruptFlags = memoryMap[Memory.addressIF]
+        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
         interruptFlags.setBit(Memory.joypadInterruptBitIndex)
-        memoryMap[Memory.addressIF] = interruptFlags
+        unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
     }
 }
 
@@ -221,17 +234,17 @@ extension MMU {
 extension MMU {
     
     func getScanline() -> UInt8 {
-        memoryMap[Memory.addressLY]
+        unsafeReadValue(globalAddress: Memory.addressLY)
     }
     
     // Use this instead of writing memory via writeValue(...) since that function
     // deliberately sets the scanline to 0 when any value is written to it.
     func setScanline(_ value: UInt8) {
-        memoryMap[Memory.addressLY] = value
+        unsafeWriteValue(value, globalAddress: Memory.addressLY)
     }
     
     var isLCDEnabled: Bool {
-        let lcdc = memoryMap[Memory.addressLCDC]
+        let lcdc = unsafeReadValue(globalAddress: Memory.addressLCDC)
         return lcdc.checkBit(Memory.lcdAndPpuEnabledBitIndex)
     }
 }
@@ -243,8 +256,8 @@ extension MMU {
     private func dmaTransfer(byte: UInt8) {
         let sourceAddress = UInt16(byte) << 8
         (0..<Memory.dmaTransferSize).forEach { addressOffset in
-            let value = readValue(address: sourceAddress + addressOffset)
-            writeValue(value, address: Memory.addressDMADestination + addressOffset)
+            let value = unsafeReadValue(globalAddress: sourceAddress + addressOffset)
+            unsafeWriteValue(value, globalAddress: Memory.addressDMADestination + addressOffset)
         }
     }
 }
