@@ -62,9 +62,15 @@ class MasterClock {
         let (newDivTimer, overflow) = divTimer.addingReportingOverflow(UInt8(cycles))
         divTimer = newDivTimer
         if overflow {
-            var div = MMU.shared.unsafeReadValue(globalAddress: Memory.addressDIV)
-            div &+= 1
-            MMU.shared.unsafeWriteValue(div, globalAddress: Memory.addressDIV)
+            
+            var oldDiv = MMU.shared.unsafeReadValue(globalAddress: Memory.addressDIV)
+            let newDiv = oldDiv &+ 1
+            MMU.shared.unsafeWriteValue(newDiv, globalAddress: Memory.addressDIV)
+            
+            let bit4Overflow = oldDiv.checkBit(4) && !newDiv.checkBit(4)
+            if bit4Overflow {
+                APU.shared.tick()
+            }
         }
     }
     

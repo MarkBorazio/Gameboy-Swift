@@ -10,9 +10,6 @@ import Foundation
 // Static definitions for addresses and bit indices
 enum Memory {
     
-    
-    
-    
     // MARK: - Memory Map
     
     static let fixedRomBankAddressRange: ClosedRange<UInt16> = 0x0000...0x3FFF // Read-only
@@ -146,6 +143,20 @@ enum Memory {
     static let addressDMATransferTrigger: UInt16 = 0xFF46 // Writing to this address launches a DMA transfer
     static let dmaTransferSize: UInt16 = 0xA0
     static let addressDMADestination: UInt16 = 0xFE00
+    
+    
+    // MARK: APU
+    
+    static let addressAPUOnOff: UInt16 = 0xFF26
+    static let addressAPUPan: UInt16 = 0xFF25
+    static let addressAPUMasterVolume: UInt16 = 0xFF24
+    
+    static let addressChannel1Range: ClosedRange<UInt16> = 0xFF10...0xFF14
+    static let addressSoundChannel1WavelengthSweep: UInt16 = 0xFF10
+    static let addressSoundChannel1LengthAndDutyCycle: UInt16 = 0xFF11
+    static let addressSoundChannel1AmplitudeSweep: UInt16 = 0xFF12
+    static let addressSoundChannel1WavelengthLow: UInt16 = 0xFF13
+    static let addressSoundChannel1WavelengthHighAndControl: UInt16 = 0xFF14
     
     
     // MARK: - Misc.

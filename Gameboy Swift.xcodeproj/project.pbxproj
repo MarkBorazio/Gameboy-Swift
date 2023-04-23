@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		4D0BFAA829E59D100009164D /* Joypad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D0BFAA729E59D100009164D /* Joypad.swift */; };
 		4D106A7E29CFFB5500EBAAC1 /* MasterClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D106A7D29CFFB5500EBAAC1 /* MasterClock.swift */; };
+		4D3124DA29F5661600A09A56 /* Synth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124D929F5661600A09A56 /* Synth.swift */; };
+		4D3124DC29F5663C00A09A56 /* APU.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124DB29F5663C00A09A56 /* APU.swift */; };
+		4D3124E129F566D100A09A56 /* Signal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124E029F566D100A09A56 /* Signal.swift */; };
+		4D3124E529F56BE600A09A56 /* SoundChannel1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124E429F56BE600A09A56 /* SoundChannel1.swift */; };
 		4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9129E6E56B00E2E68F /* Memory.swift */; };
 		4D7E7C9729EBA66300E2E68F /* MemoryBankController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */; };
 		4D7E7C9929EBA93100E2E68F /* MBC1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9829EBA93100E2E68F /* MBC1.swift */; };
@@ -67,6 +71,10 @@
 /* Begin PBXFileReference section */
 		4D0BFAA729E59D100009164D /* Joypad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Joypad.swift; sourceTree = "<group>"; };
 		4D106A7D29CFFB5500EBAAC1 /* MasterClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterClock.swift; sourceTree = "<group>"; };
+		4D3124D929F5661600A09A56 /* Synth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Synth.swift; sourceTree = "<group>"; };
+		4D3124DB29F5663C00A09A56 /* APU.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APU.swift; sourceTree = "<group>"; };
+		4D3124E029F566D100A09A56 /* Signal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Signal.swift; sourceTree = "<group>"; };
+		4D3124E429F56BE600A09A56 /* SoundChannel1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundChannel1.swift; sourceTree = "<group>"; };
 		4D7E7C9129E6E56B00E2E68F /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
 		4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryBankController.swift; sourceTree = "<group>"; };
 		4D7E7C9829EBA93100E2E68F /* MBC1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBC1.swift; sourceTree = "<group>"; };
@@ -168,6 +176,33 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4D3124DF29F5668600A09A56 /* Synth */ = {
+			isa = PBXGroup;
+			children = (
+				4D3124D929F5661600A09A56 /* Synth.swift */,
+				4D3124E029F566D100A09A56 /* Signal.swift */,
+			);
+			path = Synth;
+			sourceTree = "<group>";
+		};
+		4D3124E229F56ACF00A09A56 /* APU */ = {
+			isa = PBXGroup;
+			children = (
+				4D3124DB29F5663C00A09A56 /* APU.swift */,
+				4D3124E429F56BE600A09A56 /* SoundChannel1.swift */,
+			);
+			path = APU;
+			sourceTree = "<group>";
+		};
+		4D3124E329F56AE300A09A56 /* Cartridge */ = {
+			isa = PBXGroup;
+			children = (
+				6070725D26BFCDCC002E7119 /* Cartridge.swift */,
+				4D7E7C9529EBA63C00E2E68F /* Memory Bank Controllers */,
+			);
+			path = Cartridge;
+			sourceTree = "<group>";
+		};
 		4D73306C29C73BD900E4E5E6 /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
@@ -312,6 +347,7 @@
 			isa = PBXGroup;
 			children = (
 				6070722C26BFA814002E7119 /* AppDelegate.swift */,
+				4D3124DF29F5668600A09A56 /* Synth */,
 				4D73306C29C73BD900E4E5E6 /* Presentation */,
 				6070725826BFB63C002E7119 /* Emulator */,
 				605AFB9C26C7CA690040E608 /* Utilities */,
@@ -346,13 +382,13 @@
 		6070725826BFB63C002E7119 /* Emulator */ = {
 			isa = PBXGroup;
 			children = (
-				4D7E7C9529EBA63C00E2E68F /* Memory Bank Controllers */,
 				4D106A7D29CFFB5500EBAAC1 /* MasterClock.swift */,
 				6070725B26BFC47E002E7119 /* MMU.swift */,
 				6070725926BFB650002E7119 /* CPU.swift */,
 				6001DE2726DA4A3500D399A7 /* PPU.swift */,
+				4D3124E229F56ACF00A09A56 /* APU */,
+				4D3124E329F56AE300A09A56 /* Cartridge */,
 				4D0BFAA729E59D100009164D /* Joypad.swift */,
-				6070725D26BFCDCC002E7119 /* Cartridge.swift */,
 				4D7E7C9129E6E56B00E2E68F /* Memory.swift */,
 				6055A78026E48E5400987457 /* ColourPalette.swift */,
 			);
@@ -516,10 +552,13 @@
 				4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */,
 				4D7E7C9B29EBB24400E2E68F /* MBC0.swift in Sources */,
 				4D106A7E29CFFB5500EBAAC1 /* MasterClock.swift in Sources */,
+				4D3124E529F56BE600A09A56 /* SoundChannel1.swift in Sources */,
+				4D3124DA29F5661600A09A56 /* Synth.swift in Sources */,
 				605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */,
 				6070725C26BFC47E002E7119 /* MMU.swift in Sources */,
 				4D0BFAA829E59D100009164D /* Joypad.swift in Sources */,
 				6070726126BFCFA5002E7119 /* Array+UIntSubscript.swift in Sources */,
+				4D3124E129F566D100A09A56 /* Signal.swift in Sources */,
 				4D7E7C9729EBA66300E2E68F /* MemoryBankController.swift in Sources */,
 				4DAEF4E329D98A1C00F41DFC /* GameBoyView.swift in Sources */,
 				4D7E7C9929EBA93100E2E68F /* MBC1.swift in Sources */,
@@ -532,6 +571,7 @@
 				605AFBA626C810680040E608 /* BinaryInteger+Extensions.swift in Sources */,
 				6070725A26BFB650002E7119 /* CPU.swift in Sources */,
 				6055A78126E48E5400987457 /* ColourPalette.swift in Sources */,
+				4D3124DC29F5663C00A09A56 /* APU.swift in Sources */,
 				6070725E26BFCDCC002E7119 /* Cartridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -630,7 +670,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -685,7 +725,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
