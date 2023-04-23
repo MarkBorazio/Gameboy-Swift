@@ -89,5 +89,8 @@ fastlane/test_output
 
 iOSInjectionProject/
 
+# Project Files
+Gameboy\ Swift/Roms/*
+
 # Misc.
 .DS_Store
