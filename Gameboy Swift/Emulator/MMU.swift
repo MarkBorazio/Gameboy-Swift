@@ -85,7 +85,7 @@ class MMU {
         case Memory.addressJoypad:
             return Joypad.shared.readJoypad()
             
-        case Memory.addressChannel1Range:
+        case Memory.addressGlobalAPURange, Memory.addressChannel1Range, Memory.addressChannel2Range:
             return APU.shared.read(address: globalAddress)
             
         default:
@@ -109,7 +109,7 @@ class MMU {
         case Memory.videoRamAddressRange:
             PPU.shared.writeVRAM(globalAddress: globalAddress, value: value)
             
-        case Memory.addressChannel1Range:
+        case Memory.addressGlobalAPURange, Memory.addressChannel1Range, Memory.addressChannel2Range:
             APU.shared.write(value, address: globalAddress)
             
         case Memory.biosDeactivateAddress:

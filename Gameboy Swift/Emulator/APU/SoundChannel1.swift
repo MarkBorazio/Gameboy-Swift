@@ -15,25 +15,9 @@ class SoundChannel1 {
     
     private let deltaTime: Float // Sample length, in seconds
     private var time: Float = 0
-    private var isOn = false {
-        didSet {
-            if !isOn {
-                dutyCycle = 0.5
-                initialLengthTimerValue = 0
-                lengthTimer = 0
-                lengthTimerEnabled = false
-                wavelength = 0
-                wavelengthSweepSlope = 0
-                wavelengthSweepPace = 0
-                wavelengthSweepAddition = false
-                wavelengthSweepCounter = 0
-                amplitudeRaw = 0
-                amplitudeSweepAddition = false
-                amplitudeSweepPace = 0
-                amplitudeSweepCounter = 0
-            }
-        }
-    }
+    
+    private var isEnabled = false
+    private var isDACEnabled = false // TODO: Fade out when set to false
     
     private var dutyCycle: Double = 0.5
     private var initialLengthTimerValue: UInt8 = 0
@@ -64,7 +48,8 @@ class SoundChannel1 {
     }
     
     lazy var sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
-        guard self.isOn else { return noErr }
+        guard self.isEnabled else { return noErr }
+        
         let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
   
         let localFrequency = self.frequency
@@ -72,7 +57,14 @@ class SoundChannel1 {
 
         for frame in 0..<Int(frameCount) {
             let percentComplete = self.time / period
-            let sampleVal = self.signal(localFrequency * percentComplete, self.time, self.dutyCycle, self.amplitudeNormalised)
+            
+            let sampleVal: Float
+            if self.isDACEnabled {
+                sampleVal = self.signal(localFrequency * percentComplete, self.time, self.dutyCycle, self.amplitudeNormalised)
+            } else {
+                sampleVal = 0
+            }
+            
             self.time += self.deltaTime
             self.time = fmod(self.time, period)
             
@@ -125,14 +117,17 @@ extension SoundChannel1 {
         
         let didOverflow = newWavelength.checkBit(11)
         if didOverflow && wavelengthSweepAddition {
-            isOn = false
+            isEnabled = false
         }
         
-        // TODO: Check if we should update the wavelength if we overflowed
-        let sweepIterationsEnabled = wavelengthSweepSlope != 0
-        if sweepIterationsEnabled {
-            wavelength = newWavelength & 0b111_1111_1111 // 11 bits wide
+        if isEnabled {
+            let sweepIterationsEnabled = wavelengthSweepSlope != 0
+            if sweepIterationsEnabled {
+                wavelength = newWavelength & 0b111_1111_1111 // 11 bits wide
+            }
         }
+
+        // TODO: Should this run again as per https://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware ?
     }
     
     func tickWavelengthSweepCounter() {
@@ -170,7 +165,7 @@ extension SoundChannel1 {
         lengthTimer += 1
         if lengthTimer == 64 {
             lengthTimer = initialLengthTimerValue
-            isOn = false
+            isEnabled = false
         }
     }
 }
@@ -184,11 +179,7 @@ extension SoundChannel1 {
         amplitudeSweepPace = value & 0b111
         amplitudeSweepAddition = value.checkBit(3)
         amplitudeRaw = (value & 0b1111_0000) >> 4
-        
-        let shouldTurnOff = (value & 0b1111_1000) == 0
-        if shouldTurnOff {
-            isOn = false
-        }
+        isDACEnabled = (value & 0b1111_1000) != 0
     }
     
     private func iterateAmplitudeSweep() {
@@ -232,7 +223,7 @@ extension SoundChannel1 {
         
         // TODO: Handle this properly
         if shouldTrigger { // If DAC is off, this won't turn on
-            isOn = true
+            isEnabled = true
         }
     }
 }

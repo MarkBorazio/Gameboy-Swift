@@ -49,6 +49,7 @@ class MasterClock {
                 // In this case, we still want the PPU to tick one cycle as only the CPU instructions and timers are paused when the HALT flag is set.
                 let adjustedCycles = max(cpuCycles, 1)
                 PPU.shared.tick(cycles: adjustedCycles)
+                APU.shared.tickFrequencyTimer(clockCycles: adjustedCycles)
                 
                 self.cycles += adjustedCycles
             }
@@ -63,13 +64,13 @@ class MasterClock {
         divTimer = newDivTimer
         if overflow {
             
-            var oldDiv = MMU.shared.unsafeReadValue(globalAddress: Memory.addressDIV)
+            let oldDiv = MMU.shared.unsafeReadValue(globalAddress: Memory.addressDIV)
             let newDiv = oldDiv &+ 1
             MMU.shared.unsafeWriteValue(newDiv, globalAddress: Memory.addressDIV)
             
             let bit4Overflow = oldDiv.checkBit(4) && !newDiv.checkBit(4)
             if bit4Overflow {
-                APU.shared.tick()
+                APU.shared.tickFrameSquencer()
             }
         }
     }

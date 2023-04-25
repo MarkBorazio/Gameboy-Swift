@@ -147,9 +147,10 @@ enum Memory {
     
     // MARK: APU
     
-    static let addressAPUOnOff: UInt16 = 0xFF26
-    static let addressAPUPan: UInt16 = 0xFF25
-    static let addressAPUMasterVolume: UInt16 = 0xFF24
+    static let addressGlobalAPURange: ClosedRange<UInt16> = 0xFF24...0xFF26
+    static let addressNR52: UInt16 = 0xFF26
+    static let addressNR51: UInt16 = 0xFF25
+    static let addressNR50: UInt16 = 0xFF24
     
     static let addressChannel1Range: ClosedRange<UInt16> = 0xFF10...0xFF14
     static let addressSoundChannel1WavelengthSweep: UInt16 = 0xFF10
@@ -157,6 +158,12 @@ enum Memory {
     static let addressSoundChannel1AmplitudeSweep: UInt16 = 0xFF12
     static let addressSoundChannel1WavelengthLow: UInt16 = 0xFF13
     static let addressSoundChannel1WavelengthHighAndControl: UInt16 = 0xFF14
+    
+    static let addressChannel2Range: ClosedRange<UInt16> = 0xFF16...0xFF19
+    static let addressNR21: UInt16 = 0xFF16
+    static let addressNR22: UInt16 = 0xFF17
+    static let addressNR23: UInt16 = 0xFF18
+    static let addressNR24: UInt16 = 0xFF19
     
     
     // MARK: - Misc.
