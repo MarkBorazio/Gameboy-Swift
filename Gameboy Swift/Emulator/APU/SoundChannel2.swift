@@ -64,7 +64,7 @@ class SoundChannel2 {
     private func dacOutput() -> Float {
         guard isDACEnabled && isEnabled else { return 0.0 }
         
-        let dutyCycleValue = Self.dutyCyclePatterns[dutyCyclePatternPointer].getBitValue(fakePointer)
+        let dutyCycleValue = Self.dutyCyclePatterns[dutyCyclePatternPointer].getBitValue(dutyCycleBitPointer)
         let dacInput = dutyCycleValue * amplitudeRaw
         
         // Normalise input of 0x0...0xF to output of -1.0...1.0
