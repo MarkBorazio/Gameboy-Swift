@@ -64,8 +64,11 @@ class SoundChannel2 {
     private func dacOutput() -> Float {
         guard isDACEnabled && isEnabled else { return 0.0 }
         
-        let isUp = Self.dutyCyclePatterns[dutyCyclePatternPointer].checkBit(dutyCycleBitPointer)
-        let dacOutput: Float = isUp ? 1.0 : -1.0
+        let dutyCycleValue = Self.dutyCyclePatterns[dutyCyclePatternPointer].getBitValue(fakePointer)
+        let dacInput = dutyCycleValue * amplitudeRaw
+        
+        // Normalise input of 0x0...0xF to output of -1.0...1.0
+        let dacOutput = (Float(dacInput) / 7.5) - 1.0
         
         return dacOutput
     }
@@ -96,18 +99,11 @@ extension SoundChannel2 {
 extension SoundChannel2 {
     
     // `dutyCyclePatternPointer` is used to retrieve the duty cycle from this array
-//    private static let dutyCyclePatterns: [UInt8] = [
-//        0b00000001, // 12.5%
-//        0b00000011, // 25%
-//        0b00001111, // 50%
-//        0b11111100 // 75%
-//    ]
-    
     private static let dutyCyclePatterns: [UInt8] = [
-        0b11110000, // 12.5%
-        0b11110000, // 25%
-        0b11110000, // 50%
-        0b11110000 // 75%
+        0b00000001, // 12.5%
+        0b00000011, // 25%
+        0b00001111, // 50%
+        0b11111100 // 75%
     ]
     
     var initialLengthTimerValue: UInt8 {
