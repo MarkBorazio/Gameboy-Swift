@@ -153,11 +153,11 @@ enum Memory {
     static let addressNR50: UInt16 = 0xFF24
     
     static let addressChannel1Range: ClosedRange<UInt16> = 0xFF10...0xFF14
-    static let addressSoundChannel1WavelengthSweep: UInt16 = 0xFF10
-    static let addressSoundChannel1LengthAndDutyCycle: UInt16 = 0xFF11
-    static let addressSoundChannel1AmplitudeSweep: UInt16 = 0xFF12
-    static let addressSoundChannel1WavelengthLow: UInt16 = 0xFF13
-    static let addressSoundChannel1WavelengthHighAndControl: UInt16 = 0xFF14
+    static let addressNR10: UInt16 = 0xFF10
+    static let addressNR11: UInt16 = 0xFF11
+    static let addressNR12: UInt16 = 0xFF12
+    static let addressNR13: UInt16 = 0xFF13
+    static let addressNR14: UInt16 = 0xFF14
     
     static let addressChannel2Range: ClosedRange<UInt16> = 0xFF16...0xFF19
     static let addressNR21: UInt16 = 0xFF16

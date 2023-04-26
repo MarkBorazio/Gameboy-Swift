@@ -17,14 +17,16 @@ class APU {
     private var divCounter = 0
     private var isOn = false
     
-    private let channel1: SoundChannel1
-    private let channel2: SoundChannel2
+    private let channel1: InaccurateSoundChannel1
+    private let channel2: InaccurateSoundChannel2
     
     init() {
-        channel1 = SoundChannel1(deltaTime: synth.deltaTime)
-        channel2 = SoundChannel2()
+        channel1 = InaccurateSoundChannel1(sampleLengthSeconds: synth.deltaTime)
+        channel2 = InaccurateSoundChannel2(sampleLengthSeconds: synth.deltaTime)
         
+        synth.attachSourceNode(channel1.sourceNode)
         synth.attachSourceNode(channel2.sourceNode)
+        
         synth.volume = 0.1
         synth.start()
     }
@@ -51,7 +53,7 @@ class APU {
     
     func tickFrequencyTimer(clockCycles: Int) {
         guard isOn else { return }
-        channel2.tickFrequencyTimer(clockCycles: clockCycles)
+//        channel2.tickFrequencyTimer(clockCycles: clockCycles)
     }
     
     func tickFrameSquencer() {
@@ -96,6 +98,12 @@ extension APU {
         isOn = allSoundOn
         if !allSoundOn {
             divCounter = 0 // Not sure about this one
+            
+            channel1.write(0, address: Memory.addressNR10)
+            channel1.write(0, address: Memory.addressNR11)
+            channel1.write(0, address: Memory.addressNR12)
+            channel1.write(0, address: Memory.addressNR13)
+            channel1.write(0, address: Memory.addressNR14)
             
             channel2.write(0, address: Memory.addressNR21)
             channel2.write(0, address: Memory.addressNR22)

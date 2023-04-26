@@ -89,11 +89,11 @@ extension SoundChannel1 {
     
     func write(_ value: UInt8, address: UInt16) {
         switch address {
-        case Memory.addressSoundChannel1WavelengthSweep: updateWavelengthSweep(value: value)
-        case Memory.addressSoundChannel1LengthAndDutyCycle: updateLengthAndDutyCycle(value: value)
-        case Memory.addressSoundChannel1AmplitudeSweep: updateAmplitudeSweep(value: value)
-        case Memory.addressSoundChannel1WavelengthLow: updateWavelengthLow(value: value)
-        case Memory.addressSoundChannel1WavelengthHighAndControl: updateWavelengthHighAndControl(value: value)
+        case Memory.addressNR10: updateWavelengthSweep(value: value)
+        case Memory.addressNR11: updateLengthAndDutyCycle(value: value)
+        case Memory.addressNR12: updateAmplitudeSweep(value: value)
+        case Memory.addressNR13: updateWavelengthLow(value: value)
+        case Memory.addressNR14: updateWavelengthHighAndControl(value: value)
         default: fatalError("Unknown SoundChannel1 address received. Got \(address.hexString()).")
         }
     }
