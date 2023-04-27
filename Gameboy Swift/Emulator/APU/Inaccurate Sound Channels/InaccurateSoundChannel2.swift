@@ -57,10 +57,12 @@ class InaccurateSoundChannel2 {
             let percentComplete = self.time / period
             
             let sampleValue: Float
-            if self.isDACEnabled && self.isEnabled {
-                sampleValue = self.signal(localFrequency * percentComplete, self.time, dutyCycle, amplitude)
-            } else {
+            if !self.isDACEnabled {
                 sampleValue = 0.0
+            } else if !self.isEnabled {
+                sampleValue = 1.0
+            } else {
+                sampleValue = -self.signal(localFrequency * percentComplete, self.time, dutyCycle, amplitude)
             }
             
             self.time += self.sampleLengthSeconds

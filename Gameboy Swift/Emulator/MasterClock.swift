@@ -38,6 +38,7 @@ class MasterClock {
         // TODO
     }
     
+    // TODO: Implement Audio buffering and synchronisation.
     func tick() {
         timerQueue.async {
             while self.cycles < Self.machineCyclesCyclesPerFrame {

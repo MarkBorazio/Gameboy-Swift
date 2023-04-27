@@ -1,32 +1,32 @@
 //
-//  InaccurateSoundChannel1.swift
+//  SoundChannel2.swift
 //  Gameboy Swift
 //
-//  Created by Mark Borazio [Personal] on 23/4/2023.
+//  Created by Mark Borazio [Personal] on 24/4/2023.
 //
 
 import Foundation
 import AVFAudio
 
-// Square Wave
-// Same as Channel 2, but this has a wavelength sweep
-class InaccurateSoundChannel1 {
+// Used for common behaviour between Channel 1 and Channel 2
+class SquareWaveChannel {
     
-    private let signal = Oscillator.square
+    private static let lengthTime: UInt8 = 64
     
-    private var isEnabled = false
-    private var isDACEnabled = false // TODO: Fade out when set to false
-
-    private var nr10: UInt8 = 0
-    private var nr11: UInt8 = 0
-    private var nr12: UInt8 = 0
-    private var nr13: UInt8 = 0
-    private var nr14: UInt8 = 0 {
+    var nrX0: UInt8 = 0
+    var nrX1: UInt8 = 0
+    var nrX2: UInt8 = 0
+    var nrX3: UInt8 = 0
+    var nrX4: UInt8 = 0 {
         didSet {
             triggerChannelIfRequired()
         }
     }
     
+    var isEnabled = false
+    var isDACEnabled = false // TODO: Fade out when set to false
+    
+    private var frequencyTimer: Int = calculateInitialFrequencyTimer(wavelength: 0)
     private var dutyCycleBitPointer: Int = 0
     private var lengthTimer: UInt8 = 0
     
@@ -37,85 +37,69 @@ class InaccurateSoundChannel1 {
     private var amplitudeSweepPace: UInt8 = 0
     private var amplitudeSweepCounter = 0
     
-    private var time: Float = 0
-    private var frequency: Float {
-        Float(131072) / Float(2048 - wavelength)
-    }
-    
-    private let sampleLengthSeconds: Float
-    
-    init(sampleLengthSeconds: Float) {
-        self.sampleLengthSeconds = sampleLengthSeconds
-    }
-    
+    // TODO: Need to manually manage providing samples and buffer the timer.
     lazy var sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
+        
         let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-        
-        let localFrequency = self.frequency
-        let period = 1 / localFrequency
-        let dutyCycle = Self.dutyCycles[self.dutyCyclePatternPointer]
-        let amplitude = (Float(self.amplitudeRaw) / 7.5) - 1.0
-        
+
         for frame in 0..<Int(frameCount) {
-            let percentComplete = self.time / period
-            
-            let sampleValue: Float
-            if !self.isDACEnabled {
-                sampleValue = 0.0
-            } else if !self.isEnabled {
-                sampleValue = 1.0
-            } else {
-                sampleValue = -self.signal(localFrequency * percentComplete, self.time, dutyCycle, amplitude)
-            }
-            
-            self.time += self.sampleLengthSeconds
-            self.time = fmod(self.time, period)
-            
             for buffer in ablPointer {
                 let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
-                buf[frame] = sampleValue
+                buf[frame] = self.dacOutput()
             }
         }
         
         return noErr
     }
-}
-
-// MARK: - Read/Write
-
-extension InaccurateSoundChannel1 {
     
-    func read(address: UInt16) -> UInt8 {
-        print("TODO: SoundChannel1.read(address: \(address))")
-        return 0
+    private static func calculateInitialFrequencyTimer(wavelength: UInt16) -> Int {
+         (2048 - Int(wavelength)) * 4
     }
     
-    func write(_ value: UInt8, address: UInt16) {
-        switch address {
-        case Memory.addressNR10: nr10 = value
-        case Memory.addressNR11: nr11 = value
-        case Memory.addressNR12: nr12 = value
-        case Memory.addressNR13: nr13 = value
-        case Memory.addressNR14: nr14 = value
-        default: fatalError("Unknown SoundChannel2 address received. Got \(address.hexString()).")
+    private func dacOutput() -> Float {
+        guard isDACEnabled else { return 0.0 }
+        guard isEnabled else { return 1.0 }
+        
+        let dutyCycleValue = Self.dutyCyclePatterns[dutyCyclePatternPointer].getBitValue(dutyCycleBitPointer)
+        let dacInput = dutyCycleValue * amplitudeRaw
+        
+        // Normalise input of 0x0...0xF to output of 1.0...-1.0
+        let dacOutput = (-Float(dacInput) / 7.5) + 1.0
+        
+        return dacOutput
+    }
+    
+    func tickFrequencyTimer(clockCycles: Int) {
+        frequencyTimer -= clockCycles
+        if frequencyTimer <= 0 {
+            frequencyTimer += Self.calculateInitialFrequencyTimer(wavelength: wavelength)
+            dutyCycleBitPointer = (dutyCycleBitPointer + 1) & 0b111
+        }
+    }
+    
+    func tickWavelengthSweepCounter() {
+        wavelengthSweepCounter += 1
+        if wavelengthSweepCounter == wavelengthSweepPace {
+            wavelengthSweepCounter = 0
+            iterateWavelengthSweep()
         }
     }
 }
 
-// MARK: - NR10 Wavelength Sweep
+// MARK: - NRX0 Wavelength Sweep
 
-extension InaccurateSoundChannel1 {
+extension SquareWaveChannel {
     
     private var wavelengthSweepSlope: UInt8 {
-        nr10 & 0b111
+        nrX0 & 0b111
     }
     
     private var wavelengthSweepAddition: Bool {
-        nr10.checkBit(3)
+        nrX0.checkBit(3)
     }
     
     private var wavelengthSweepPace: UInt8 {
-        (nr10 & 0b0111_0000) >> 4
+        (nrX0 & 0b0111_0000) >> 4
     }
 
     private func iterateWavelengthSweep() {
@@ -138,58 +122,49 @@ extension InaccurateSoundChannel1 {
 
         // TODO: Should this run again as per https://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware ?
     }
-
-    func tickWavelengthSweepCounter() {
-        wavelengthSweepCounter += 1
-        if wavelengthSweepCounter == wavelengthSweepPace {
-            wavelengthSweepCounter = 0
-            iterateWavelengthSweep()
-        }
-    }
 }
 
-// MARK: - NR11: Length and Duty Cycle
+// MARK: - NRX1: Length and Duty Cycle
 
-extension InaccurateSoundChannel1 {
+extension SquareWaveChannel {
     
-    private static let maxTimerLength: UInt8 = 64
-    
-    private static let dutyCycles: [Double] = [
-        0.125,
-        0.25,
-        0.50,
-        0.75
+    // `dutyCyclePatternPointer` is used to retrieve the duty cycle from this array
+    private static let dutyCyclePatterns: [UInt8] = [
+        0b00000001, // 12.5%
+        0b00000011, // 25%
+        0b00001111, // 50%
+        0b11111100 // 75%
     ]
     
     var initialLengthTimerValue: UInt8 {
-        nr11 & 0b0011_1111
+        nrX1 & 0b0011_1111
     }
     
     var dutyCyclePatternPointer: UInt8 {
-        (nr11 & 0b1100_0000) >> 6
+        (nrX1 & 0b1100_0000) >> 6
     }
     
     func tickLengthTimer() {
         guard lengthTimerEnabled else { return }
         lengthTimer -= 1
         if lengthTimer == 0 {
-            lengthTimer = Self.maxTimerLength - initialLengthTimerValue
+            lengthTimer = Self.lengthTime - initialLengthTimerValue
             isEnabled = false
         }
     }
 }
 
-// MARK: - NR12: Amplitude Sweep
+// MARK: - NRX2: Amplitude Sweep
 
-extension InaccurateSoundChannel1 {
+extension SquareWaveChannel {
     
     private static let amplitudeRawRange = 0x0...0xF
     
     private func triggerAmplitudeSweep() {
-        amplitudeSweepPace = nr12 & 0b111
-        amplitudeSweepAddition = nr12.checkBit(3)
-        amplitudeRaw = (nr12 & 0b1111_0000) >> 4
-        isDACEnabled = (nr12 & 0b1111_1000) != 0
+        amplitudeSweepPace = nrX2 & 0b111
+        amplitudeSweepAddition = nrX2.checkBit(3)
+        amplitudeRaw = (nrX2 & 0b1111_0000) >> 4
+        isDACEnabled = (nrX2 & 0b1111_1000) != 0
         
         // Disabling DAC disables channel
         // Enabling DAC does not enable channel
@@ -218,31 +193,31 @@ extension InaccurateSoundChannel1 {
     }
 }
 
-// MARK: - NR13: Wavelength Low | NR14: Wavelength High and Control
+// MARK: - NRX3: Wavelength Low | NRX4: Wavelength High and Control
 
-extension InaccurateSoundChannel1 {
+extension SquareWaveChannel {
     
     private var wavelength: UInt16 {
         get {
-            let highByte = (UInt16(nr14) & 0b111) << 8
-            let lowByte = UInt16(nr13)
+            let highByte = (UInt16(nrX4) & 0b111) << 8
+            let lowByte = UInt16(nrX3)
             return highByte | lowByte
         }
         set {
             let highByte = newValue.getByte(1) & 0b111
             let lowByte = newValue.getByte(0)
-            nr14 |= highByte
-            nr13 = lowByte
+            nrX4 |= highByte
+            nrX3 = lowByte
         }
     }
     
     private var lengthTimerEnabled: Bool {
-        nr14.checkBit(6)
+        nrX4.checkBit(6)
     }
     
     // Ref: https://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware
     private func triggerChannelIfRequired() {
-        let shouldTrigger = nr14.checkBit(7)
+        let shouldTrigger = nrX4.checkBit(7)
         guard shouldTrigger else { return }
         
         let dacWasOff = !isDACEnabled
@@ -259,13 +234,14 @@ extension InaccurateSoundChannel1 {
         isEnabled = true
         
         if lengthTimer == 0 {
-            lengthTimer = Self.maxTimerLength
+            lengthTimer = Self.lengthTime
         }
+        frequencyTimer = Self.calculateInitialFrequencyTimer(wavelength: wavelength)
         
-        amplitudeSweepPace = nr12 & 0b111
-        amplitudeSweepAddition = nr12.checkBit(3)
-        amplitudeRaw = (nr12 & 0b1111_0000) >> 4
-        isDACEnabled = (nr12 & 0b1111_1000) != 0
+        amplitudeSweepPace = nrX2 & 0b111
+        amplitudeSweepAddition = nrX2.checkBit(3)
+        amplitudeRaw = (nrX2 & 0b1111_0000) >> 4
+        isDACEnabled = (nrX2 & 0b1111_1000) != 0
         
         // Disabling DAC disables channel
         // Enabling DAC does not enable channel
@@ -274,4 +250,3 @@ extension InaccurateSoundChannel1 {
         }
     }
 }
-

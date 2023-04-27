@@ -16,6 +16,7 @@
 		4D3124E729F6C1E600A09A56 /* SoundChannel2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124E629F6C1E600A09A56 /* SoundChannel2.swift */; };
 		4D3124EC29F96F2700A09A56 /* InaccurateSoundChannel1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124EA29F96F2700A09A56 /* InaccurateSoundChannel1.swift */; };
 		4D3124ED29F96F2700A09A56 /* InaccurateSoundChannel2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124EB29F96F2700A09A56 /* InaccurateSoundChannel2.swift */; };
+		4D3124EF29FAACD200A09A56 /* SquareWaveChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124EE29FAACD200A09A56 /* SquareWaveChannel.swift */; };
 		4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9129E6E56B00E2E68F /* Memory.swift */; };
 		4D7E7C9729EBA66300E2E68F /* MemoryBankController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */; };
 		4D7E7C9929EBA93100E2E68F /* MBC1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9829EBA93100E2E68F /* MBC1.swift */; };
@@ -81,6 +82,7 @@
 		4D3124E629F6C1E600A09A56 /* SoundChannel2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundChannel2.swift; sourceTree = "<group>"; };
 		4D3124EA29F96F2700A09A56 /* InaccurateSoundChannel1.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InaccurateSoundChannel1.swift; sourceTree = "<group>"; };
 		4D3124EB29F96F2700A09A56 /* InaccurateSoundChannel2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InaccurateSoundChannel2.swift; sourceTree = "<group>"; };
+		4D3124EE29FAACD200A09A56 /* SquareWaveChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareWaveChannel.swift; sourceTree = "<group>"; };
 		4D7E7C9129E6E56B00E2E68F /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
 		4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryBankController.swift; sourceTree = "<group>"; };
 		4D7E7C9829EBA93100E2E68F /* MBC1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBC1.swift; sourceTree = "<group>"; };
@@ -213,6 +215,7 @@
 		4D3124E829F96EFF00A09A56 /* Accurate Sound Channels */ = {
 			isa = PBXGroup;
 			children = (
+				4D3124EE29FAACD200A09A56 /* SquareWaveChannel.swift */,
 				4D3124E429F56BE600A09A56 /* SoundChannel1.swift */,
 				4D3124E629F6C1E600A09A56 /* SoundChannel2.swift */,
 			);
@@ -581,6 +584,7 @@
 				4D3124DA29F5661600A09A56 /* Synth.swift in Sources */,
 				605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */,
 				6070725C26BFC47E002E7119 /* MMU.swift in Sources */,
+				4D3124EF29FAACD200A09A56 /* SquareWaveChannel.swift in Sources */,
 				4D0BFAA829E59D100009164D /* Joypad.swift in Sources */,
 				6070726126BFCFA5002E7119 /* Array+UIntSubscript.swift in Sources */,
 				4D3124E129F566D100A09A56 /* Signal.swift in Sources */,
