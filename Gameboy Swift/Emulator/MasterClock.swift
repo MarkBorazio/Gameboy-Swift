@@ -41,18 +41,21 @@ class MasterClock {
     // TODO: Implement Audio buffering and synchronisation.
     func tick() {
         timerQueue.async {
+            
             while self.cycles < Self.machineCyclesCyclesPerFrame {
-                let cpuCycles = CPU.shared.tick()
-                self.incrementDivRegister(cycles: cpuCycles)
-                self.incrementTimaRegister(cycles: cpuCycles)
-                
-                // If cycles accumulated during CPU tick is 0, then that means that the HALT flag is set.
-                // In this case, we still want the PPU to tick one cycle as only the CPU instructions and timers are paused when the HALT flag is set.
-                let adjustedCycles = max(cpuCycles, 1)
-                PPU.shared.tick(cycles: adjustedCycles)
-                APU.shared.tickFrequencyTimer(clockCycles: adjustedCycles)
-                
-                self.cycles += adjustedCycles
+                if !APU.shared.isDrainingSamples {
+                    let cpuCycles = CPU.shared.tick()
+                    self.incrementDivRegister(cycles: cpuCycles)
+                    self.incrementTimaRegister(cycles: cpuCycles)
+                    
+                    // If cycles accumulated during CPU tick is 0, then that means that the HALT flag is set.
+                    // In this case, we still want the PPU to tick one cycle as only the CPU instructions and timers are paused when the HALT flag is set.
+                    let adjustedCycles = max(cpuCycles, 1)
+                    PPU.shared.tick(cycles: adjustedCycles)
+                    APU.shared.tick(clockCycles: adjustedCycles)
+                    
+                    self.cycles += adjustedCycles
+                }
             }
             
             self.cycles -= Int(Self.machineCyclesCyclesPerFrame) // Keep overflowed values instead of just resetting to zero

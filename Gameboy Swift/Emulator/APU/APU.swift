@@ -20,12 +20,16 @@ class APU {
     private let channel1: SoundChannel1
     private let channel2: SoundChannel2
     
+    private var sampleBuffer: [Float] = []
+    private var sampleCounter = 0
+    var isDrainingSamples = false
+    var isSampleBufferFull: Bool {
+        sampleBuffer.count >= 512
+    }
+    
     init() {
         channel1 = SoundChannel1()
         channel2 = SoundChannel2()
-        
-        synth.attachSourceNode(channel1.sourceNode)
-        synth.attachSourceNode(channel2.sourceNode)
         
         synth.volume = 0.1
         synth.start()
@@ -54,10 +58,29 @@ class APU {
 
     }
     
-    func tickFrequencyTimer(clockCycles: Int) {
+    func tick(clockCycles: Int) {
         guard isOn else { return }
         channel1.tickFrequencyTimer(clockCycles: clockCycles)
         channel2.tickFrequencyTimer(clockCycles: clockCycles)
+        
+        sampleCounter += clockCycles
+        if sampleCounter >= Self.cyclesPerSample {
+            sampleCounter -= Self.cyclesPerSample
+            collectSample()
+        }
+    }
+    
+    private func collectSample() {
+        let sample = (channel1.dacOutput() + channel2.dacOutput()) / 2
+        sampleBuffer.append(sample)
+        
+        if isSampleBufferFull {
+            isDrainingSamples = true
+            synth.playSamples(sampleBuffer) { [weak self] in
+                self?.sampleBuffer.removeAll()
+                self?.isDrainingSamples = false
+            }
+        }
     }
     
     func tickFrameSquencer() {
@@ -115,4 +138,11 @@ extension APU {
             channel2.write(0, address: Memory.addressNR24)
         }
     }
+}
+
+// MARK: - Constants
+
+extension APU {
+    
+    private static let cyclesPerSample = 22 // M-Cycles
 }

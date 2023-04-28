@@ -18,29 +18,35 @@ class Synth {
         }
     }
     
-    private var audioEngine: AVAudioEngine
-    private let inputFormat: AVAudioFormat?
-    let deltaTime: Float
+    private let audioEngine: AVAudioEngine
+    private let audioPlayerNode: AVAudioPlayerNode
+    private let audioFormat: AVAudioFormat
     
     init() {
         audioEngine = AVAudioEngine()
-        
-        let format = audioEngine.outputNode.inputFormat(forBus: 0)
-        deltaTime = Float(1 / format.sampleRate)
-        
-        inputFormat = AVAudioFormat(
+        let outputNode = audioEngine.outputNode
+        let format = outputNode.inputFormat(forBus: 0)
+        let audioFormat = AVAudioFormat(
             commonFormat: format.commonFormat,
             sampleRate: format.sampleRate,
             channels: 1,
             interleaved: format.isInterleaved
-        )
+        )!
+        
+        audioPlayerNode = AVAudioPlayerNode()
+        self.audioFormat = audioFormat
 
-        audioEngine.mainMixerNode.outputVolume = 0
+        audioEngine.attach(audioPlayerNode)
+        audioEngine.connect(audioPlayerNode, to: audioEngine.mainMixerNode, format: audioFormat)
+        
+        audioPlayerNode.volume = 1
+        audioEngine.mainMixerNode.outputVolume = 1
     }
     
     func start() {
         do {
             try audioEngine.start()
+            audioPlayerNode.play()
         } catch {
             fatalError("Failed to start Audio Engine. Got error: \(error).")
         }
@@ -50,10 +56,15 @@ class Synth {
         audioEngine.stop()
     }
     
-    func attachSourceNode(_ sourceNode: AVAudioSourceNode) {
-        audioEngine.attach(sourceNode)
-        audioEngine.connect(sourceNode, to: audioEngine.mainMixerNode, format: inputFormat)
-        audioEngine.connect(audioEngine.mainMixerNode, to: audioEngine.outputNode, format: nil)
+    
+    func playSamples(_ samples: [Float], completionHandler: @escaping AVAudioNodeCompletionHandler) {
+        let frameCount = samples.count
+        let buffer = AVAudioPCMBuffer(pcmFormat: audioFormat, frameCapacity: AVAudioFrameCount(frameCount))!
+        buffer.frameLength = AVAudioFrameCount(frameCount)
+        for i in 0..<frameCount {
+            buffer.floatChannelData?[0][i] = samples[i]
+        }
+        audioPlayerNode.scheduleBuffer(buffer, completionHandler: completionHandler)
     }
 }
 

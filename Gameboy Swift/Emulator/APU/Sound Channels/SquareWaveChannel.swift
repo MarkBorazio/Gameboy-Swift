@@ -37,26 +37,11 @@ class SquareWaveChannel {
     private var amplitudeSweepPace: UInt8 = 0
     private var amplitudeSweepCounter = 0
     
-    // TODO: Need to manually manage providing samples and buffer the timer.
-    lazy var sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
-        
-        let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-
-        for frame in 0..<Int(frameCount) {
-            for buffer in ablPointer {
-                let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
-                buf[frame] = self.dacOutput()
-            }
-        }
-        
-        return noErr
-    }
-    
     private static func calculateInitialFrequencyTimer(wavelength: UInt16) -> Int {
-         (2048 - Int(wavelength)) * 4
+         (2048 - Int(wavelength))
     }
     
-    private func dacOutput() -> Float {
+    func dacOutput() -> Float {
         guard isDACEnabled else { return 0.0 }
         guard isEnabled else { return 1.0 }
         
@@ -146,7 +131,10 @@ extension SquareWaveChannel {
     
     func tickLengthTimer() {
         guard lengthTimerEnabled else { return }
-        lengthTimer -= 1
+        if lengthTimer > 0 {
+            lengthTimer -= 1
+            
+        }
         if lengthTimer == 0 {
             lengthTimer = Self.lengthTime - initialLengthTimerValue
             isEnabled = false
