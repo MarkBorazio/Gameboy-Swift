@@ -165,6 +165,20 @@ enum Memory {
     static let addressNR23: UInt16 = 0xFF18
     static let addressNR24: UInt16 = 0xFF19
     
+    static let addressChannel3Range: ClosedRange<UInt16> = 0xFF1A...0xFF1E
+    static let addressNR30: UInt16 = 0xFF1A
+    static let addressNR31: UInt16 = 0xFF1B
+    static let addressNR32: UInt16 = 0xFF1C
+    static let addressNR33: UInt16 = 0xFF1D
+    static let addressNR34: UInt16 = 0xFF1E
+    static let addressChannel3WavePatternsRange: ClosedRange<UInt16> = 0xFF30...0xFF3F
+    
+    static let addressChannel4Range: ClosedRange<UInt16> = 0xFF20...0xFF23
+    static let addressNR41: UInt16 = 0xFF20
+    static let addressNR42: UInt16 = 0xFF21
+    static let addressNR43: UInt16 = 0xFF22
+    static let addressNR44: UInt16 = 0xFF23
+    
     
     // MARK: - Misc.
     static let echoRamOffset: UInt16 = 0x2000

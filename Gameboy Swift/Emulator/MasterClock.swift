@@ -19,9 +19,9 @@ class MasterClock {
     
     private static let framesPerSecond: UInt32 = 60
     
-    private static let clockCycleHz: UInt32 = 4194304
-    private static let machineCyclesHz: UInt32 = clockCycleHz / 4
-    private static let machineCyclesCyclesPerFrame: UInt32 = machineCyclesHz / framesPerSecond
+    static let tCyclesHz: UInt32 = 4194304
+    static let mCyclesHz: UInt32 = tCyclesHz / 4
+    private static let machineCyclesCyclesPerFrame: UInt32 = mCyclesHz / framesPerSecond
     private static let timerInterval: TimeInterval = 1.0 / Double(framesPerSecond)
     
     private var cycles: Int = 0

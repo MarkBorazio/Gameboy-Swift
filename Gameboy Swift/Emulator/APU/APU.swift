@@ -19,6 +19,9 @@ class APU {
     
     private let channel1: SoundChannel1
     private let channel2: SoundChannel2
+    private let channel3: SoundChannel3
+    private let channel4: SoundChannel4
+    private let cyclesPerSample: Int
     
     private var sampleBuffer: [Float] = []
     private var sampleCounter = 0
@@ -30,6 +33,10 @@ class APU {
     init() {
         channel1 = SoundChannel1()
         channel2 = SoundChannel2()
+        channel3 = SoundChannel3()
+        channel4 = SoundChannel4()
+        let cyclesPerSampleDouble = Double(MasterClock.mCyclesHz) / synth.sampleRate
+        cyclesPerSample = Int(cyclesPerSampleDouble.rounded())
         
         synth.volume = 0.1
         synth.start()
@@ -37,8 +44,18 @@ class APU {
     
     func read(address: UInt16) -> UInt8 {
         switch address {
-        case Memory.addressChannel1Range: return channel1.read(address: address)
-        case Memory.addressChannel2Range: return channel2.read(address: address)
+        case Memory.addressChannel1Range:
+            return channel1.read(address: address)
+            
+        case Memory.addressChannel2Range:
+            return channel2.read(address: address)
+            
+        case Memory.addressChannel3Range, Memory.addressChannel3WavePatternsRange:
+            return channel3.read(address: address)
+            
+        case Memory.addressChannel4Range:
+            return channel4.read(address: address)
+            
         default: return 0 //print("TODO: APU.read(address: \(address.hexString()))")
         }
     }
@@ -50,8 +67,18 @@ class APU {
             guard isOn else { return }
             
             switch address {
-            case Memory.addressChannel1Range: channel1.write(value, address: address)
-            case Memory.addressChannel2Range: channel2.write(value, address: address)
+            case Memory.addressChannel1Range:
+                channel1.write(value, address: address)
+                
+            case Memory.addressChannel2Range:
+                channel2.write(value, address: address)
+                
+            case Memory.addressChannel3Range, Memory.addressChannel3WavePatternsRange:
+                channel3.write(value, address: address)
+                
+            case Memory.addressChannel4Range:
+                channel4.write(value, address: address)
+                
             default: break //print("TODO: APU.write(\(value), address: \(address.hexString()))")
             }
         }
@@ -62,17 +89,26 @@ class APU {
         guard isOn else { return }
         channel1.tickFrequencyTimer(clockCycles: clockCycles)
         channel2.tickFrequencyTimer(clockCycles: clockCycles)
+        channel3.tickFrequencyTimer(clockCycles: clockCycles)
+        channel4.tickFrequencyTimer(clockCycles: clockCycles)
         
         sampleCounter += clockCycles
-        if sampleCounter >= Self.cyclesPerSample {
-            sampleCounter -= Self.cyclesPerSample
+        if sampleCounter >= cyclesPerSample {
+            sampleCounter -= cyclesPerSample
             collectSample()
         }
     }
     
     private func collectSample() {
-        let sample = (channel1.dacOutput() + channel2.dacOutput()) / 2
-        sampleBuffer.append(sample)
+        let samples = [
+            channel1.dacOutput(),
+            channel2.dacOutput(),
+            channel3.dacOutput(),
+            channel4.dacOutput()
+        ]
+        let mixedSample = samples.reduce(.zero, +) / Float(samples.count)
+        
+        sampleBuffer.append(mixedSample)
         
         if isSampleBufferFull {
             isDrainingSamples = true
@@ -104,6 +140,7 @@ class APU {
     private func tick64Hz() {
         channel1.tickAmplitudeSweepCounter()
         channel2.tickAmplitudeSweepCounter()
+        channel4.tickAmplitudeSweepCounter()
     }
     
     private func tick128Hz() {
@@ -113,6 +150,8 @@ class APU {
     private func tick256Hz() {
         channel1.tickLengthTimer()
         channel2.tickLengthTimer()
+        channel3.tickLengthTimer()
+        channel4.tickLengthTimer()
     }
 }
 
@@ -138,11 +177,4 @@ extension APU {
             channel2.write(0, address: Memory.addressNR24)
         }
     }
-}
-
-// MARK: - Constants
-
-extension APU {
-    
-    private static let cyclesPerSample = 22 // M-Cycles
 }

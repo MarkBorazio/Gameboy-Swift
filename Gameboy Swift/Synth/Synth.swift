@@ -18,6 +18,8 @@ class Synth {
         }
     }
     
+    var sampleRate: Double { audioFormat.sampleRate }
+    
     private let audioEngine: AVAudioEngine
     private let audioPlayerNode: AVAudioPlayerNode
     private let audioFormat: AVAudioFormat

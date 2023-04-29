@@ -11,7 +11,7 @@ import AVFAudio
 // Used for common behaviour between Channel 1 and Channel 2
 class SquareWaveChannel {
     
-    private static let lengthTime: UInt8 = 64
+    private static let lengthTime: UInt8 = 255
     
     var nrX0: UInt8 = 0
     var nrX1: UInt8 = 0
@@ -54,14 +54,6 @@ class SquareWaveChannel {
         return dacOutput
     }
     
-    func tickFrequencyTimer(clockCycles: Int) {
-        frequencyTimer -= clockCycles
-        if frequencyTimer <= 0 {
-            frequencyTimer += Self.calculateInitialFrequencyTimer(wavelength: wavelength)
-            dutyCycleBitPointer = (dutyCycleBitPointer + 1) & 0b111
-        }
-    }
-    
     func tickWavelengthSweepCounter() {
         wavelengthSweepCounter += 1
         if wavelengthSweepCounter == wavelengthSweepPace {
@@ -69,6 +61,37 @@ class SquareWaveChannel {
             iterateWavelengthSweep()
         }
     }
+    
+    func tickLengthTimer() {
+        guard lengthTimerEnabled else { return }
+        if lengthTimer > 0 {
+            lengthTimer -= 1
+            
+        }
+        if lengthTimer == 0 {
+            lengthTimer = Self.lengthTime - initialLengthTimerValue
+            isEnabled = false
+        }
+    }
+    
+    func tickAmplitudeSweepCounter() {
+        guard amplitudeSweepPace != 0 else { return }
+        
+        amplitudeSweepCounter -= 1
+        if amplitudeSweepCounter <= 0 {
+            amplitudeSweepCounter = Int(amplitudeSweepPace)
+            iterateAmplitudeSweep()
+        }
+    }
+    
+    func tickFrequencyTimer(clockCycles: Int) {
+        frequencyTimer -= clockCycles
+        if frequencyTimer <= 0 {
+            frequencyTimer += Self.calculateInitialFrequencyTimer(wavelength: wavelength)
+            dutyCycleBitPointer = (dutyCycleBitPointer + 1) & 0b111
+        }
+    }
+
 }
 
 // MARK: - NRX0 Wavelength Sweep
@@ -128,18 +151,6 @@ extension SquareWaveChannel {
     var dutyCyclePatternPointer: UInt8 {
         (nrX1 & 0b1100_0000) >> 6
     }
-    
-    func tickLengthTimer() {
-        guard lengthTimerEnabled else { return }
-        if lengthTimer > 0 {
-            lengthTimer -= 1
-            
-        }
-        if lengthTimer == 0 {
-            lengthTimer = Self.lengthTime - initialLengthTimerValue
-            isEnabled = false
-        }
-    }
 }
 
 // MARK: - NRX2: Amplitude Sweep
@@ -167,16 +178,6 @@ extension SquareWaveChannel {
         
         if Self.amplitudeRawRange.contains(newAmplitudeRaw) {
             amplitudeRaw = UInt8(newAmplitudeRaw)
-        }
-    }
-    
-    func tickAmplitudeSweepCounter() {
-        guard amplitudeSweepPace != 0 else { return }
-        
-        amplitudeSweepCounter -= 1
-        if amplitudeSweepCounter <= 0 {
-            amplitudeSweepCounter = Int(amplitudeSweepPace)
-            iterateAmplitudeSweep()
         }
     }
 }

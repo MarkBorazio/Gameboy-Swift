@@ -15,6 +15,8 @@
 		4D3124E529F56BE600A09A56 /* SoundChannel1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124E429F56BE600A09A56 /* SoundChannel1.swift */; };
 		4D3124E729F6C1E600A09A56 /* SoundChannel2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124E629F6C1E600A09A56 /* SoundChannel2.swift */; };
 		4D3124EF29FAACD200A09A56 /* SquareWaveChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124EE29FAACD200A09A56 /* SquareWaveChannel.swift */; };
+		4D31251129FCF3CF00A09A56 /* SoundChannel4.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D31251029FCF3CF00A09A56 /* SoundChannel4.swift */; };
+		4D31251329FD72EC00A09A56 /* SoundChannel3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D31251229FD72EC00A09A56 /* SoundChannel3.swift */; };
 		4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9129E6E56B00E2E68F /* Memory.swift */; };
 		4D7E7C9729EBA66300E2E68F /* MemoryBankController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */; };
 		4D7E7C9929EBA93100E2E68F /* MBC1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9829EBA93100E2E68F /* MBC1.swift */; };
@@ -79,6 +81,8 @@
 		4D3124E429F56BE600A09A56 /* SoundChannel1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundChannel1.swift; sourceTree = "<group>"; };
 		4D3124E629F6C1E600A09A56 /* SoundChannel2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundChannel2.swift; sourceTree = "<group>"; };
 		4D3124EE29FAACD200A09A56 /* SquareWaveChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareWaveChannel.swift; sourceTree = "<group>"; };
+		4D31251029FCF3CF00A09A56 /* SoundChannel4.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundChannel4.swift; sourceTree = "<group>"; };
+		4D31251229FD72EC00A09A56 /* SoundChannel3.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundChannel3.swift; sourceTree = "<group>"; };
 		4D7E7C9129E6E56B00E2E68F /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
 		4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryBankController.swift; sourceTree = "<group>"; };
 		4D7E7C9829EBA93100E2E68F /* MBC1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBC1.swift; sourceTree = "<group>"; };
@@ -192,8 +196,8 @@
 		4D3124E229F56ACF00A09A56 /* APU */ = {
 			isa = PBXGroup;
 			children = (
-				4D3124E829F96EFF00A09A56 /* Sound Channels */,
 				4D3124DB29F5663C00A09A56 /* APU.swift */,
+				4D3124E829F96EFF00A09A56 /* Sound Channels */,
 			);
 			path = APU;
 			sourceTree = "<group>";
@@ -213,6 +217,8 @@
 				4D3124EE29FAACD200A09A56 /* SquareWaveChannel.swift */,
 				4D3124E429F56BE600A09A56 /* SoundChannel1.swift */,
 				4D3124E629F6C1E600A09A56 /* SoundChannel2.swift */,
+				4D31251229FD72EC00A09A56 /* SoundChannel3.swift */,
+				4D31251029FCF3CF00A09A56 /* SoundChannel4.swift */,
 			);
 			path = "Sound Channels";
 			sourceTree = "<group>";
@@ -566,6 +572,7 @@
 				4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */,
 				4D7E7C9B29EBB24400E2E68F /* MBC0.swift in Sources */,
 				4D106A7E29CFFB5500EBAAC1 /* MasterClock.swift in Sources */,
+				4D31251129FCF3CF00A09A56 /* SoundChannel4.swift in Sources */,
 				4D3124E529F56BE600A09A56 /* SoundChannel1.swift in Sources */,
 				4D3124DA29F5661600A09A56 /* Synth.swift in Sources */,
 				605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */,
@@ -581,6 +588,7 @@
 				4DFF76AD29E17CB200BE180F /* FixedWidthInteger+Extensions.swift in Sources */,
 				6001DE2826DA4A3500D399A7 /* PPU.swift in Sources */,
 				605AFBAE26C8FE580040E608 /* UInt8+Extensions.swift in Sources */,
+				4D31251329FD72EC00A09A56 /* SoundChannel3.swift in Sources */,
 				4D7E7C9D29EBB88000E2E68F /* MBC3.swift in Sources */,
 				6070722D26BFA814002E7119 /* AppDelegate.swift in Sources */,
 				4D3124E729F6C1E600A09A56 /* SoundChannel2.swift in Sources */,
