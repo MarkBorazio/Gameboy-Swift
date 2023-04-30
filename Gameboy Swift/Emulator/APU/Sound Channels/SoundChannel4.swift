@@ -12,6 +12,9 @@ class SoundChannel4 {
     
     private static let lengthTime: UInt8 = 64
     
+    var isEnabled = false
+    private var isDACEnabled = false // TODO: Fade out when set to false
+    
     private var nr41: UInt8 = 0
     private var nr42: UInt8 = 0
     private var nr43: UInt8 = 0
@@ -21,9 +24,6 @@ class SoundChannel4 {
         }
     }
     private var lsfr: UInt16 = 0 // Linear Feedback Shift Register
-    
-    private var isEnabled = false
-    private var isDACEnabled = false // TODO: Fade out when set to false
     
     private var lengthTimer: UInt8 = 0
     private var frequencyTimer: Int = 0

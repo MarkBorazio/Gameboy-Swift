@@ -148,9 +148,9 @@ enum Memory {
     // MARK: APU
     
     static let addressGlobalAPURange: ClosedRange<UInt16> = 0xFF24...0xFF26
-    static let addressNR52: UInt16 = 0xFF26
-    static let addressNR51: UInt16 = 0xFF25
     static let addressNR50: UInt16 = 0xFF24
+    static let addressNR51: UInt16 = 0xFF25
+    static let addressNR52: UInt16 = 0xFF26
     
     static let addressChannel1Range: ClosedRange<UInt16> = 0xFF10...0xFF14
     static let addressNR10: UInt16 = 0xFF10

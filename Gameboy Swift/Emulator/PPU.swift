@@ -236,7 +236,7 @@ extension PPU {
         // Iterate through minimum amount of tiles that we need to grab from memory
         for scanlineTileIndex in 0..<Self.maxTilesPerScanline {
             
-            let firstPixelIndexOfTile = scanlineTileIndex &* Self.pixelsPerTileRow + windowX
+            let firstPixelIndexOfTile = scanlineTileIndex &* Self.pixelsPerTileRow &+ windowX
 
             // Get memory address of tile
             let tileIndexAddress: UInt16 = tileRowIndexAddress &+ UInt16(scanlineTileIndex)

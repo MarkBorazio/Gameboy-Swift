@@ -12,6 +12,8 @@ class SoundChannel3 {
     
     private static let lengthTime: UInt8 = 64
     
+    var isEnabled = false
+    
     private var nr30: UInt8 = 0 {
         didSet {
             disableChannelIfRequired()
@@ -27,8 +29,6 @@ class SoundChannel3 {
     }
     private var sampleBuffer: [UInt8] = Array(repeating: 0, count: 32) // Wave Pattern RAM
     private var samplePointer: Int = 1 // Starts at 1, apparently
-    
-    private var isEnabled = false
     
     private var frequencyTimer: Int = calculateInitialFrequencyTimer(wavelength: 0)
     private var lengthTimer: UInt8 = 0

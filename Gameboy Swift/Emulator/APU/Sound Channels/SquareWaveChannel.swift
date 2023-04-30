@@ -13,6 +13,9 @@ class SquareWaveChannel {
     
     private static let lengthTime: UInt8 = 255
     
+    var isEnabled = false
+    private var isDACEnabled = false // TODO: Fade out when set to false
+    
     var nrX0: UInt8 = 0
     var nrX1: UInt8 = 0
     var nrX2: UInt8 = 0
@@ -22,10 +25,7 @@ class SquareWaveChannel {
             triggerChannelIfRequired()
         }
     }
-    
-    var isEnabled = false
-    var isDACEnabled = false // TODO: Fade out when set to false
-    
+
     private var frequencyTimer: Int = calculateInitialFrequencyTimer(wavelength: 0)
     private var dutyCycleBitPointer: Int = 0
     private var lengthTimer: UInt8 = 0
