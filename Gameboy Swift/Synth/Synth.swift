@@ -26,16 +26,14 @@ class Synth {
     
     init() {
         audioEngine = AVAudioEngine()
-        let outputNode = audioEngine.outputNode
-        let format = outputNode.inputFormat(forBus: 0)
+        audioPlayerNode = AVAudioPlayerNode()
         let audioFormat = AVAudioFormat(
-            commonFormat: format.commonFormat,
-            sampleRate: format.sampleRate,
-            channels: 1,
-            interleaved: format.isInterleaved
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: 48000,
+            channels: 2,
+            interleaved: false
         )!
         
-        audioPlayerNode = AVAudioPlayerNode()
         self.audioFormat = audioFormat
 
         audioEngine.attach(audioPlayerNode)
@@ -57,15 +55,22 @@ class Synth {
     func stop() {
         audioEngine.stop()
     }
+
     
-    
-    func playSamples(_ samples: [Float], completionHandler: @escaping AVAudioNodeCompletionHandler) {
-        let frameCount = samples.count
-        let buffer = AVAudioPCMBuffer(pcmFormat: audioFormat, frameCapacity: AVAudioFrameCount(frameCount))!
-        buffer.frameLength = AVAudioFrameCount(frameCount)
-        for i in 0..<frameCount {
-            buffer.floatChannelData?[0][i] = samples[i]
+    /// interleavedSamples in the format of [L, R, L, R, ...]
+    func playSamples(_ interleavedSamples: [Float], completionHandler: @escaping AVAudioNodeCompletionHandler) {
+        let bufferSize = interleavedSamples.count / 2
+        let frameCount = AVAudioFrameCount(bufferSize)
+        
+        let buffer = AVAudioPCMBuffer(pcmFormat: audioFormat, frameCapacity: frameCount)!
+        buffer.frameLength = frameCount
+        
+        for i in 0..<bufferSize {
+            let sampleIndex = i*2
+            buffer.floatChannelData?[0][i] = interleavedSamples[sampleIndex]
+            buffer.floatChannelData?[1][i] = interleavedSamples[sampleIndex + 1]
         }
+        
         audioPlayerNode.scheduleBuffer(buffer, completionHandler: completionHandler)
     }
 }

@@ -10,33 +10,36 @@ import Foundation
 class APU {
     
     static let shared = APU()
-    private let synth = Synth()
     
-    private var nr52: UInt8 = 0
-    
-    private var divCounter = 0
     private var isOn = false
     
-    private let channel1: SoundChannel1
-    private let channel2: SoundChannel2
-    private let channel3: SoundChannel3
-    private let channel4: SoundChannel4
-    private let cyclesPerSample: Int
-    
-    private var sampleBuffer: [Float] = []
-    private var sampleCounter = 0
-    var isDrainingSamples = false
-    var isSampleBufferFull: Bool {
-        sampleBuffer.count >= 512
+    private var nr50: UInt8 = 0
+    private var nr51: UInt8 = 0
+    private var nr52: UInt8 {
+        get { getNR52() }
+        set { setNR52(newValue) }
     }
     
+    private let synth = Synth()
+    private let channel1 = SoundChannel1()
+    private let channel2 = SoundChannel2()
+    private let channel3 = SoundChannel3()
+    private let channel4 = SoundChannel4()
+    
+    private let cyclesPerSample: Int
+    
+    private var interleavedSampleBuffer: [Float] = [] // L/R
+    private var sampleCounter = 0
+    private var isSampleBufferFull: Bool {
+        interleavedSampleBuffer.count >= 1024 // 512 samples left and 512 samples right
+    }
+    
+    private var divCounter = 0
+    var isDrainingSamples = false
+    
     init() {
-        channel1 = SoundChannel1()
-        channel2 = SoundChannel2()
-        channel3 = SoundChannel3()
-        channel4 = SoundChannel4()
         let cyclesPerSampleDouble = Double(MasterClock.mCyclesHz) / synth.sampleRate
-        cyclesPerSample = Int(cyclesPerSampleDouble.rounded())
+        cyclesPerSample = Int(cyclesPerSampleDouble.rounded(.awayFromZero))
         
         synth.volume = 0.1
         synth.start()
@@ -44,6 +47,15 @@ class APU {
     
     func read(address: UInt16) -> UInt8 {
         switch address {
+        case Memory.addressNR50:
+            return nr50
+            
+        case Memory.addressNR51:
+            return nr51
+        
+        case Memory.addressNR52:
+            return nr52
+            
         case Memory.addressChannel1Range:
             return channel1.read(address: address)
             
@@ -56,17 +68,24 @@ class APU {
         case Memory.addressChannel4Range:
             return channel4.read(address: address)
             
-        default: return 0 //print("TODO: APU.read(address: \(address.hexString()))")
+        default:
+            fatalError("Unhandled APU read address received. Got: \(address.hexString()).")
         }
     }
     
     func write(_ value: UInt8, address: UInt16) {
         if address == Memory.addressNR52 {
-            updateSoundOnOff(value: value)
+            nr52 = value
         } else {
             guard isOn else { return }
             
             switch address {
+            case Memory.addressNR50:
+                nr50 = value
+                
+            case Memory.addressNR51:
+                nr51 = value
+                
             case Memory.addressChannel1Range:
                 channel1.write(value, address: address)
                 
@@ -79,7 +98,8 @@ class APU {
             case Memory.addressChannel4Range:
                 channel4.write(value, address: address)
                 
-            default: break //print("TODO: APU.write(\(value), address: \(address.hexString()))")
+            default:
+                fatalError("Unhandled APU write address received. Got: \(address.hexString()).")
             }
         }
 
@@ -96,26 +116,6 @@ class APU {
         if sampleCounter >= cyclesPerSample {
             sampleCounter -= cyclesPerSample
             collectSample()
-        }
-    }
-    
-    private func collectSample() {
-        let samples = [
-            channel1.dacOutput(),
-            channel2.dacOutput(),
-            channel3.dacOutput(),
-            channel4.dacOutput()
-        ]
-        let mixedSample = samples.reduce(.zero, +) / Float(samples.count)
-        
-        sampleBuffer.append(mixedSample)
-        
-        if isSampleBufferFull {
-            isDrainingSamples = true
-            synth.playSamples(sampleBuffer) { [weak self] in
-                self?.sampleBuffer.removeAll()
-                self?.isDrainingSamples = false
-            }
         }
     }
     
@@ -155,26 +155,144 @@ class APU {
     }
 }
 
+// MARK: - Sample Mixing
+
 extension APU {
     
-    private func updateSoundOnOff(value: UInt8) {
-        nr52 = value
-        let allSoundOn = value.checkBit(7)
+    private func collectSample() {
+        let channel1Sample = channel1.dacOutput()
+        let channel2Sample = channel2.dacOutput()
+        let channel3Sample = channel3.dacOutput()
+        let channel4Sample = channel4.dacOutput()
         
-        isOn = allSoundOn
-        if !allSoundOn {
-            divCounter = 0 // Not sure about this one
+        let leftChannelSamples: [Float] = [
+            channel1Left ? channel1Sample : 0,
+            channel2Left ? channel2Sample : 0,
+            channel3Left ? channel3Sample : 0,
+            channel4Left ? channel4Sample : 0,
+        ]
+        let leftSample = Self.mixChannelSamples(samples: leftChannelSamples, rawVolume: leftVolume)
+        
+        let rightChannelSamples: [Float] = [
+            channel1Right ? channel1Sample : 0,
+            channel2Right ? channel2Sample : 0,
+            channel3Right ? channel3Sample : 0,
+            channel4Right ? channel4Sample : 0,
+        ]
+        let rightSample = Self.mixChannelSamples(samples: rightChannelSamples, rawVolume: rightVolume)
+        
+        interleavedSampleBuffer.append(leftSample)
+        interleavedSampleBuffer.append(rightSample)
+        
+        if isSampleBufferFull {
+            isDrainingSamples = true
+            synth.playSamples(interleavedSampleBuffer) { [weak self] in
+                self?.interleavedSampleBuffer.removeAll()
+                self?.isDrainingSamples = false
+            }
+        }
+    }
+    
+    private static func mixChannelSamples(samples: [Float], rawVolume: UInt8) -> Float {
+        let unmixedSample = samples.reduce(.zero, +) / 4
+        let volumeMultiplier = (rawVolume + 1) / 8 // Use volume percentage to ensure sample remains in range of -1.0...1.0
+        return unmixedSample * Float(volumeMultiplier)
+    }
+}
+
+// MARK: - NR50: Master Volume
+
+extension APU {
+    
+    private var rightVolume: UInt8 {
+        nr50 & 0b111
+    }
+    
+    private var leftVolume: UInt8 {
+        (nr50 & 0b0111_0000) >> 4
+    }
+}
+
+// MARK: - NR51: Sound Panning
+
+extension APU {
+    
+    private var channel1Right: Bool {
+        nr51.checkBit(0)
+    }
+    
+    private var channel1Left: Bool {
+        nr51.checkBit(4)
+    }
+    
+    private var channel2Right: Bool {
+        nr51.checkBit(1)
+    }
+    
+    private var channel2Left: Bool {
+        nr51.checkBit(5)
+    }
+    
+    private var channel3Right: Bool {
+        nr51.checkBit(2)
+    }
+    
+    private var channel3Left: Bool {
+        nr51.checkBit(6)
+    }
+    
+    private var channel4Right: Bool {
+        nr51.checkBit(3)
+    }
+    
+    private var channel4Left: Bool {
+        nr51.checkBit(7)
+    }
+}
+
+// MARK: - NR52: Sound On/Off
+
+extension APU {
+    
+    private func getNR52() -> UInt8 {
+        var byte: UInt8 = 0
+        if isOn { byte.setBit(0) }
+        if channel4.isEnabled { byte.setBit(3) }
+        if channel3.isEnabled { byte.setBit(2) }
+        if channel2.isEnabled { byte.setBit(1) }
+        if channel1.isEnabled { byte.setBit(0) }
+        return byte
+    }
+    
+    private func setNR52(_ nr52: UInt8) {
+        // Writing to NR52 only affects AllSoundOn/Off flag for APU, and does not affect the enabled flags for each individual channel
+        isOn = nr52.checkBit(7)
+        
+        if !isOn {
+            divCounter = 0
             
-            channel1.write(0, address: Memory.addressNR10)
-            channel1.write(0, address: Memory.addressNR11)
-            channel1.write(0, address: Memory.addressNR12)
-            channel1.write(0, address: Memory.addressNR13)
-            channel1.write(0, address: Memory.addressNR14)
+            nr50 = 0
+            nr51 = 0
             
-            channel2.write(0, address: Memory.addressNR21)
-            channel2.write(0, address: Memory.addressNR22)
-            channel2.write(0, address: Memory.addressNR23)
-            channel2.write(0, address: Memory.addressNR24)
+            Memory.addressChannel1Range.forEach {
+                channel1.write(0, address: $0)
+            }
+            
+            Memory.addressChannel2Range.forEach {
+                channel2.write(0, address: $0)
+            }
+            
+            Memory.addressChannel3Range.forEach {
+                channel3.write(0, address: $0)
+            }
+            
+            Memory.addressChannel3WavePatternsRange.forEach {
+                channel3.write(0, address: $0)
+            }
+            
+            Memory.addressChannel4Range.forEach {
+                channel4.write(0, address: $0)
+            }
         }
     }
 }
