@@ -25,8 +25,10 @@ class MasterClock {
     private static let timerInterval: TimeInterval = 1.0 / Double(framesPerSecond)
     
     private var cycles: Int = 0
-    private var divTimer: UInt8 = 0
     private var timaTimer: Int = 0
+    
+    private var internalDivCounter: UInt8 = 0
+    private var divRegister: UInt8 = 0
     
     func startTicking() {
         self.timer = Timer.scheduledTimer(withTimeInterval: Self.timerInterval, repeats: true) { _ in
@@ -45,7 +47,7 @@ class MasterClock {
             while self.cycles < Self.machineCyclesCyclesPerFrame {
                 if !APU.shared.isDrainingSamples {
                     let cpuCycles = CPU.shared.tick()
-                    self.incrementDivRegister(cycles: cpuCycles)
+                    self.incrementDivCounter(cycles: cpuCycles)
                     self.incrementTimaRegister(cycles: cpuCycles)
                     
                     // If cycles accumulated during CPU tick is 0, then that means that the HALT flag is set.
@@ -63,22 +65,7 @@ class MasterClock {
         }
     }
     
-    private func incrementDivRegister(cycles: Int) {
-        let (newDivTimer, overflow) = divTimer.addingReportingOverflow(UInt8(cycles))
-        divTimer = newDivTimer
-        if overflow {
-            
-            let oldDiv = MMU.shared.unsafeReadValue(globalAddress: Memory.addressDIV)
-            let newDiv = oldDiv &+ 1
-            MMU.shared.unsafeWriteValue(newDiv, globalAddress: Memory.addressDIV)
-            
-            let bit4Overflow = oldDiv.checkBit(4) && !newDiv.checkBit(4)
-            if bit4Overflow {
-                APU.shared.tickFrameSquencer()
-            }
-        }
-    }
-    
+    // TODO: Pull out the registers from the MMU into this class.
     // This thing is pretty complicated: https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour
     // TODO: The rest of the complexity.
     private func incrementTimaRegister(cycles: Int) {
@@ -116,6 +103,38 @@ class MasterClock {
         case 0b10: return 64 // 65536 Hz
         case 0b11: return 256 // 16384 Hz
         default: fatalError("This should never be reached.")
+        }
+    }
+}
+
+// MARK: - DIV
+
+extension MasterClock {
+    
+    private func incrementDivCounter(cycles: Int) {
+        let (newInternalDivCounter, overflow) = internalDivCounter.addingReportingOverflow(UInt8(cycles))
+        internalDivCounter = newInternalDivCounter
+        if overflow {
+            setDivRegister(newValue: divRegister &+ 1)
+        }
+    }
+    
+    func readDIV() -> UInt8 {
+        divRegister
+    }
+    
+    func clearDIV() {
+        internalDivCounter = 0
+        setDivRegister(newValue: 0)
+    }
+    
+    private func setDivRegister(newValue: UInt8) {
+        let oldDiv = divRegister
+        divRegister = newValue
+        
+        let bit4Overflow = oldDiv.checkBit(4) && !divRegister.checkBit(4)
+        if bit4Overflow {
+            APU.shared.tickFrameSquencer()
         }
     }
 }

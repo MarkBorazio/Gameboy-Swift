@@ -226,16 +226,7 @@ extension SquareWaveChannel {
             lengthTimer = Self.lengthTime
         }
         frequencyTimer = Self.calculateInitialFrequencyTimer(wavelength: wavelength)
-        
-        amplitudeSweepPace = nrX2 & 0b111
-        amplitudeSweepAddition = nrX2.checkBit(3)
-        amplitudeRaw = (nrX2 & 0b1111_0000) >> 4
-        isDACEnabled = (nrX2 & 0b1111_1000) != 0
-        
-        // Disabling DAC disables channel
-        // Enabling DAC does not enable channel
-        if !isDACEnabled {
-            isEnabled = false
-        }
+
+        triggerAmplitudeSweep()
     }
 }

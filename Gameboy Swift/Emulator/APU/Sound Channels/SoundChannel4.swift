@@ -170,22 +170,23 @@ extension SoundChannel4 {
     }
     
     private func iterateLSFR() {
-        let xorResult = lsfr.getBitValue(0) ^ lsfr.getBitValue(1)
-        lsfr = lsfr >> 1
         
-        // Some docs refer to bits 15 and 7, but that is *before* it is shifted right.
         var mask: UInt16 = 0
-        mask.setBit(14)
+        mask.setBit(15)
         if shortModeLSFR {
-            mask.setBit(6)
+            mask.setBit(7)
         }
         
+        let xorResult = lsfr.getBitValue(0) ^ lsfr.getBitValue(1)
         let shouldSet = xorResult == 1
+        
         if shouldSet {
-            lsfr |= mask // Set bit 14 (and bit 6 if short mode)
+            lsfr |= mask // Set bit 15 (and bit 7 if short mode)
         } else {
-            lsfr &= ~mask // Clear bit 14 (and bit 6 if short mode)
+            lsfr &= ~mask // Clear bit 15 (and bit 7 if short mode)
         }
+        
+        lsfr = lsfr >> 1
     }
 }
 
@@ -220,18 +221,8 @@ extension SoundChannel4 {
         }
         
         frequencyTimer = frequencyLSFR
+        lsfr = .max // Not sure if all bits should be set to 1 or 0.
         
-        amplitudeSweepPace = nr42 & 0b111
-        amplitudeSweepAddition = nr42.checkBit(3)
-        amplitudeRaw = (nr42 & 0b1111_0000) >> 4
-        isDACEnabled = (nr42 & 0b1111_1000) != 0
-        
-        lsfr = .max// Not sure if all bits should be set to 1 or 0.
-        
-        // Disabling DAC disables channel
-        // Enabling DAC does not enable channel
-        if !isDACEnabled {
-            isEnabled = false
-        }
+        triggerAmplitudeSweep()
     }
 }

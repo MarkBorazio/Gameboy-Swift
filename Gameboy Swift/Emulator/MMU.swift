@@ -93,6 +93,9 @@ class MMU {
             Memory.addressChannel4Range:
             return APU.shared.read(address: globalAddress)
             
+        case Memory.addressDIV:
+            return MasterClock.shared.readDIV()
+            
         default:
             return unsafeReadValue(globalAddress: globalAddress)
         }
@@ -145,8 +148,8 @@ class MMU {
             safeWriteValue(value, globalAddress: globalAddress &- Memory.echoRamOffset)
             
         case Memory.addressDIV:
-            // If anything tries to write to this, then it should instead just be reset.
-            unsafeWriteValue(0, globalAddress: globalAddress)
+            // If anything tries to write to this, then it should instead just be cleared.
+            MasterClock.shared.clearDIV()
             
         case Memory.addressTAC:
             // If we change the clock frequency, we need to reset it.
