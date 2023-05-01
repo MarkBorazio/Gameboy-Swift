@@ -8,16 +8,16 @@
 import Foundation
 import Cocoa
 
+
 class PPU {
     
     static let shared = PPU()
+   
+    private var vRam = Array(repeating: UInt8.min, count: vRamSize)
     
-    // These were moved here to improve performance
     private var scanlineTimer = 0
     var currentScanlineIndex: UInt8 = 0 // LY
     var coincidenceRegister: UInt8 = 0 // LYC
-    
-    private var vRam = Array(repeating: UInt8.min, count: vRamSize)
     
     var screenData: [ColourPalette.PixelData] = Array(
         repeating: .init(id: 0, palette: 0),
@@ -34,7 +34,7 @@ class PPU {
         vRam[vRamAddress] = value
     }
     
-    func tick(cycles: Int) {
+    func tick(tCycles: Int) {
         let status = MMU.shared.safeReadValue(globalAddress: Memory.addressLCDS)
         
         guard MMU.shared.isLCDEnabled else {
@@ -44,9 +44,9 @@ class PPU {
         
         updateEnabledLCDStatus(currentStatus: status)
         
-        scanlineTimer += cycles
-        if scanlineTimer >= Self.machineCyclesPerScanline {
-            scanlineTimer = 0
+        scanlineTimer += tCycles
+        if scanlineTimer >= Self.tCyclesPerScanline {
+            scanlineTimer -= Self.tCyclesPerScanline
             
             switch currentScanlineIndex {
             case ...Self.lastVisibleScanlineIndex:
@@ -94,12 +94,12 @@ class PPU {
             interruptRequired = status.checkBit(Memory.vBlankInterruptEnabledBitIndex)
         } else {
             switch scanlineTimer {
-            case Self.searchingOAMPeriod: // First 20 M-Cycles / 80 Clock Cycles
+            case Self.searchingOAMPeriodTCycles: // First 20 M-Cycles / 80 Clock Cycles
                 newLCDMode = Self.searchingOAMMode
                 status |= newLCDMode
                 interruptRequired = status.checkBit(Memory.searchingOAMBitIndex)
                 
-            case Self.transferringDataToLCDPeriod: // Next 43 M-Cycles / 172 Clock Cycles
+            case Self.transferringDataToLCDPeriodTCycles: // Next 43 M-Cycles / 172 Clock Cycles
                 newLCDMode = Self.transferringDataToLCDMode
                 status |= newLCDMode
                 interruptRequired = false
@@ -390,9 +390,9 @@ extension PPU {
     private static let lastAbsoluteScanlineIndex: UInt8 = 153
     
     // Scanline Timing Periods
-    private static let machineCyclesPerScanline = 114 // 456 clock cycles
-    private static let searchingOAMPeriod: ClosedRange<Int> = 0...19 // First 20 M-Cycles
-    private static let transferringDataToLCDPeriod: ClosedRange<Int> = 20...62 // Next 43 M-Cycles
+    private static let tCyclesPerScanline = 456
+    private static let searchingOAMPeriodTCycles: ClosedRange<Int> = 0...79
+    private static let transferringDataToLCDPeriodTCycles: ClosedRange<Int> = 80...247
     
     // LCD Modes
     private static let lcdModeMask: UInt8 = 0b00000011

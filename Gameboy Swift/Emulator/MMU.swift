@@ -94,8 +94,17 @@ class MMU {
             return APU.shared.read(address: globalAddress)
             
         case Memory.addressDIV:
-            return MasterClock.shared.readDIV()
+            return MasterClock.shared.divRegister
             
+        case Memory.addressTIMA:
+            return MasterClock.shared.timaRegister
+            
+        case Memory.addressTMA:
+            return MasterClock.shared.tmaRegister
+            
+        case Memory.addressTAC:
+            return MasterClock.shared.tacRegister
+
         default:
             return unsafeReadValue(globalAddress: globalAddress)
         }
@@ -136,7 +145,6 @@ class MMU {
             PPU.shared.currentScanlineIndex = 0
             
         case Memory.addressLYC:
-            // If the current scanline is attempted to be manually changed, set it to zero instead
             PPU.shared.coincidenceRegister = value
             
         case Memory.addressDMATransferTrigger:
@@ -151,14 +159,14 @@ class MMU {
             // If anything tries to write to this, then it should instead just be cleared.
             MasterClock.shared.clearDIV()
             
+        case Memory.addressTIMA:
+            MasterClock.shared.timaRegister = value
+            
+        case Memory.addressTMA:
+            MasterClock.shared.tmaRegister = value
+            
         case Memory.addressTAC:
-            // If we change the clock frequency, we need to reset it.
-            let previousFrequency = MasterClock.shared.clockCyclesPerTimaCycle
-            unsafeWriteValue(value, globalAddress: globalAddress)
-            let newFrequency = MasterClock.shared.clockCyclesPerTimaCycle
-            if previousFrequency != newFrequency {
-                MasterClock.shared.resetTimaCycle()
-            }
+            MasterClock.shared.writeTacRegister(value)
             
         case Memory.probitedAddressRange:
             return

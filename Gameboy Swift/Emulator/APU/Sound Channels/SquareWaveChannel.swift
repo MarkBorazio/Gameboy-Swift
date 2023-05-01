@@ -38,7 +38,7 @@ class SquareWaveChannel {
     private var amplitudeSweepCounter = 0
     
     private static func calculateInitialFrequencyTimer(wavelength: UInt16) -> Int {
-         (2048 - Int(wavelength))
+         (2048 - Int(wavelength)) * 4
     }
     
     func dacOutput() -> Float {
@@ -84,8 +84,8 @@ class SquareWaveChannel {
         }
     }
     
-    func tickFrequencyTimer(clockCycles: Int) {
-        frequencyTimer -= clockCycles
+    func tickFrequencyTimer(tCycles: Int) {
+        frequencyTimer -= tCycles
         if frequencyTimer <= 0 {
             frequencyTimer += Self.calculateInitialFrequencyTimer(wavelength: wavelength)
             dutyCycleBitPointer = (dutyCycleBitPointer + 1) & 0b111
@@ -164,6 +164,8 @@ extension SquareWaveChannel {
         amplitudeSweepAddition = nrX2.checkBit(3)
         amplitudeRaw = (nrX2 & 0b1111_0000) >> 4
         isDACEnabled = (nrX2 & 0b1111_1000) != 0
+        
+        amplitudeSweepCounter = Int(amplitudeSweepPace) // Not sure if this should be done here
         
         // Disabling DAC disables channel
         // Enabling DAC does not enable channel

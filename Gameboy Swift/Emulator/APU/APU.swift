@@ -26,7 +26,7 @@ class APU {
     private let channel3 = SoundChannel3()
     private let channel4 = SoundChannel4()
     
-    private let cyclesPerSample: Int
+    private let tCyclesPerSample: Int
     
     private var interleavedSampleBuffer: [Float] = [] // L/R
     private var sampleCounter = 0
@@ -38,8 +38,8 @@ class APU {
     var isDrainingSamples = false
     
     init() {
-        let cyclesPerSampleDouble = Double(MasterClock.mCyclesHz) / synth.sampleRate
-        cyclesPerSample = Int(cyclesPerSampleDouble.rounded(.awayFromZero))
+        let tCyclesPerSampleDouble = Double(MasterClock.tCyclesHz) / synth.sampleRate
+        tCyclesPerSample = Int(tCyclesPerSampleDouble.rounded(.awayFromZero))
         
         synth.volume = 0.1
         synth.start()
@@ -105,16 +105,16 @@ class APU {
 
     }
     
-    func tick(clockCycles: Int) {
+    func tick(tCycles: Int) {
         guard isOn else { return }
-        channel1.tickFrequencyTimer(clockCycles: clockCycles)
-        channel2.tickFrequencyTimer(clockCycles: clockCycles)
-        channel3.tickFrequencyTimer(clockCycles: clockCycles)
-        channel4.tickFrequencyTimer(clockCycles: clockCycles)
+        channel1.tickFrequencyTimer(tCycles: tCycles)
+        channel2.tickFrequencyTimer(tCycles: tCycles)
+        channel3.tickFrequencyTimer(tCycles: tCycles)
+        channel4.tickFrequencyTimer(tCycles: tCycles)
         
-        sampleCounter += clockCycles
-        if sampleCounter >= cyclesPerSample {
-            sampleCounter -= cyclesPerSample
+        sampleCounter += tCycles
+        if sampleCounter >= tCyclesPerSample {
+            sampleCounter -= tCyclesPerSample
             collectSample()
         }
     }

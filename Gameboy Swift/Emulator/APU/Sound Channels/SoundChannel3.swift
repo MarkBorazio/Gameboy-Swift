@@ -34,7 +34,7 @@ class SoundChannel3 {
     private var lengthTimer: UInt8 = 0
     
     private static func calculateInitialFrequencyTimer(wavelength: UInt16) -> Int {
-         (2048 - Int(wavelength))
+         (2048 - Int(wavelength)) * 4
     }
     
     func dacOutput() -> Float {
@@ -61,8 +61,8 @@ class SoundChannel3 {
         }
     }
     
-    func tickFrequencyTimer(clockCycles: Int) {
-        frequencyTimer -= clockCycles
+    func tickFrequencyTimer(tCycles: Int) {
+        frequencyTimer -= tCycles
         if frequencyTimer <= 0 {
             frequencyTimer += Self.calculateInitialFrequencyTimer(wavelength: wavelength)
             samplePointer = (samplePointer + 1) & 31 // Equivalent to `(samplePointer + 1) % 32`

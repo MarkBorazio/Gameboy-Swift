@@ -48,6 +48,7 @@ class SoundChannel4 {
     
     func tickLengthTimer() {
         guard lengthTimerEnabled else { return }
+        
         if lengthTimer > 0 {
             lengthTimer -= 1
         }
@@ -67,8 +68,8 @@ class SoundChannel4 {
         }
     }
     
-    func tickFrequencyTimer(clockCycles: Int) {
-        frequencyTimer -= clockCycles
+    func tickFrequencyTimer(tCycles: Int) {
+        frequencyTimer -= tCycles
         if frequencyTimer <= 0 {
             frequencyTimer += frequencyLSFR
             iterateLSFR()
@@ -122,6 +123,8 @@ extension SoundChannel4 {
         amplitudeSweepAddition = nr42.checkBit(3)
         amplitudeRaw = (nr42 & 0b1111_0000) >> 4
         isDACEnabled = (nr42 & 0b1111_1000) != 0
+        
+        amplitudeSweepCounter = Int(amplitudeSweepPace) // Not sure if this should be done here
         
         // Disabling DAC disables channel
         // Enabling DAC does not enable channel

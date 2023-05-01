@@ -8,6 +8,9 @@
 import Foundation
 
 // TODO: Consider using function builders
+
+// Everything in here works in mCycles
+// 1 mCycle == 4 tCycles
 class CPU {
     
     static let shared = CPU()
@@ -87,7 +90,7 @@ class CPU {
     // Ref: https://gbdev.io/pandocs/Interrupts.html
     private var pendingInterruptMasterEnable = true
 
-    func tick() -> Int {
+    func tickReturningMCycles() -> Int {
         var totalCyclesThisTick = 0
         totalCyclesThisTick += executeInstruction()
         totalCyclesThisTick += handleInterrupts()
