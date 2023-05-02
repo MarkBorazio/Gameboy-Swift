@@ -102,7 +102,7 @@ extension MasterClock {
 extension MasterClock {
     
     private var isTimaClockEnabled: Bool {
-        tacRegister.checkBit(Memory.timaEnabledBitIndex)
+        tacRegister.checkBit(2)
     }
     
     private var tCyclesPerTimaCycle: UInt32 {
@@ -133,10 +133,6 @@ extension MasterClock {
                 timaRegister &+= 1
             }
         }
-    }
-    
-    func resetTimaCycle() {
-        internalTimaCounter = 0
     }
     
     // If we change the clock frequency, we need to reset the counter.

@@ -25,52 +25,53 @@ class MMU {
         
         if skipBootRom {
             CPU.shared.skipBootRom()
-            unsafeWriteValue(0x00, globalAddress: Memory.addressTIMA)
-            unsafeWriteValue(0x00, globalAddress: Memory.addressTMA)
-            unsafeWriteValue(0x00, globalAddress: Memory.addressTAC)
-            unsafeWriteValue(0x80, globalAddress: 0xFF10)
-            unsafeWriteValue(0xBF, globalAddress: 0xFF11)
-            unsafeWriteValue(0xF3, globalAddress: 0xFF12)
-            unsafeWriteValue(0xBF, globalAddress: 0xFF14)
-            unsafeWriteValue(0x3F, globalAddress: 0xFF16)
-            unsafeWriteValue(0x00, globalAddress: 0xFF17)
-            unsafeWriteValue(0xBF, globalAddress: 0xFF19)
-            unsafeWriteValue(0x7F, globalAddress: 0xFF1A)
-            unsafeWriteValue(0xFF, globalAddress: 0xFF1B)
-            unsafeWriteValue(0x9F, globalAddress: 0xFF1C)
-            unsafeWriteValue(0xBF, globalAddress: 0xFF1E)
-            unsafeWriteValue(0xFF, globalAddress: 0xFF20)
-            unsafeWriteValue(0x00, globalAddress: 0xFF21)
-            unsafeWriteValue(0x00, globalAddress: 0xFF22)
-            unsafeWriteValue(0xBF, globalAddress: 0xFF23)
-            unsafeWriteValue(0x77, globalAddress: 0xFF24)
-            unsafeWriteValue(0xF3, globalAddress: 0xFF25)
-            unsafeWriteValue(0xF1, globalAddress: 0xFF26)
-            unsafeWriteValue(0x91, globalAddress: Memory.addressLCDC)
-            unsafeWriteValue(0x00, globalAddress: Memory.addressScrollY)
-            unsafeWriteValue(0x00, globalAddress: Memory.addressScrollX)
-            PPU.shared.coincidenceRegister = 0x00 // LYC
-            unsafeWriteValue(0xFC, globalAddress: Memory.addressBgPalette)
-            unsafeWriteValue(0xFF, globalAddress: Memory.addressObjPalette1)
-            unsafeWriteValue(0xFF, globalAddress: Memory.addressObjPalette2)
-            unsafeWriteValue(0x00, globalAddress: Memory.addressWindowY)
-            unsafeWriteValue(0x00, globalAddress: Memory.addressWindowX)
-            unsafeWriteValue(0x00, globalAddress: Memory.interruptRegisterAddress)
+            safeWriteValue(0x00, globalAddress: Memory.addressTIMA)
+            safeWriteValue(0x00, globalAddress: Memory.addressTMA)
+            safeWriteValue(0x00, globalAddress: Memory.addressTAC)
+            safeWriteValue(0x80, globalAddress: Memory.addressNR10)
+            safeWriteValue(0xBF, globalAddress: Memory.addressNR11)
+            safeWriteValue(0xF3, globalAddress: Memory.addressNR12)
+            safeWriteValue(0xBF, globalAddress: Memory.addressNR14)
+            safeWriteValue(0x3F, globalAddress: Memory.addressNR21)
+            safeWriteValue(0x00, globalAddress: Memory.addressNR22)
+            safeWriteValue(0xBF, globalAddress: Memory.addressNR24)
+            safeWriteValue(0x7F, globalAddress: Memory.addressNR30)
+            safeWriteValue(0xFF, globalAddress: Memory.addressNR31)
+            safeWriteValue(0x9F, globalAddress: Memory.addressNR32)
+            safeWriteValue(0xBF, globalAddress: Memory.addressNR34)
+            safeWriteValue(0xFF, globalAddress: Memory.addressNR41)
+            safeWriteValue(0x00, globalAddress: Memory.addressNR42)
+            safeWriteValue(0x00, globalAddress: Memory.addressNR43)
+            safeWriteValue(0xBF, globalAddress: Memory.addressNR44)
+            safeWriteValue(0x77, globalAddress: Memory.addressNR50)
+            safeWriteValue(0xF3, globalAddress: Memory.addressNR51)
+            safeWriteValue(0xF1, globalAddress: Memory.addressNR52)
+            safeWriteValue(0x91, globalAddress: Memory.addressLCDC)
+            safeWriteValue(0x00, globalAddress: Memory.addressScrollY)
+            safeWriteValue(0x00, globalAddress: Memory.addressScrollX)
+            safeWriteValue(0x00, globalAddress: Memory.addressLYC)
+            safeWriteValue(0xFC, globalAddress: Memory.addressBgPalette)
+            safeWriteValue(0xFF, globalAddress: Memory.addressObjPalette1)
+            safeWriteValue(0xFF, globalAddress: Memory.addressObjPalette2)
+            safeWriteValue(0x00, globalAddress: Memory.addressWindowY)
+            safeWriteValue(0x00, globalAddress: Memory.addressWindowX)
+            safeWriteValue(0x00, globalAddress: Memory.interruptRegisterAddress)
         } else {
-            // Overlay BIOS/BootRom at beginning
-            memoryMap.replaceSubrange(Self.biosAddressRange, with: Self.bios)
             isBootRomOverlayed = true
         }
-    }
-    
-    private func removeBootRomOverlay() {
-        isBootRomOverlayed = false
     }
     
     func safeReadValue(globalAddress: UInt16) -> UInt8 {
         switch globalAddress {
             
-        case Memory.cartridgeRomAddressRange, Memory.cartridgeRamAddressRange:
+        case Memory.cartridgeRomAddressRange:
+            if isBootRomOverlayed && Self.biosAddressRange.contains(globalAddress) {
+                return Self.bios[globalAddress]
+            } else {
+                return cartridge!.read(address: globalAddress) // TODO: Fixo.
+            }
+            
+        case Memory.cartridgeRamAddressRange:
             return cartridge!.read(address: globalAddress) // TODO: Fixo.
             
         case Memory.videoRamAddressRange:
@@ -81,6 +82,12 @@ class MMU {
             
         case Memory.addressLYC:
             return PPU.shared.coincidenceRegister
+            
+        case Memory.addressLCDS:
+            return PPU.shared.statusRegister
+            
+        case Memory.addressLCDC:
+            return PPU.shared.controlRegister
             
         case Memory.addressJoypad:
             return Joypad.shared.readJoypad()
@@ -147,6 +154,12 @@ class MMU {
         case Memory.addressLYC:
             PPU.shared.coincidenceRegister = value
             
+        case Memory.addressLCDS:
+            PPU.shared.statusRegister = value
+            
+        case Memory.addressLCDC:
+            PPU.shared.controlRegister = value
+            
         case Memory.addressDMATransferTrigger:
             dmaTransfer(byte: value)
             
@@ -175,9 +188,6 @@ class MMU {
             // Standard write
             unsafeWriteValue(value, globalAddress: globalAddress)
         }
-        
-        // TODO: "When writing to DIV, the whole counter is reseted, so the timer is also affected."
-        // REF: https://gbdev.gg8.se/wiki/articles/Timer_Obscure_Behaviour
     }
     
     func unsafeWriteValue(_ value: UInt8, globalAddress: UInt16) {
@@ -192,7 +202,7 @@ extension MMU {
     
     var hasPendingAndEnabledInterrupt: Bool {
         let interruptByte = unsafeReadValue(globalAddress: Memory.addressIE) & unsafeReadValue(globalAddress: Memory.addressIF)
-        return interruptByte & 0b0001_1111 != 0 // First five bits correspond to pending interrupts as per static definitions above
+        return interruptByte & 0b0001_1111 != 0
     }
     
     func getNextPendingAndEnabledInterrupt() -> UInt16? {
@@ -236,43 +246,29 @@ extension MMU {
     }
     
     func requestVBlankInterrupt() {
-        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
-        interruptFlags.setBit(Memory.vBlankInterruptBitIndex)
-        unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
+        requestInterrupt(bitIndex: Memory.vBlankInterruptBitIndex)
     }
     
     func requestLCDInterrupt() {
-        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
-        interruptFlags.setBit(Memory.lcdInterruptBitIndex)
-        unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
+        requestInterrupt(bitIndex: Memory.lcdInterruptBitIndex)
     }
     
     func requestTimerInterrupt() {
-        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
-        interruptFlags.setBit(Memory.timerInterruptBitIndex)
-        unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
+        requestInterrupt(bitIndex: Memory.timerInterruptBitIndex)
     }
     
     func requestSerialInterrupt() {
-        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
-        interruptFlags.setBit(Memory.serialInterruptBitIndex)
-        unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
+        requestInterrupt(bitIndex: Memory.serialInterruptBitIndex)
     }
     
     func requestJoypadInterrupt() {
-        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
-        interruptFlags.setBit(Memory.joypadInterruptBitIndex)
-        unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
+        requestInterrupt(bitIndex: Memory.joypadInterruptBitIndex)
     }
-}
-
-// MARK: - LCD Registers
-
-extension MMU {
     
-    var isLCDEnabled: Bool {
-        let lcdc = unsafeReadValue(globalAddress: Memory.addressLCDC)
-        return lcdc.checkBit(Memory.lcdAndPpuEnabledBitIndex)
+    private func requestInterrupt(bitIndex: Int) {
+        var interruptFlags = unsafeReadValue(globalAddress: Memory.addressIF)
+        interruptFlags.setBit(bitIndex)
+        unsafeWriteValue(interruptFlags, globalAddress: Memory.addressIF)
     }
 }
 
@@ -293,7 +289,7 @@ extension MMU {
 
 extension MMU {
     
-    private static let biosAddressRange: Range<Int> = 0..<bios.count
+    private static let biosAddressRange: Range<UInt16> = 0..<UInt16(bios.count)
     
     // BootRom
     private static let bios: [UInt8] = [ // 256 Bytes long

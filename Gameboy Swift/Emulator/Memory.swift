@@ -87,18 +87,16 @@ enum Memory {
     static let addressTMA: UInt16 = 0xFF06
     static let addressTAC: UInt16 = 0xFF07
     
-    static let timaEnabledBitIndex = 2
-    
     
     // MARK: - LCD Registers
     
     static let addressLCDC: UInt16 = 0xFF40 // LCD Control
     static let addressLCDS: UInt16 = 0xFF41 // LCD Status
     static let addressLY: UInt16 = 0xFF44 // Current Scanline
+    static let addressLYC: UInt16 = 0xFF45 // Coincidence Register
     static let addressBgPalette: UInt16 = 0xFF47 // Background Colour Palette
     static let addressObjPalette1: UInt16 = 0xFF48 // Object Colour Palette 1
     static let addressObjPalette2: UInt16 = 0xFF49 // Object Colour Palette 2
-    static let addressLYC: UInt16 = 0xFF45
     
     // LCDC Bit Indices
     static let bgAndWindowEnabledBitIndex = 0
@@ -145,7 +143,7 @@ enum Memory {
     static let addressDMADestination: UInt16 = 0xFE00
     
     
-    // MARK: APU
+    // MARK: - APU
     
     static let addressGlobalAPURange: ClosedRange<UInt16> = 0xFF24...0xFF26
     static let addressNR50: UInt16 = 0xFF24
@@ -182,6 +180,7 @@ enum Memory {
     
     // MARK: - Misc.
     static let echoRamOffset: UInt16 = 0x2000
+    
     
     // MARK: - BIOS
     

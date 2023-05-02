@@ -18,6 +18,8 @@ class PPU {
     private var scanlineTimer = 0
     var currentScanlineIndex: UInt8 = 0 // LY
     var coincidenceRegister: UInt8 = 0 // LYC
+    var statusRegister: UInt8 = 0 // LCDS
+    var controlRegister: UInt8 = 0 // LCDC
     
     var screenData: [ColourPalette.PixelData] = Array(
         repeating: .init(id: 0, palette: 0),
@@ -35,14 +37,14 @@ class PPU {
     }
     
     func tick(tCycles: Int) {
-        let status = MMU.shared.safeReadValue(globalAddress: Memory.addressLCDS)
         
-        guard MMU.shared.isLCDEnabled else {
-            updateDisabledLCDStatus(currentStatus: status)
+        let isLCDEnabled = controlRegister.checkBit(Memory.lcdAndPpuEnabledBitIndex)
+        guard isLCDEnabled else {
+            updateDisabledLCDStatus()
             return
         }
         
-        updateEnabledLCDStatus(currentStatus: status)
+        updateEnabledLCDStatus()
         
         scanlineTimer += tCycles
         if scanlineTimer >= Self.tCyclesPerScanline {
@@ -66,48 +68,45 @@ class PPU {
         }
     }
     
-    private func updateDisabledLCDStatus(currentStatus: UInt8) {
+    private func updateDisabledLCDStatus() {
         // LCD is disabled, so reset scanline and set mode to vBlank.
         scanlineTimer = 0
         currentScanlineIndex = 0
         
-        var status = currentStatus
-        status &= ~Self.lcdModeMask
-        status |= Self.vBlankMode
-        MMU.shared.safeWriteValue(status, globalAddress: Memory.addressLCDS)
+        statusRegister &= ~Self.lcdModeMask
+        statusRegister |= Self.vBlankMode
         return
     }
     
-    private func updateEnabledLCDStatus(currentStatus: UInt8) {
-        var status = currentStatus
-        let currentLCDMode = status & Self.lcdModeMask
+    private func updateEnabledLCDStatus() {
+        let currentLCDMode = statusRegister & Self.lcdModeMask
         
         var newLCDMode: UInt8
         var interruptRequired: Bool
         
         // Clear the current mode
-        status &= ~Self.lcdModeMask
+        statusRegister &= ~Self.lcdModeMask
         
         if currentScanlineIndex > Self.lastVisibleScanlineIndex {
             newLCDMode = Self.vBlankMode
-            status |= newLCDMode
-            interruptRequired = status.checkBit(Memory.vBlankInterruptEnabledBitIndex)
+            statusRegister |= newLCDMode
+            interruptRequired = statusRegister.checkBit(Memory.vBlankInterruptEnabledBitIndex)
         } else {
             switch scanlineTimer {
             case Self.searchingOAMPeriodTCycles: // First 20 M-Cycles / 80 Clock Cycles
                 newLCDMode = Self.searchingOAMMode
-                status |= newLCDMode
-                interruptRequired = status.checkBit(Memory.searchingOAMBitIndex)
+                statusRegister |= newLCDMode
+                interruptRequired = statusRegister.checkBit(Memory.searchingOAMBitIndex)
                 
             case Self.transferringDataToLCDPeriodTCycles: // Next 43 M-Cycles / 172 Clock Cycles
                 newLCDMode = Self.transferringDataToLCDMode
-                status |= newLCDMode
+                statusRegister |= newLCDMode
                 interruptRequired = false
                 
             default:
                 newLCDMode = Self.hBlankMode
-                status |= newLCDMode
-                interruptRequired = status.checkBit(Memory.hBlankInterruptEnabledBitIndex)
+                statusRegister |= newLCDMode
+                interruptRequired = statusRegister.checkBit(Memory.hBlankInterruptEnabledBitIndex)
             }
         }
         
@@ -118,16 +117,12 @@ class PPU {
         
         // Check the conicidence flag
         if currentScanlineIndex == coincidenceRegister {
-            status.setBit(Memory.coincidenceBitIndex)
-            if status.checkBit(Memory.coincidenceInterruptEnabledBitIndex) {
+            statusRegister.setBit(Memory.coincidenceBitIndex)
+            if statusRegister.checkBit(Memory.coincidenceInterruptEnabledBitIndex) {
                 MMU.shared.requestLCDInterrupt()
             }
         } else {
-            status.clearBit(Memory.coincidenceBitIndex)
-        }
-        
-        if status != currentStatus {
-            MMU.shared.safeWriteValue(status, globalAddress: Memory.addressLCDS)
+            statusRegister.clearBit(Memory.coincidenceBitIndex)
         }
     }
 }
@@ -140,34 +135,32 @@ extension PPU {
         // Don't bother rendering if scanline is off screen
         guard (currentScanlineIndex < Self.pixelHeight) else { return }
         
-        let control = MMU.shared.safeReadValue(globalAddress: Memory.addressLCDC)
-        
-        let renderTilesAndWindowEnabled = control.checkBit(Memory.bgAndWindowEnabledBitIndex)
-        let renderSpritesEnabled = control.checkBit(Memory.objectsEnabledBitIndex)
+        let renderTilesAndWindowEnabled = controlRegister.checkBit(Memory.bgAndWindowEnabledBitIndex)
+        let renderSpritesEnabled = controlRegister.checkBit(Memory.objectsEnabledBitIndex)
         
         if renderTilesAndWindowEnabled {
-            renderBackground(control: control)
+            renderBackground()
         }
         
         if renderTilesAndWindowEnabled {
-            renderWindow(control: control)
+            renderWindow()
         }
         
         if renderSpritesEnabled {
-            renderSprites(control: control)
+            renderSprites()
         }
     }
     
-    private func renderBackground(control: UInt8) {
+    private func renderBackground() {
         let scrollY = MMU.shared.safeReadValue(globalAddress: Memory.addressScrollY)
         let scrollX = MMU.shared.safeReadValue(globalAddress: Memory.addressScrollX)
         let palette = MMU.shared.safeReadValue(globalAddress: Memory.addressBgPalette)
 
         // Check which area of tile data we are using
-        let isUsingTileDataAddress1 = control.checkBit(Memory.bgAndWindowTileDataAreaBitIndex)
+        let isUsingTileDataAddress1 = controlRegister.checkBit(Memory.bgAndWindowTileDataAreaBitIndex)
         
         // Check which area of background data we are using
-        let addressBgArea = control.checkBit(Memory.bgTileMapAreaBitIndex) ? Memory.addressBgAndWindowArea1 : Memory.addressBgAndWindowArea2
+        let addressBgArea = controlRegister.checkBit(Memory.bgTileMapAreaBitIndex) ? Memory.addressBgAndWindowArea1 : Memory.addressBgAndWindowArea2
         
         // Get Y coordinate relative to background space
         let relativeYCo = currentScanlineIndex &+ scrollY
@@ -208,8 +201,8 @@ extension PPU {
         }
     }
     
-    private func renderWindow(control: UInt8) {
-        let windowEnabled = control.checkBit(Memory.windowEnabledBitIndex)
+    private func renderWindow() {
+        let windowEnabled = controlRegister.checkBit(Memory.windowEnabledBitIndex)
         guard windowEnabled else { return }
         
         let windowY = MMU.shared.safeReadValue(globalAddress: Memory.addressWindowY)
@@ -217,10 +210,10 @@ extension PPU {
         guard isScanlineWithinWindowBounds else { return }
     
         // Check which area of tile data we are using
-        let isUsingTileDataAddress1 = control.checkBit(Memory.bgAndWindowTileDataAreaBitIndex)
+        let isUsingTileDataAddress1 = controlRegister.checkBit(Memory.bgAndWindowTileDataAreaBitIndex)
         
         // Check which area of window data we are using
-        let addressWindowArea = control.checkBit(Memory.windowTileMapAreaBitIndex) ? Memory.addressBgAndWindowArea1 : Memory.addressBgAndWindowArea2
+        let addressWindowArea = controlRegister.checkBit(Memory.windowTileMapAreaBitIndex) ? Memory.addressBgAndWindowArea1 : Memory.addressBgAndWindowArea2
         
         // Get Y coordinate relative to window space
         let relativeYCo = currentScanlineIndex &- windowY
@@ -260,8 +253,8 @@ extension PPU {
         }
     }
     
-    private func renderSprites(control: UInt8) {
-        let areLargeSprites = control.checkBit(Memory.objectSizeBitIndex)
+    private func renderSprites() {
+        let areLargeSprites = controlRegister.checkBit(Memory.objectSizeBitIndex)
         let spriteHeight = areLargeSprites ? Self.largeSpriteHeight : Self.smallSpriteHeight
         
         // TODO: Implement sprite priority

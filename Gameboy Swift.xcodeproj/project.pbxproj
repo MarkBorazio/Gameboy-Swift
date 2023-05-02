@@ -83,6 +83,7 @@
 		4D3124EE29FAACD200A09A56 /* SquareWaveChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareWaveChannel.swift; sourceTree = "<group>"; };
 		4D31251029FCF3CF00A09A56 /* SoundChannel4.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundChannel4.swift; sourceTree = "<group>"; };
 		4D31251229FD72EC00A09A56 /* SoundChannel3.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundChannel3.swift; sourceTree = "<group>"; };
+		4D3125142A015A2B00A09A56 /* halt_bug.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = halt_bug.gb; sourceTree = "<group>"; };
 		4D7E7C9129E6E56B00E2E68F /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
 		4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryBankController.swift; sourceTree = "<group>"; };
 		4D7E7C9829EBA93100E2E68F /* MBC1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBC1.swift; sourceTree = "<group>"; };
@@ -256,6 +257,7 @@
 			isa = PBXGroup;
 			children = (
 				4DFF762F29E1269000BE180F /* Blargg CPU Instructions */,
+				4D3125142A015A2B00A09A56 /* halt_bug.gb */,
 			);
 			path = "Test ROMS";
 			sourceTree = "<group>";
@@ -529,6 +531,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D3125152A015A2B00A09A56 /* halt_bug.gb in Resources */,
 				4DFF768529E1269000BE180F /* 04-op r,imm.gb in Resources */,
 				4DFF768229E1269000BE180F /* 09-op r,r.gb in Resources */,
 				6070723126BFA814002E7119 /* Assets.xcassets in Resources */,

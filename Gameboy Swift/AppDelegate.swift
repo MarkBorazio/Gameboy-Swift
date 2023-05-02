@@ -22,7 +22,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         "08-misc instrs", // Passes
         "09-op r,r", // Passes
         "10-bit ops", // Passes
-        "11-op a,(hl)" // Passes
+        "11-op a,(hl)", // Passes,
+        "halt_bug"
     ]
     
     let games = [
@@ -32,7 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     ]
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        let rom = try! Cartridge(fileName: games[2])
+        let rom = try! Cartridge(fileName: testRoms[12])
         MMU.shared.loadCartridge(cartridge: rom, skipBootRom: true)
         MasterClock.shared.startTicking()
     }
