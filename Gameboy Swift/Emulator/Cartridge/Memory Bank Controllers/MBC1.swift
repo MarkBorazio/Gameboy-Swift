@@ -104,7 +104,7 @@ extension MBC1 {
         guard ramEnabled else { return 0xFF } // In practice, this is not guaranteed to be 0xFF, but it is the most likely return value.
         
         let ramAddress = convertToRamAddress(address: address)
-        guard ramAddress <= ram.count else {
+        guard ramAddress < ram.count else {
             print("ERROR: Invalid read RAM address")
             return 0xFF
         }
@@ -115,7 +115,7 @@ extension MBC1 {
         guard ramEnabled else { return }
         
         let ramAddress = convertToRamAddress(address: address)
-        guard ramAddress <= ram.count else {
+        guard ramAddress < ram.count else {
             print("ERROR: Invalid write RAM address")
             return
         }
