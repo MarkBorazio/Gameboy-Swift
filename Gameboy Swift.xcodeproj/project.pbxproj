@@ -17,6 +17,7 @@
 		4D3124EF29FAACD200A09A56 /* SquareWaveChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3124EE29FAACD200A09A56 /* SquareWaveChannel.swift */; };
 		4D31251129FCF3CF00A09A56 /* SoundChannel4.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D31251029FCF3CF00A09A56 /* SoundChannel4.swift */; };
 		4D31251329FD72EC00A09A56 /* SoundChannel3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D31251229FD72EC00A09A56 /* SoundChannel3.swift */; };
+		4D3125152A015A2B00A09A56 /* halt_bug.gb in Resources */ = {isa = PBXBuildFile; fileRef = 4D3125142A015A2B00A09A56 /* halt_bug.gb */; };
 		4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9129E6E56B00E2E68F /* Memory.swift */; };
 		4D7E7C9729EBA66300E2E68F /* MemoryBankController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */; };
 		4D7E7C9929EBA93100E2E68F /* MBC1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9829EBA93100E2E68F /* MBC1.swift */; };

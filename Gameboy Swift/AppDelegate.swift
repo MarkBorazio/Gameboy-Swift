@@ -13,7 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let testRoms: [String] = [
         "cpu_instrs",
         "01-special", // Passes
-        "02-interrupts", // Timer doesn't work
+        "02-interrupts", // Passes
         "03-op sp,hl", // Passes
         "04-op r,imm", // Passes
         "05-op rp", // Passes
@@ -29,11 +29,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let games = [
         "Tetris",
         "Super Mario Land",
-        "Pokemon Blue"
+        "Pokemon Blue",
+        "Pokemon Gold"
     ]
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        let rom = try! Cartridge(fileName: testRoms[12])
+        let rom = try! Cartridge(fileName: games[3])
         MMU.shared.loadCartridge(cartridge: rom, skipBootRom: true)
         MasterClock.shared.startTicking()
     }
