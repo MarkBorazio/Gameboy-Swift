@@ -48,18 +48,17 @@ class MasterClock {
             while self.tCyclesForCurrentFrame < Self.tCyclesHz {
                 if !APU.shared.isDrainingSamples {
                     let cpuMCycles = CPU.shared.tickReturningMCycles()
-                    let cpuTCycles = cpuMCycles * 4
-                    
-                    self.incrementDivCounter(tCycles: cpuTCycles)
-                    self.incrementTimaRegister(tCycles: cpuTCycles)
-                    
                     // If cycles accumulated during CPU tick is 0, then that means that the HALT flag is set.
-                    // In this case, we still want the PPU to tick one cycle as only the CPU instructions and timers are paused when the HALT flag is set.
-                    let adjustedTCycles = max(cpuTCycles, 4) // TODO: Figure out if min is 4 or 1.
-                    PPU.shared.tick(tCycles: adjustedTCycles)
-                    APU.shared.tick(tCycles: adjustedTCycles)
+                    // In this case, we still want to tick everything else over.
+                    let adjustedMCycles = max(cpuMCycles, 1)
+                    let tCycles = adjustedMCycles * 4
                     
-                    self.tCyclesForCurrentFrame += adjustedTCycles
+                    self.incrementDivCounter(tCycles: tCycles)
+                    self.incrementTimaRegister(tCycles: tCycles)
+                    PPU.shared.tick(tCycles: tCycles)
+                    APU.shared.tick(tCycles: tCycles)
+                    
+                    self.tCyclesForCurrentFrame += tCycles
                 }
             }
             
