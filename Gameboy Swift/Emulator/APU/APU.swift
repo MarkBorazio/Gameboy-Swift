@@ -119,22 +119,38 @@ class APU {
         }
     }
     
+    /*
+     Step   Length Ctr  Vol Env     Sweep
+     ---------------------------------------
+     0      Clock       -           -
+     1      -           -           -
+     2      Clock       -           Clock
+     3      -           -           -
+     4      Clock       -           -
+     5      -           -           -
+     6      Clock       -           Clock
+     7      -           Clock       -
+     ---------------------------------------
+     Rate   256 Hz      64 Hz       128 Hz
+     
+     Ref: https://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware#Frame_Sequencer
+    */
     func tickFrameSquencer() {
         guard isOn else { return }
-        divCounter += 1
         
-        if (divCounter % 2) == 0 {
+        if (divCounter & 0x1) == 0 { // Every second step
             tick256Hz()
         }
         
-        if (divCounter % 4) == 0 {
+        if (divCounter == 2 || divCounter == 6) { // Every fourth step
             tick128Hz()
         }
         
-        if (divCounter % 8) == 0 {
+        if divCounter == 7 { // Every eighth step
             tick64Hz()
-            divCounter = 0
         }
+        
+        divCounter = (divCounter + 1) & 7 // Cycle from 0-7
     }
     
     private func tick64Hz() {
