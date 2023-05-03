@@ -73,7 +73,6 @@ extension MBC3 {
     }
     
     private func selectRamBankOrRTCRegister(value: UInt8) {
-        print("Setting RAM index or RTC register to \(value.hexString()).")
         guard Self.validRamBankIndices.contains(value) || Self.validRTCRegisterIndices.contains(value) else {
             print("ERROR: Invalid Ram and RTC Register value set. Got \(value.hexString()).")
             return
@@ -88,7 +87,7 @@ extension MBC3 {
         switch ramAndRTCRegister {
         case Self.validRamBankIndices:
             let ramAddress = convertToRamAddress(address: address)
-            guard ramAddress <= ram.count else {
+            guard ramAddress < ram.count else {
                 print("ERROR: Invalid read RAM address")
                 return 0xFF
             }
@@ -114,7 +113,7 @@ extension MBC3 {
         switch ramAndRTCRegister {
         case Self.validRamBankIndices:
             let ramAddress = convertToRamAddress(address: address)
-            guard ramAddress <= ram.count else {
+            guard ramAddress < ram.count else {
                 print("ERROR: Invalid write RAM address")
                 return
             }
