@@ -7,6 +7,13 @@
 
 import Cocoa
 
+// TODO:
+// - Fix audio issues in Pokemon Gold
+// - Implement Saving and save states
+// - Implement serial interrupts ???
+// - Implement file system for opening roms (and displaying name in window)
+// - Remove singleton structure and clean things up
+
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
     
