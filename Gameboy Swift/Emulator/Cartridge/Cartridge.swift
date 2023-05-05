@@ -11,12 +11,8 @@ struct Cartridge {
     
     private let mbc: MemoryBankController
     
-    init(fileName: String) throws {
-        let dmgUrl = Bundle.main.url(forResource: fileName, withExtension: "gb")
-        let gbcUrl = Bundle.main.url(forResource: fileName, withExtension: "gbc")
-        let url = gbcUrl ?? dmgUrl
-        
-        let romData = try Data(contentsOf: url!)
+    init(fileURL: URL) throws {
+        let romData = try Data(contentsOf: fileURL)
         let rom = [UInt8](romData)
         
         // ROM Banks

@@ -14,8 +14,17 @@ class GameBoyView: NSView {
     private let colourSpace = CGColorSpaceCreateDeviceRGB()
     private let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
     
-    override func awakeFromNib() {
-        super.awakeFromNib()
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        initialise()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        initialise()
+    }
+    
+    private func initialise() {
         self.wantsLayer = true
         layer?.magnificationFilter = .nearest
     }

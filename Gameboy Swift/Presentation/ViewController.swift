@@ -9,11 +9,34 @@ import Cocoa
 
 class ViewController: NSViewController {
     
-    @IBOutlet var gameBoyView: GameBoyView!
+    override func loadView() {
+        
+        let containerView = NSView(frame: .init(origin: .zero, size: .init(width: 500, height: 500)))
+        let gameBoyView = GameBoyView()
+        
+        gameBoyView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(gameBoyView)
+        
+        NSLayoutConstraint.activate([
+            gameBoyView.heightAnchor.constraint(greaterThanOrEqualToConstant: 500),
+            gameBoyView.widthAnchor.constraint(greaterThanOrEqualToConstant: 500),
+            
+            gameBoyView.widthAnchor.constraint(lessThanOrEqualTo: containerView.widthAnchor),
+            gameBoyView.heightAnchor.constraint(lessThanOrEqualTo: containerView.heightAnchor),
+            
+            gameBoyView.widthAnchor.constraint(equalTo: gameBoyView.heightAnchor, multiplier: 160/144),
+            
+            gameBoyView.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+            gameBoyView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+        ])
+        
+        self.view = containerView
+        
+        setupKeyPressMonitoring()
+        MasterClock.shared.screenRenderDelegate = gameBoyView
+    }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
+    private func setupKeyPressMonitoring() {
         // Set up the event monitor to detect key presses and releases
         view.window?.makeFirstResponder(view)
         
@@ -28,8 +51,6 @@ class ViewController: NSViewController {
             }
             return $0
         }
-        
-        MasterClock.shared.screenRenderDelegate = gameBoyView
     }
     
     override func mouseDown(with event: NSEvent) {
