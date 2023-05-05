@@ -194,6 +194,10 @@ class MMU {
         let localAddress = globalAddress - Memory.internalMemoryAddressRange.lowerBound
         memoryMap[localAddress] = value
     }
+    
+    func getRAMSnapshot() -> Data {
+        cartridge!.getRAMSnapshot()
+    }
 }
 
 // MARK: - Interrupts

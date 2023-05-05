@@ -39,4 +39,8 @@ extension MBC0: MemoryBankController {
             fatalError("Unhandled read address sent to cartridge. Got \(address.hexString()).")
         }
     }
+    
+    func getRAMSnapshot() -> Data {
+        return Data(ram)
+    }
 }

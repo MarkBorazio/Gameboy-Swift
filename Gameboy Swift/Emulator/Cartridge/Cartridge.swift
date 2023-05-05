@@ -9,9 +9,12 @@ import Foundation
 
 struct Cartridge {
     
+    private let fileURL: URL
     private let mbc: MemoryBankController
     
-    init(fileURL: URL) throws {
+    init(fileURL: URL, saveDataURL: URL?) throws {
+        self.fileURL = fileURL
+        
         let romData = try Data(contentsOf: fileURL)
         let rom = [UInt8](romData)
         
@@ -51,7 +54,7 @@ struct Cartridge {
         case Self.mbcType0: mbc = MBC0(rom: rom)
         case Self.mbcType1: mbc = MBC1(rom: rom, numberOfRomBanks: numberOfRomBanks, numberOfRamBanks: numberOfRamBanks)
         case Self.mbcType2: fatalError("MBC2 not yet implemented")
-        case Self.mbcType3: mbc = MBC3(rom: rom, numberOfRomBanks: numberOfRomBanks, numberOfRamBanks: numberOfRamBanks)
+        case Self.mbcType3: mbc = MBC3(rom: rom, numberOfRomBanks: numberOfRomBanks, numberOfRamBanks: numberOfRamBanks, saveDataURL: saveDataURL)
         case Self.mbcType5: fatalError("MBC5 not yet implemented")
         case Self.mbcType6: fatalError("MBC6 not yet implemented")
         case Self.mbcType7: fatalError("MBC7 not yet implemented")
@@ -66,6 +69,10 @@ struct Cartridge {
     
     func write(_ value: UInt8, address: UInt16) {
         mbc.write(value: value, address: address)
+    }
+    
+    func getRAMSnapshot() -> Data {
+        mbc.getRAMSnapshot()
     }
 }
 

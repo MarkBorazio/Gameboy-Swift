@@ -19,12 +19,19 @@ class MBC3 {
     private var ramAndRTCEnabled = false
     private var realTimeClock = RealTimeClock.zeroValue
     
-    init(rom: [UInt8], numberOfRomBanks: Int, numberOfRamBanks: Int) {
+    init(rom: [UInt8], numberOfRomBanks: Int, numberOfRamBanks: Int, saveDataURL: URL?) {
         self.rom = rom
         self.numberOfRomBanks = numberOfRomBanks
         
         let totalRam = numberOfRamBanks * Cartridge.ramBankSize
-        ram = Array(repeating: UInt8.min, count: totalRam)
+        
+        
+        if let saveDataURL {
+            let saveData = try! Data(contentsOf: saveDataURL)
+            ram = Array<UInt8>(saveData)
+        } else {
+            ram = Array(repeating: UInt8.min, count: totalRam)
+        }
     }
 }
 
@@ -211,6 +218,10 @@ extension MBC3: MemoryBankController {
         default:
             fatalError("Unhandled read address sent to cartridge. Got \(address.hexString()).")
         }
+    }
+    
+    func getRAMSnapshot() -> Data {
+        return Data(ram)
     }
 }
 
