@@ -272,7 +272,7 @@ extension APU {
     
     private func getNR52() -> UInt8 {
         var byte: UInt8 = 0
-        if isOn { byte.setBit(0) }
+        if isOn { byte.setBit(7) }
         if channel4.isEnabled { byte.setBit(3) }
         if channel3.isEnabled { byte.setBit(2) }
         if channel2.isEnabled { byte.setBit(1) }

@@ -311,7 +311,7 @@ extension PPU {
 
                 let globalXco = Int(xCo) &+ pixelIndex
                 let screenDataIndex = Int(currentScanlineIndex) * Self.pixelWidth + Int(globalXco)
-                guard screenDataIndex <= screenData.count else { return }
+                guard screenDataIndex < screenData.count else { return }
                 
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
                 
