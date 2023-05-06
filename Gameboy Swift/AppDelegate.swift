@@ -8,8 +8,7 @@
 import Cocoa
 
 // TODO:
-// - Implement serial interrupts and write unit tests for test ROMs
-// - Look into addressing sound popping
+// - Periodic saving
 
 class AppDelegate: NSObject, NSApplicationDelegate {
 

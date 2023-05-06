@@ -10,16 +10,14 @@ import Cocoa
 
 class MasterClock {
     
-    var timer: Timer?
-    let timerQueue = DispatchQueue(label: "timerQueue")
+    private var isTicking = false
+    private let timerQueue = DispatchQueue(label: "timerQueue")
     
     private static let framesPerSecond: UInt32 = 60
     
     static let tCyclesHz: UInt32 = 4194304
     private static let tCyclesCyclesPerFrame: UInt32 = tCyclesHz / framesPerSecond
-    private static let timerInterval: TimeInterval = 1.0 / Double(framesPerSecond)
-    
-    private var tCyclesForCurrentFrame: Int = 0
+    private static let frameDuration: TimeInterval = 1.0 / Double(framesPerSecond)
     
     private var internalDivCounter: UInt8 = 0
     private(set) var divRegister: UInt8 = 0
@@ -30,19 +28,10 @@ class MasterClock {
     private(set) var tacRegister: UInt8 = 0
     
     func startTicking() {
-        timer = Timer.scheduledTimer(withTimeInterval: Self.timerInterval, repeats: true) { _ in
-            self.tick()
-        }
-    }
-    
-    func stopTicking() { 
-        timer?.invalidate()
-        timer = nil
-    }
-    
-    func tick() {
+        isTicking = true
         timerQueue.async {
-            while self.tCyclesForCurrentFrame < Self.tCyclesHz {
+            var nextRenderDate = Date().addingTimeInterval(Self.frameDuration)
+            while(self.isTicking) {
                 if !GameBoy.instance.apu.isDrainingSamples {
                     let cpuMCycles = GameBoy.instance.cpu.tickReturningMCycles()
                     // If cycles accumulated during CPU tick is 0, then that means that the HALT flag is set.
@@ -54,14 +43,19 @@ class MasterClock {
                     self.incrementTimaRegister(tCycles: tCycles)
                     GameBoy.instance.ppu.tick(tCycles: tCycles)
                     GameBoy.instance.apu.tick(tCycles: tCycles)
-                    
-                    self.tCyclesForCurrentFrame += tCycles
+                }
+                
+                let now = Date()
+                if now >= nextRenderDate {
+                    nextRenderDate = now.addingTimeInterval(Self.frameDuration)
+                    GameBoy.instance.renderScreen()
                 }
             }
-            
-            self.tCyclesForCurrentFrame -= Int(Self.tCyclesCyclesPerFrame)
-            GameBoy.instance.renderScreen()
         }
+    }
+    
+    func stopTicking() {
+        isTicking = false
     }
 }
 
