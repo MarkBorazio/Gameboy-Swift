@@ -8,10 +8,8 @@
 import Cocoa
 
 // TODO:
-// - Implement Saving and save states
 // - Implement serial interrupts and write unit tests for test ROMs
 // - Look into addressing sound popping
-// - Remove singleton structure and clean things up
 
 class AppDelegate: NSObject, NSApplicationDelegate {
 
@@ -20,6 +18,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
-        // Insert code here to tear down your application
+        Coordinator.instance.stopGameBoy()
+    }
+    
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        true
     }
 }

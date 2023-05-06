@@ -9,8 +9,6 @@ import Foundation
 
 class APU {
     
-    static let shared = APU()
-    
     private var isOn = false
     
     private var nr50: UInt8 = 0

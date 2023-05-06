@@ -9,56 +9,45 @@ import Foundation
 
 class MMU {
     
-    static let shared = MMU()
-    
     private var memoryMap: [UInt8]
-    private var cartridge: Cartridge?
-    private var isBootRomOverlayed = false
+    private var isBootRomOverlayed = true
     
     init() {
         memoryMap = Array(repeating: 0, count: Memory.internalMemorySize)
     }
     
-    func loadCartridge(cartridge: Cartridge, skipBootRom: Bool) {
-        memoryMap = Array(repeating: 0, count: Memory.internalMemorySize)
-        self.cartridge = cartridge
-        
-        if skipBootRom {
-            CPU.shared.skipBootRom()
-            safeWriteValue(0x00, globalAddress: Memory.addressTIMA)
-            safeWriteValue(0x00, globalAddress: Memory.addressTMA)
-            safeWriteValue(0x00, globalAddress: Memory.addressTAC)
-            safeWriteValue(0x80, globalAddress: Memory.addressNR10)
-            safeWriteValue(0xBF, globalAddress: Memory.addressNR11)
-            safeWriteValue(0xF3, globalAddress: Memory.addressNR12)
-            safeWriteValue(0xBF, globalAddress: Memory.addressNR14)
-            safeWriteValue(0x3F, globalAddress: Memory.addressNR21)
-            safeWriteValue(0x00, globalAddress: Memory.addressNR22)
-            safeWriteValue(0xBF, globalAddress: Memory.addressNR24)
-            safeWriteValue(0x7F, globalAddress: Memory.addressNR30)
-            safeWriteValue(0xFF, globalAddress: Memory.addressNR31)
-            safeWriteValue(0x9F, globalAddress: Memory.addressNR32)
-            safeWriteValue(0xBF, globalAddress: Memory.addressNR34)
-            safeWriteValue(0xFF, globalAddress: Memory.addressNR41)
-            safeWriteValue(0x00, globalAddress: Memory.addressNR42)
-            safeWriteValue(0x00, globalAddress: Memory.addressNR43)
-            safeWriteValue(0xBF, globalAddress: Memory.addressNR44)
-            safeWriteValue(0x77, globalAddress: Memory.addressNR50)
-            safeWriteValue(0xF3, globalAddress: Memory.addressNR51)
-            safeWriteValue(0xF1, globalAddress: Memory.addressNR52)
-            safeWriteValue(0x91, globalAddress: Memory.addressLCDC)
-            safeWriteValue(0x00, globalAddress: Memory.addressScrollY)
-            safeWriteValue(0x00, globalAddress: Memory.addressScrollX)
-            safeWriteValue(0x00, globalAddress: Memory.addressLYC)
-            safeWriteValue(0xFC, globalAddress: Memory.addressBgPalette)
-            safeWriteValue(0xFF, globalAddress: Memory.addressObjPalette1)
-            safeWriteValue(0xFF, globalAddress: Memory.addressObjPalette2)
-            safeWriteValue(0x00, globalAddress: Memory.addressWindowY)
-            safeWriteValue(0x00, globalAddress: Memory.addressWindowX)
-            safeWriteValue(0x00, globalAddress: Memory.interruptRegisterAddress)
-        } else {
-            isBootRomOverlayed = true
-        }
+    func skipBootRom() {
+        safeWriteValue(0x00, globalAddress: Memory.addressTIMA)
+        safeWriteValue(0x00, globalAddress: Memory.addressTMA)
+        safeWriteValue(0x00, globalAddress: Memory.addressTAC)
+        safeWriteValue(0x80, globalAddress: Memory.addressNR10)
+        safeWriteValue(0xBF, globalAddress: Memory.addressNR11)
+        safeWriteValue(0xF3, globalAddress: Memory.addressNR12)
+        safeWriteValue(0xBF, globalAddress: Memory.addressNR14)
+        safeWriteValue(0x3F, globalAddress: Memory.addressNR21)
+        safeWriteValue(0x00, globalAddress: Memory.addressNR22)
+        safeWriteValue(0xBF, globalAddress: Memory.addressNR24)
+        safeWriteValue(0x7F, globalAddress: Memory.addressNR30)
+        safeWriteValue(0xFF, globalAddress: Memory.addressNR31)
+        safeWriteValue(0x9F, globalAddress: Memory.addressNR32)
+        safeWriteValue(0xBF, globalAddress: Memory.addressNR34)
+        safeWriteValue(0xFF, globalAddress: Memory.addressNR41)
+        safeWriteValue(0x00, globalAddress: Memory.addressNR42)
+        safeWriteValue(0x00, globalAddress: Memory.addressNR43)
+        safeWriteValue(0xBF, globalAddress: Memory.addressNR44)
+        safeWriteValue(0x77, globalAddress: Memory.addressNR50)
+        safeWriteValue(0xF3, globalAddress: Memory.addressNR51)
+        safeWriteValue(0xF1, globalAddress: Memory.addressNR52)
+        safeWriteValue(0x91, globalAddress: Memory.addressLCDC)
+        safeWriteValue(0x00, globalAddress: Memory.addressScrollY)
+        safeWriteValue(0x00, globalAddress: Memory.addressScrollX)
+        safeWriteValue(0x00, globalAddress: Memory.addressLYC)
+        safeWriteValue(0xFC, globalAddress: Memory.addressBgPalette)
+        safeWriteValue(0xFF, globalAddress: Memory.addressObjPalette1)
+        safeWriteValue(0xFF, globalAddress: Memory.addressObjPalette2)
+        safeWriteValue(0x00, globalAddress: Memory.addressWindowY)
+        safeWriteValue(0x00, globalAddress: Memory.addressWindowX)
+        safeWriteValue(0x00, globalAddress: Memory.interruptRegisterAddress)
     }
     
     func safeReadValue(globalAddress: UInt16) -> UInt8 {
@@ -68,29 +57,29 @@ class MMU {
             if isBootRomOverlayed && Self.biosAddressRange.contains(globalAddress) {
                 return Self.bios[globalAddress]
             } else {
-                return cartridge!.read(address: globalAddress) // TODO: Fixo.
+                return GameBoy.instance.cartridge?.read(address: globalAddress) ?? 0x00
             }
             
         case Memory.cartridgeRamAddressRange:
-            return cartridge!.read(address: globalAddress) // TODO: Fixo.
+            return GameBoy.instance.cartridge?.read(address: globalAddress) ?? 0x00
             
         case Memory.videoRamAddressRange:
-            return PPU.shared.readVRAM(globalAddress: globalAddress)
+            return GameBoy.instance.ppu.readVRAM(globalAddress: globalAddress)
             
         case Memory.addressLY:
-            return PPU.shared.currentScanlineIndex
+            return GameBoy.instance.ppu.currentScanlineIndex
             
         case Memory.addressLYC:
-            return PPU.shared.coincidenceRegister
+            return GameBoy.instance.ppu.coincidenceRegister
             
         case Memory.addressLCDS:
-            return PPU.shared.statusRegister
+            return GameBoy.instance.ppu.statusRegister
             
         case Memory.addressLCDC:
-            return PPU.shared.controlRegister
+            return GameBoy.instance.ppu.controlRegister
             
         case Memory.addressJoypad:
-            return Joypad.shared.readJoypad()
+            return GameBoy.instance.joypad.readJoypad()
             
         case Memory.addressGlobalAPURange,
             Memory.addressChannel1Range,
@@ -98,19 +87,19 @@ class MMU {
             Memory.addressChannel3Range,
             Memory.addressChannel3WavePatternsRange,
             Memory.addressChannel4Range:
-            return APU.shared.read(address: globalAddress)
+            return GameBoy.instance.apu.read(address: globalAddress)
             
         case Memory.addressDIV:
-            return MasterClock.shared.divRegister
+            return GameBoy.instance.clock.divRegister
             
         case Memory.addressTIMA:
-            return MasterClock.shared.timaRegister
+            return GameBoy.instance.clock.timaRegister
             
         case Memory.addressTMA:
-            return MasterClock.shared.tmaRegister
+            return GameBoy.instance.clock.tmaRegister
             
         case Memory.addressTAC:
-            return MasterClock.shared.tacRegister
+            return GameBoy.instance.clock.tacRegister
 
         default:
             return unsafeReadValue(globalAddress: globalAddress)
@@ -127,11 +116,10 @@ class MMU {
         switch globalAddress {
             
         case Memory.cartridgeRomAddressRange, Memory.cartridgeRamAddressRange:
-            cartridge?.write(value, address: globalAddress)
-            return
+            GameBoy.instance.cartridge?.write(value, address: globalAddress)
             
         case Memory.videoRamAddressRange:
-            PPU.shared.writeVRAM(globalAddress: globalAddress, value: value)
+            GameBoy.instance.ppu.writeVRAM(globalAddress: globalAddress, value: value)
             
         case Memory.addressGlobalAPURange,
             Memory.addressChannel1Range,
@@ -139,7 +127,7 @@ class MMU {
             Memory.addressChannel3Range,
             Memory.addressChannel3WavePatternsRange,
             Memory.addressChannel4Range:
-            APU.shared.write(value, address: globalAddress)
+            GameBoy.instance.apu.write(value, address: globalAddress)
             
         case Memory.biosDeactivateAddress:
             if value == 1 {
@@ -149,16 +137,16 @@ class MMU {
             
         case Memory.addressLY:
             // If the current scanline is attempted to be manually changed, set it to zero instead
-            PPU.shared.currentScanlineIndex = 0
+            GameBoy.instance.ppu.currentScanlineIndex = 0
             
         case Memory.addressLYC:
-            PPU.shared.coincidenceRegister = value
+            GameBoy.instance.ppu.coincidenceRegister = value
             
         case Memory.addressLCDS:
-            PPU.shared.statusRegister = value
+            GameBoy.instance.ppu.statusRegister = value
             
         case Memory.addressLCDC:
-            PPU.shared.controlRegister = value
+            GameBoy.instance.ppu.controlRegister = value
             
         case Memory.addressDMATransferTrigger:
             dmaTransfer(byte: value)
@@ -170,16 +158,16 @@ class MMU {
             
         case Memory.addressDIV:
             // If anything tries to write to this, then it should instead just be cleared.
-            MasterClock.shared.clearDIV()
+            GameBoy.instance.clock.clearDIV()
             
         case Memory.addressTIMA:
-            MasterClock.shared.timaRegister = value
+            GameBoy.instance.clock.timaRegister = value
             
         case Memory.addressTMA:
-            MasterClock.shared.tmaRegister = value
+            GameBoy.instance.clock.tmaRegister = value
             
         case Memory.addressTAC:
-            MasterClock.shared.writeTacRegister(value)
+            GameBoy.instance.clock.writeTacRegister(value)
             
         case Memory.probitedAddressRange:
             return
@@ -193,10 +181,6 @@ class MMU {
     func unsafeWriteValue(_ value: UInt8, globalAddress: UInt16) {
         let localAddress = globalAddress - Memory.internalMemoryAddressRange.lowerBound
         memoryMap[localAddress] = value
-    }
-    
-    func getRAMSnapshot() -> Data {
-        cartridge!.getRAMSnapshot()
     }
 }
 

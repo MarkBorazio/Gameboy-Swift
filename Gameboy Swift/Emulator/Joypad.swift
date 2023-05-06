@@ -14,13 +14,11 @@ protocol JoypadDelegate: AnyObject {
 
 class Joypad {
     
-    static let shared = Joypad()
-    
     // Source of truth for if a button is held down or not
     private var buttonsHeldDown: Set<Button> = []
     
     func readJoypad() -> UInt8 {
-        var newJoypadByte = MMU.shared.unsafeReadValue(globalAddress: Memory.addressJoypad) | 0x0F // Set bottom 4 bits high as that means they not held down
+        var newJoypadByte = GameBoy.instance.mmu.unsafeReadValue(globalAddress: Memory.addressJoypad) | 0x0F // Set bottom 4 bits high as that means they not held down
         
         let isDirectionSelected = !newJoypadByte.checkBit(Memory.selectDirectionButtonsBitIndex)
         let isActionSelected = !newJoypadByte.checkBit(Memory.selectActionButtonsBitIndex)
@@ -76,10 +74,10 @@ extension Joypad: JoypadDelegate {
     func buttonDown(_ button: Button) {
         buttonsHeldDown.insert(button)
         
-        let joypadByte = MMU.shared.safeReadValue(globalAddress: Memory.addressJoypad)
+        let joypadByte = GameBoy.instance.mmu.safeReadValue(globalAddress: Memory.addressJoypad)
         let isButtonTypeSelected = !joypadByte.checkBit(button.selectionBitIndex) // 0 means selected, 1 means unselected
         if isButtonTypeSelected {
-            MMU.shared.requestJoypadInterrupt()
+            GameBoy.instance.mmu.requestJoypadInterrupt()
         }
     }
     

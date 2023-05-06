@@ -10,8 +10,6 @@ import Cocoa
 
 
 class PPU {
-    
-    static let shared = PPU()
    
     private var vRam = Array(repeating: UInt8.min, count: vRamSize)
     
@@ -55,7 +53,7 @@ class PPU {
                 drawScanline()
                 
             case Self.lastVisibleScanlineIndex &+ 1:
-                MMU.shared.requestVBlankInterrupt()
+                GameBoy.instance.mmu.requestVBlankInterrupt()
                 
             default:
                 break
@@ -112,14 +110,14 @@ class PPU {
         
         // Request interrupt if required
         if interruptRequired && (newLCDMode != currentLCDMode) {
-            MMU.shared.requestLCDInterrupt()
+            GameBoy.instance.mmu.requestLCDInterrupt()
         }
         
         // Check the conicidence flag
         if currentScanlineIndex == coincidenceRegister {
             statusRegister.setBit(Memory.coincidenceBitIndex)
             if statusRegister.checkBit(Memory.coincidenceInterruptEnabledBitIndex) {
-                MMU.shared.requestLCDInterrupt()
+                GameBoy.instance.mmu.requestLCDInterrupt()
             }
         } else {
             statusRegister.clearBit(Memory.coincidenceBitIndex)
@@ -152,9 +150,9 @@ extension PPU {
     }
     
     private func renderBackground() {
-        let scrollY = MMU.shared.safeReadValue(globalAddress: Memory.addressScrollY)
-        let scrollX = MMU.shared.safeReadValue(globalAddress: Memory.addressScrollX)
-        let palette = MMU.shared.safeReadValue(globalAddress: Memory.addressBgPalette)
+        let scrollY = GameBoy.instance.mmu.safeReadValue(globalAddress: Memory.addressScrollY)
+        let scrollX = GameBoy.instance.mmu.safeReadValue(globalAddress: Memory.addressScrollX)
+        let palette = GameBoy.instance.mmu.safeReadValue(globalAddress: Memory.addressBgPalette)
 
         // Check which area of tile data we are using
         let isUsingTileDataAddress1 = controlRegister.checkBit(Memory.bgAndWindowTileDataAreaBitIndex)
@@ -205,7 +203,7 @@ extension PPU {
         let windowEnabled = controlRegister.checkBit(Memory.windowEnabledBitIndex)
         guard windowEnabled else { return }
         
-        let windowY = MMU.shared.safeReadValue(globalAddress: Memory.addressWindowY)
+        let windowY = GameBoy.instance.mmu.safeReadValue(globalAddress: Memory.addressWindowY)
         let isScanlineWithinWindowBounds = currentScanlineIndex >= windowY
         guard isScanlineWithinWindowBounds else { return }
     
@@ -223,8 +221,8 @@ extension PPU {
         let tileRowIndexAddress: UInt16 = addressWindowArea &+ (UInt16(tileRowIndex) &* Self.tilesPerRow)
         
         let pixelRowIndex = (relativeYCo & 7) &* Self.bytesPerPixelRow // Equivalent to `Int(relativeYCo % 8) &* Self.bytesPerPixelRow
-        let palette = MMU.shared.safeReadValue(globalAddress: Memory.addressBgPalette)
-        let windowX = MMU.shared.safeReadValue(globalAddress: Memory.addressWindowX) &- Self.windowXOffset
+        let palette = GameBoy.instance.mmu.safeReadValue(globalAddress: Memory.addressBgPalette)
+        let windowX = GameBoy.instance.mmu.safeReadValue(globalAddress: Memory.addressWindowX) &- Self.windowXOffset
         
         // Iterate through minimum amount of tiles that we need to grab from memory
         for scanlineTileIndex in 0..<Self.maxTilesPerScanline {
@@ -271,8 +269,8 @@ extension PPU {
             let spriteDataTileIndexAddress = spriteDataAddress &+ 2
             let spriteDataAttributesAddress = spriteDataAddress &+ 3
             
-            let yCo = MMU.shared.safeReadValue(globalAddress: spriteDataYCoAddress) &- Self.spriteYOffset
-            let xCo = MMU.shared.safeReadValue(globalAddress: spriteDataXCoAddress) &- Self.spriteXOffset
+            let yCo = GameBoy.instance.mmu.safeReadValue(globalAddress: spriteDataYCoAddress) &- Self.spriteYOffset
+            let xCo = GameBoy.instance.mmu.safeReadValue(globalAddress: spriteDataXCoAddress) &- Self.spriteXOffset
             
             let spriteBoundsLower = Int(yCo)
             let spriteBoundsUpper = spriteBoundsLower + spriteHeight
@@ -281,13 +279,13 @@ extension PPU {
             // Check if sprite intercepts with scanline
             guard spriteBounds.contains(Int(currentScanlineIndex)) else { continue }
                 
-            let attributes = MMU.shared.safeReadValue(globalAddress: spriteDataAttributesAddress)
+            let attributes = GameBoy.instance.mmu.safeReadValue(globalAddress: spriteDataAttributesAddress)
             let renderAboveBackground = !attributes.checkBit(Memory.bgAndWindowOverObjBitIndex)
             let flipY = attributes.checkBit(Memory.yFlipBitIndex)
             let flipX = attributes.checkBit(Memory.xFlipBitIndex)
             let colourAddress = attributes.checkBit(Memory.paletteNumberBitIndex) ? Memory.addressObjPalette2 : Memory.addressObjPalette1
             
-            let palette = MMU.shared.safeReadValue(globalAddress: colourAddress)
+            let palette = GameBoy.instance.mmu.safeReadValue(globalAddress: colourAddress)
             
             var spriteRowIndex = currentScanlineIndex &- yCo
             if flipY {
@@ -295,7 +293,7 @@ extension PPU {
             }
 
             spriteRowIndex &*= Self.bytesPerPixelRow
-            let tileIndex = MMU.shared.safeReadValue(globalAddress: spriteDataTileIndexAddress)
+            let tileIndex = GameBoy.instance.mmu.safeReadValue(globalAddress: spriteDataTileIndexAddress)
             let tileIndexAddress = Memory.addressTileArea1 &+ (UInt16(tileIndex) &* Self.bytesPerTile)
             let dataAddress = tileIndexAddress &+ UInt16(spriteRowIndex)
             let rowData1 = readVRAM(globalAddress: dataAddress)

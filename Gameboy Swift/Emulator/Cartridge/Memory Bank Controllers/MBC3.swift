@@ -19,15 +19,13 @@ class MBC3 {
     private var ramAndRTCEnabled = false
     private var realTimeClock = RealTimeClock.zeroValue
     
-    init(rom: [UInt8], numberOfRomBanks: Int, numberOfRamBanks: Int, saveDataURL: URL?) {
+    init(rom: [UInt8], numberOfRomBanks: Int, numberOfRamBanks: Int, saveData: Data?) {
         self.rom = rom
         self.numberOfRomBanks = numberOfRomBanks
         
         let totalRam = numberOfRamBanks * Cartridge.ramBankSize
         
-        
-        if let saveDataURL {
-            let saveData = try! Data(contentsOf: saveDataURL)
+        if let saveData {
             ram = Array<UInt8>(saveData)
         } else {
             ram = Array(repeating: UInt8.min, count: totalRam)

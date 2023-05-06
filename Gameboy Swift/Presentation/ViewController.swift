@@ -33,7 +33,7 @@ class ViewController: NSViewController {
         self.view = containerView
         
         setupKeyPressMonitoring()
-        MasterClock.shared.screenRenderDelegate = gameBoyView
+        GameBoy.instance.screenRenderDelegate = gameBoyView
     }
     
     private func setupKeyPressMonitoring() {
@@ -60,12 +60,12 @@ class ViewController: NSViewController {
 
     override func keyDown(with event: NSEvent) {
         guard let button = getButtonFromEvent(event: event) else { return }
-        Joypad.shared.buttonDown(button)
+        GameBoy.instance.joypad.buttonDown(button)
     }
     
     override func keyUp(with event: NSEvent) {
         guard let button = getButtonFromEvent(event: event) else { return }
-        Joypad.shared.buttonUp(button)
+        GameBoy.instance.joypad.buttonUp(button)
     }
     
     private func getButtonFromEvent(event: NSEvent) -> Joypad.Button? {

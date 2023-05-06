@@ -13,8 +13,6 @@ import Foundation
 // 1 mCycle == 4 tCycles
 class CPU {
     
-    static let shared = CPU()
-    
     // Individual Registers
     private var a: UInt8 = 0
     private var f: UInt8 = 0 {
@@ -123,10 +121,10 @@ class CPU {
     
     /// Checks for any interrupts and returns the number of cycles the check took.
     private func handleInterrupts() -> Int {
-        if MMU.shared.hasPendingAndEnabledInterrupt {
+        if GameBoy.instance.mmu.hasPendingAndEnabledInterrupt {
             haltFlag = false
             if interruptMasterEnableFlag {
-                guard let nextInterruptAddress = MMU.shared.getNextPendingAndEnabledInterrupt() else {
+                guard let nextInterruptAddress = GameBoy.instance.mmu.getNextPendingAndEnabledInterrupt() else {
                     fatalError("This should never be `nil` at this point")
                 }
                 interruptMasterEnableFlag = false
@@ -139,7 +137,7 @@ class CPU {
     }
     
     private func fetchNextByte() -> UInt8 {
-        let byte = MMU.shared.safeReadValue(globalAddress: pc)
+        let byte = GameBoy.instance.mmu.safeReadValue(globalAddress: pc)
         pc &+= 1
         return byte
     }
@@ -149,7 +147,7 @@ class CPU {
     }
     
     private func fetchByteAtNextAddress() -> UInt8 {
-        return MMU.shared.safeReadValue(globalAddress: fetchNextShort())
+        return GameBoy.instance.mmu.safeReadValue(globalAddress: fetchNextShort())
     }
     
     func skipBootRom() {
@@ -467,8 +465,8 @@ extension CPU {
     /// 0x08
     private func loadSPIntoAddress() -> Int {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        MMU.shared.safeWriteValue(sp.getByte(0), globalAddress: address)
-        MMU.shared.safeWriteValue(sp.getByte(1), globalAddress: address+1)
+        GameBoy.instance.mmu.safeWriteValue(sp.getByte(0), globalAddress: address)
+        GameBoy.instance.mmu.safeWriteValue(sp.getByte(1), globalAddress: address+1)
         return 5
     }
     
@@ -601,7 +599,7 @@ extension CPU {
     
     // 0x02, 0x12, 0x22, 0x32, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x77
     private func loadRegisterIntoAddress(address: UInt16, register: UInt8, hlOperation: HLOperation = .nothing) -> Int {
-        MMU.shared.safeWriteValue(register, globalAddress: address)
+        GameBoy.instance.mmu.safeWriteValue(register, globalAddress: address)
         executeHLOperation(hlOperation)
         return 2
     }
@@ -609,7 +607,7 @@ extension CPU {
     // 0x36
     private func loadImmediateByteIntoAddress(_ address: UInt16) -> Int {
         let value = fetchNextByte()
-        MMU.shared.safeWriteValue(value, globalAddress: address)
+        GameBoy.instance.mmu.safeWriteValue(value, globalAddress: address)
         return 3
     }
     
@@ -622,7 +620,7 @@ extension CPU {
     
     // 0x0A, 0x1A, 0x2A, 0x3A, 0x46, 0x56, 0x66, 0x4E, 0x5E, 0x6E
     private func loadValueIntoRegister(register: inout UInt8, address: UInt16, hlOperation: HLOperation = .nothing) -> Int {
-        register = MMU.shared.safeReadValue(globalAddress: address)
+        register = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         executeHLOperation(hlOperation)
         return 2
     }
@@ -640,7 +638,7 @@ extension CPU {
     private func highPageLoadAIntoNextByteAddress() -> Int {
         let lowerByte = fetchNextByte()
         let address = UInt16(bytes: [lowerByte, 0xFF])!
-        MMU.shared.safeWriteValue(a, globalAddress: address)
+        GameBoy.instance.mmu.safeWriteValue(a, globalAddress: address)
         return 3
     }
     
@@ -648,35 +646,35 @@ extension CPU {
     private func highPageLoadNextByteAddressIntoA() -> Int {
         let lowerByte = fetchNextByte()
         let address = UInt16(bytes: [lowerByte, 0xFF])!
-        a = MMU.shared.safeReadValue(globalAddress: address)
+        a = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         return 3
     }
     
     // 0xE2
     private func highPageLoadAIntoAddressC() -> Int {
         let address = UInt16(bytes: [c, 0xFF])!
-        MMU.shared.safeWriteValue(a, globalAddress: address)
+        GameBoy.instance.mmu.safeWriteValue(a, globalAddress: address)
         return 2
     }
     
     // 0xF2
     private func highPageLoadAddressCIntoA() -> Int {
         let address = UInt16(bytes: [c, 0xFF])!
-        a = MMU.shared.safeReadValue(globalAddress: address)
+        a = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         return 2
     }
     
     // 0xEA
     private func loadAIntoShortAddress() -> Int {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        MMU.shared.safeWriteValue(a, globalAddress: address)
+        GameBoy.instance.mmu.safeWriteValue(a, globalAddress: address)
         return 4
     }
     
     // 0xEA, 0xFA
     private func loadShortAddressIntoA() -> Int {
         let address = UInt16(bytes: [fetchNextByte(), fetchNextByte()])!
-        a = MMU.shared.safeReadValue(globalAddress: address)
+        a = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         return 4
     }
     
@@ -715,17 +713,17 @@ extension CPU {
     
     /// 0x34
     private func incrementValue(address: UInt16) -> Int {
-        let value = MMU.shared.safeReadValue(globalAddress: address)
+        let value = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         let incrementedValue = incrementOperation(value)
-        MMU.shared.safeWriteValue(incrementedValue, globalAddress: address)
+        GameBoy.instance.mmu.safeWriteValue(incrementedValue, globalAddress: address)
         return 3
     }
     
     /// 0x35
     private func decrementValue(address: UInt16) -> Int {
-        let value = MMU.shared.safeReadValue(globalAddress: address)
+        let value = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         let decrementedValue = decrementOperation(value)
-        MMU.shared.safeWriteValue(decrementedValue, globalAddress: address)
+        GameBoy.instance.mmu.safeWriteValue(decrementedValue, globalAddress: address)
         return 3
     }
     
@@ -782,7 +780,7 @@ extension CPU {
     
     // 0x86, 0x8E
     private func addOperation(lhs: inout UInt8, address: UInt16, carry: Bool) -> Int {
-        let rhs = MMU.shared.safeReadValue(globalAddress: address)
+        let rhs = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         _ = addOperation(lhs: &lhs, rhs: rhs, carry: carry)
         return 2
     }
@@ -812,7 +810,7 @@ extension CPU {
     
     // 0x96, 0x9E
     private func subtractOperation(lhs: inout UInt8, address: UInt16, carry: Bool) -> Int {
-        let rhs = MMU.shared.safeReadValue(globalAddress: address)
+        let rhs = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         _ = subtractOperation(lhs: &lhs, rhs: rhs, carry: carry)
         return 2
     }
@@ -835,7 +833,7 @@ extension CPU {
     
     // 0xA6
     private func logicalAndOperation(lhs: inout UInt8, address: UInt16) -> Int {
-        let rhs = MMU.shared.safeReadValue(globalAddress: address)
+        let rhs = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         _ = logicalAndOperation(lhs: &lhs, rhs: rhs)
         return 2
     }
@@ -863,7 +861,7 @@ extension CPU {
     
     // 0xAE
     private func logicalXorOperation(lhs: inout UInt8, address: UInt16) -> Int {
-        let rhs = MMU.shared.safeReadValue(globalAddress: address)
+        let rhs = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         _ = logicalXorOperation(lhs: &lhs, rhs: rhs)
         return 2
     }
@@ -891,7 +889,7 @@ extension CPU {
     
     // 0xB6
     private func logicalOrOperation(lhs: inout UInt8, address: UInt16) -> Int {
-        let rhs = MMU.shared.safeReadValue(globalAddress: address)
+        let rhs = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         _ = logicalOrOperation(lhs: &lhs, rhs: rhs)
         return 2
     }
@@ -918,7 +916,7 @@ extension CPU {
     
     // 0xBE
     private func compare(lhs: UInt8, address: UInt16) -> Int {
-        let rhs = MMU.shared.safeReadValue(globalAddress: address)
+        let rhs = GameBoy.instance.mmu.safeReadValue(globalAddress: address)
         _ = compare(lhs: lhs, rhs: rhs)
         return 2
     }
@@ -967,9 +965,9 @@ extension CPU {
         let upperByte = address.getByte(1)
         
         sp &-= 1
-        MMU.shared.safeWriteValue(upperByte, globalAddress: sp)
+        GameBoy.instance.mmu.safeWriteValue(upperByte, globalAddress: sp)
         sp &-= 1
-        MMU.shared.safeWriteValue(lowerByte, globalAddress: sp)
+        GameBoy.instance.mmu.safeWriteValue(lowerByte, globalAddress: sp)
         
         return 4
     }
@@ -1118,7 +1116,7 @@ extension CPU {
         case 0x3, 0xB: return e
         case 0x4, 0xC: return h
         case 0x5, 0xD: return l
-        case 0x6, 0xE: return MMU.shared.safeReadValue(globalAddress: hl)
+        case 0x6, 0xE: return GameBoy.instance.mmu.safeReadValue(globalAddress: hl)
         case 0x7, 0xF: return a
         default: fatalError("Failed to get byte register for opcode: \(opcode)")
         }
@@ -1134,7 +1132,7 @@ extension CPU {
         case 0x3, 0xB: e = value
         case 0x4, 0xC: h = value
         case 0x5, 0xD: l = value
-        case 0x6, 0xE: MMU.shared.safeWriteValue(value, globalAddress: hl)
+        case 0x6, 0xE: GameBoy.instance.mmu.safeWriteValue(value, globalAddress: hl)
         case 0x7, 0xF: a = value
         default: fatalError("Failed to set byte register for opcode: \(opcode)")
         }
@@ -1146,9 +1144,9 @@ extension CPU {
 extension CPU {
     
     private func popStack() -> UInt16 {
-        let lowerByte = MMU.shared.safeReadValue(globalAddress: sp)
+        let lowerByte = GameBoy.instance.mmu.safeReadValue(globalAddress: sp)
         sp &+= 1
-        let upperByte = MMU.shared.safeReadValue(globalAddress: sp)
+        let upperByte = GameBoy.instance.mmu.safeReadValue(globalAddress: sp)
         sp &+= 1
         return UInt16(bytes: [lowerByte, upperByte])!
     }

@@ -10,10 +10,6 @@ import Cocoa
 
 class MasterClock {
     
-    static let shared = MasterClock()
-    
-    weak var screenRenderDelegate: ScreenRenderDelegate?
-    
     var timer: Timer?
     let timerQueue = DispatchQueue(label: "timerQueue")
     
@@ -34,20 +30,21 @@ class MasterClock {
     private(set) var tacRegister: UInt8 = 0
     
     func startTicking() {
-        self.timer = Timer.scheduledTimer(withTimeInterval: Self.timerInterval, repeats: true) { _ in
+        timer = Timer.scheduledTimer(withTimeInterval: Self.timerInterval, repeats: true) { _ in
             self.tick()
         }
     }
     
     func stopTicking() { 
-        // TODO
+        timer?.invalidate()
+        timer = nil
     }
     
     func tick() {
         timerQueue.async {
             while self.tCyclesForCurrentFrame < Self.tCyclesHz {
-                if !APU.shared.isDrainingSamples {
-                    let cpuMCycles = CPU.shared.tickReturningMCycles()
+                if !GameBoy.instance.apu.isDrainingSamples {
+                    let cpuMCycles = GameBoy.instance.cpu.tickReturningMCycles()
                     // If cycles accumulated during CPU tick is 0, then that means that the HALT flag is set.
                     // In this case, we still want to tick everything else over.
                     let adjustedMCycles = max(cpuMCycles, 1)
@@ -55,15 +52,15 @@ class MasterClock {
                     
                     self.incrementDivCounter(tCycles: tCycles)
                     self.incrementTimaRegister(tCycles: tCycles)
-                    PPU.shared.tick(tCycles: tCycles)
-                    APU.shared.tick(tCycles: tCycles)
+                    GameBoy.instance.ppu.tick(tCycles: tCycles)
+                    GameBoy.instance.apu.tick(tCycles: tCycles)
                     
                     self.tCyclesForCurrentFrame += tCycles
                 }
             }
             
             self.tCyclesForCurrentFrame -= Int(Self.tCyclesCyclesPerFrame)
-            self.screenRenderDelegate?.renderScreen(screenData: PPU.shared.screenData)
+            GameBoy.instance.renderScreen()
         }
     }
 }
@@ -91,7 +88,7 @@ extension MasterClock {
         
         let bit4Overflow = oldDiv.checkBit(4) && !divRegister.checkBit(4)
         if bit4Overflow {
-            APU.shared.tickFrameSquencer()
+            GameBoy.instance.apu.tickFrameSquencer()
         }
     }
 }
@@ -127,7 +124,7 @@ extension MasterClock {
             if timaRegister == .max {
                 // TODO: The following actually needs to be done after 1 cycle from this point.
                 timaRegister = tmaRegister
-                MMU.shared.requestTimerInterrupt()
+                GameBoy.instance.mmu.requestTimerInterrupt()
             } else {
                 timaRegister &+= 1
             }
@@ -143,9 +140,4 @@ extension MasterClock {
             internalTimaCounter = 0
         }
     }
-}
-
-// TODO: Cleanup and rename
-protocol ScreenRenderDelegate: AnyObject {
-    func renderScreen(screenData: [ColourPalette.PixelData])
 }

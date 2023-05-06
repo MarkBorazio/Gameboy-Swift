@@ -11,19 +11,19 @@ class Coordinator: NSObject {
     
     static let instance = Coordinator()
     
-    let window: NSWindow
+    let window = NSWindow(
+        contentRect: NSMakeRect(0, 0, 0, 0),
+        styleMask: [.titled, .closable, .miniaturizable, .resizable],
+        backing: .buffered,
+        defer: false
+    )
     
     private override init() {
-        window = NSWindow(
-            contentRect: NSMakeRect(0, 0, 0, 0),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
-            backing: .buffered,
-            defer: false
-        )
         super.init()
         
         window.center()
         window.delegate = self
+        window.isReleasedWhenClosed = false
     }
     
     func presentFileSelector() {
@@ -34,7 +34,7 @@ class Coordinator: NSObject {
         dialog.allowsMultipleSelection = false
         dialog.canChooseDirectories = false
 
-        let response = dialog.runModal()
+        let response = dialog.runModal() // Seems to pause thread until dismissed.
         
         guard response == NSApplication.ModalResponse.OK else {
             // User clicked on "Cancel"
@@ -50,41 +50,24 @@ class Coordinator: NSObject {
     }
     
     func startGameBoy(romURL: URL) {
+        try! GameBoy.instance.loadCartridge(romURL: romURL, skipBootROM: true)
+        GameBoy.instance.clock.startTicking()
+        
         window.contentViewController = ViewController()
         window.title = romURL.deletingPathExtension().lastPathComponent
         window.makeKeyAndOrderFront(nil)
-        
-        let saveDataURL = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            .appendingPathComponent(romURL.deletingPathExtension().lastPathComponent)
-            .appendingPathExtension("gbswiftsave")
-        
-        let rom = try! Cartridge(fileURL: romURL, saveDataURL: saveDataURL) // TODO: Handle error
-        MMU.shared.loadCartridge(cartridge: rom, skipBootRom: true)
-        MasterClock.shared.startTicking()
-        
-        someURL = romURL
     }
     
-    var someURL: URL?
+    func stopGameBoy() {
+        GameBoy.instance.saveDataToFile()
+        GameBoy.instance.removeCartridge()
+    }
 }
 
 extension Coordinator: NSWindowDelegate {
     
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        guard let someURL else { return true }
-        
-        let saveData = MMU.shared.getRAMSnapshot()
-        
-        let url = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            .appendingPathComponent(someURL.deletingPathExtension().lastPathComponent)
-            .appendingPathExtension("gbswiftsave")
-        
-        if (FileManager.default.createFile(atPath: url.path, contents: saveData, attributes: nil)) {
-            print("File created successfully.")
-        } else {
-            print("File not created.")
-        }
-        
+        stopGameBoy()
         return true
     }
 }
