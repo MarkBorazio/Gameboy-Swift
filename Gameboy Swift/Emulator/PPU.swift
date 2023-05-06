@@ -356,7 +356,7 @@ extension PPU {
             case 5: adjustedPixelIndex = 2
             case 6: adjustedPixelIndex = 1
             case 7: adjustedPixelIndex = 0
-            default: fatalError()
+            default: Coordinator.instance.crash(message: "Invalid pixel index found. Got \(adjustedPixelIndex).")
             }
         }
         let colourID = (rowData2.getBitValue(adjustedPixelIndex) << 1) | rowData1.getBitValue(adjustedPixelIndex)

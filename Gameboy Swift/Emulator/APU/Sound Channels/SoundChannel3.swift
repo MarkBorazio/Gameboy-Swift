@@ -82,7 +82,7 @@ extension SoundChannel3 {
         case Memory.addressNR33: return 0 // Write only
         case Memory.addressNR34: return nr34 & 0b0100_0000
         case Memory.addressChannel3WavePatternsRange: return readWaveRAM(globalAddress: address)
-        default: fatalError("Unknown SoundChannel3 read address received. Got \(address.hexString()).")
+        default: Coordinator.instance.crash(message: "Unknown SoundChannel3 read address received. Got \(address.hexString()).")
         }
     }
     
@@ -94,7 +94,7 @@ extension SoundChannel3 {
         case Memory.addressNR33: nr33 = value
         case Memory.addressNR34: nr34 = value
         case Memory.addressChannel3WavePatternsRange: writeWaveRAM(value, globalAddress: address)
-        default: fatalError("Unknown SoundChannel3 write address received. Got \(address.hexString()).")
+        default: Coordinator.instance.crash(message: "Unknown SoundChannel3 write address received. Got \(address.hexString()).")
         }
     }
     
@@ -147,7 +147,7 @@ extension SoundChannel3 {
         case 0b01: return 0 // 100%
         case 0b10: return 1 // 50%
         case 0b11: return 2 // 25%
-        default: fatalError("Unrecognised amplitude shift amount. Got \(rawValue).")
+        default: Coordinator.instance.crash(message: "Unrecognised amplitude shift amount. Got \(rawValue).")
         }
     }
 }

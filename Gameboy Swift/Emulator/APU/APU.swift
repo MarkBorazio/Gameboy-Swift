@@ -72,7 +72,7 @@ class APU {
             return channel4.read(address: address)
             
         default:
-            fatalError("Unhandled APU read address received. Got: \(address.hexString()).")
+            Coordinator.instance.crash(message: "Unhandled APU read address received. Got: \(address.hexString()).")
         }
     }
     
@@ -102,7 +102,7 @@ class APU {
                 channel4.write(value, address: address)
                 
             default:
-                fatalError("Unhandled APU write address received. Got: \(address.hexString()).")
+                Coordinator.instance.crash(message: "Unhandled APU write address received. Got: \(address.hexString()).")
             }
         }
 

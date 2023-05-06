@@ -18,7 +18,7 @@ class SoundChannel2: SquareWaveChannel {
         case Memory.addressNR22: return nrX2
         case Memory.addressNR23: return nrX3
         case Memory.addressNR24: return nrX4 & 0b0100_0000
-        default: fatalError("Unknown SoundChannel2 read address received. Got \(address.hexString()).")
+        default: Coordinator.instance.crash(message: "Unknown SoundChannel2 read address received. Got \(address.hexString()).")
         }
     }
     
@@ -28,11 +28,11 @@ class SoundChannel2: SquareWaveChannel {
         case Memory.addressNR22: nrX2 = value
         case Memory.addressNR23: nrX3 = value
         case Memory.addressNR24: nrX4 = value
-        default: fatalError("Unknown SoundChannel2 write address received. Got \(address.hexString()).")
+        default: Coordinator.instance.crash(message: "Unknown SoundChannel2 write address received. Got \(address.hexString()).")
         }
     }
     
     override func tickWavelengthSweepCounter() {
-        fatalError("Channel 2 does not support wavelength sweep.")
+        Coordinator.instance.crash(message: "Channel 2 does not support wavelength sweep.")
     }
 }

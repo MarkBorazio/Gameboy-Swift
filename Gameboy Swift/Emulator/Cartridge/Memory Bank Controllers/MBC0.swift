@@ -36,7 +36,7 @@ extension MBC0: MemoryBankController {
         case Memory.switchableRamBankAddressRange:
             return ram[address]
         default:
-            fatalError("Unhandled read address sent to cartridge. Got \(address.hexString()).")
+            Coordinator.instance.crash(message: "Unhandled read address sent to cartridge. Got \(address.hexString()).")
         }
     }
     

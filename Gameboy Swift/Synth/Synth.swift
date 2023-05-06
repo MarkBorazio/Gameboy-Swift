@@ -48,7 +48,7 @@ class Synth {
             try audioEngine.start()
             audioPlayerNode.play()
         } catch {
-            fatalError("Failed to start Audio Engine. Got error: \(error).")
+            Coordinator.instance.crash(message: "Failed to start Audio Engine. Got error: \(error).")
         }
     }
     

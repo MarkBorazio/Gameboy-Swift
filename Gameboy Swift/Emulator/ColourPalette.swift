@@ -33,7 +33,7 @@ struct ColourPalette {
         case Self.lightGreyRaw: return lightGrey
         case Self.darkGreyRaw: return darkGrey
         case Self.blackRaw: return black
-        default: fatalError()
+        default: Coordinator.instance.crash(message: "Invalid colour ID found. Got \(rawColour.hexString()).")
         }
     }
 }

@@ -38,7 +38,7 @@ class MBC1 {
         case Self.bankMode0: bankMode = .mode0
         case Self.bankMode1: bankMode = .mode1
         default:
-            fatalError("Unhandled bank mode value set. Got \(newValue.hexString()).")
+            Coordinator.instance.crash(message: "Unhandled bank mode value set. Got \(newValue.hexString()).")
         }
     }
     
@@ -153,7 +153,7 @@ extension MBC1: MemoryBankController {
         case Memory.setBankModeAddressRange:
             setBankMode(value: value)
         default:
-            fatalError("Unhandled write address sent to cartridge. Got \(address.hexString()).")
+            Coordinator.instance.crash(message: "Unhandled write address sent to cartridge. Got \(address.hexString()).")
         }
     }
     
@@ -166,7 +166,7 @@ extension MBC1: MemoryBankController {
         case Memory.switchableRamBankAddressRange:
             return readRamBank(address: address)
         default:
-            fatalError("Unhandled read address sent to cartridge. Got \(address.hexString()).")
+            Coordinator.instance.crash(message: "Unhandled read address sent to cartridge. Got \(address.hexString()).")
         }
     }
     

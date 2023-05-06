@@ -87,7 +87,7 @@ extension SoundChannel4 {
         case Memory.addressNR42: return nr42
         case Memory.addressNR43: return nr43
         case Memory.addressNR44: return nr44
-        default: fatalError("Unknown SoundChannel4 read address received. Got \(address.hexString()).")
+        default: Coordinator.instance.crash(message: "Unknown SoundChannel4 read address received. Got \(address.hexString()).")
         }
     }
     
@@ -97,7 +97,7 @@ extension SoundChannel4 {
         case Memory.addressNR42: nr42 = value
         case Memory.addressNR43: nr43 = value
         case Memory.addressNR44: nr44 = value
-        default: fatalError("Unknown SoundChannel4 write address received. Got \(address.hexString()).")
+        default: Coordinator.instance.crash(message: "Unknown SoundChannel4 write address received. Got \(address.hexString()).")
         }
     }
     

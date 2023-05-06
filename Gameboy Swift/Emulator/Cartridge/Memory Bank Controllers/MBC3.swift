@@ -108,7 +108,7 @@ extension MBC3 {
         case Self.rtcDaysHighRegisterIndex:
             return realTimeClock.dayHigh
         default:
-            fatalError("Invalid RAM and RTC register value found when trying to read. Got \(ramAndRTCRegister.hexString()).")
+            Coordinator.instance.crash(message: "Invalid RAM and RTC register value found when trying to read. Got \(ramAndRTCRegister.hexString()).")
         }
     }
     
@@ -134,7 +134,7 @@ extension MBC3 {
         case Self.rtcDaysHighRegisterIndex:
             realTimeClock.dayHigh = value
         default:
-            fatalError("Invalid RAM and RTC register value found when trying to write. Got \(ramAndRTCRegister.hexString()).")
+            Coordinator.instance.crash(message: "Invalid RAM and RTC register value found when trying to write. Got \(ramAndRTCRegister.hexString()).")
         }
     }
     
@@ -201,7 +201,7 @@ extension MBC3: MemoryBankController {
         case Memory.setBankModeAddressRange:
             latchClockData(value: value)
         default:
-            fatalError("Unhandled write address sent to cartridge. Got \(address.hexString()).")
+            Coordinator.instance.crash(message: "Unhandled write address sent to cartridge. Got \(address.hexString()).")
         }
     }
     
@@ -214,7 +214,7 @@ extension MBC3: MemoryBankController {
         case Memory.switchableRamBankAddressRange:
             return readRamBankOrRTCRegister(address: address)
         default:
-            fatalError("Unhandled read address sent to cartridge. Got \(address.hexString()).")
+            Coordinator.instance.crash(message: "Unhandled read address sent to cartridge. Got \(address.hexString()).")
         }
     }
     

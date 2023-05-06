@@ -105,12 +105,10 @@ class CPU {
     private func executeInstruction() -> Int {
         guard !haltFlag else { return 0 }
         
-//        print("--- PC: \(pc.hexString())")
         let opcode = fetchNextByte()
         
         let value: Int
         if opcode == 0xCB {
-//            print("Byte was 0xCB")
             value = execute16BitInstruction()
         } else {
             value = execute8BitInstruction(opcode: opcode)
@@ -125,7 +123,7 @@ class CPU {
             haltFlag = false
             if interruptMasterEnableFlag {
                 guard let nextInterruptAddress = GameBoy.instance.mmu.getNextPendingAndEnabledInterrupt() else {
-                    fatalError("This should never be `nil` at this point")
+                    Coordinator.instance.crash(message: "This should never be `nil` at this point")
                 }
                 interruptMasterEnableFlag = false
                 let cycles = pushOntoStack(address: pc)
@@ -166,7 +164,6 @@ extension CPU {
     
     /// Execute the instruction from the opcode and returns the number of cycles it took.
     private func execute8BitInstruction(opcode: UInt8) -> Int {
-//        print("Excuting 8-Bit Instruction: \(opcode.hexString())")
         switch opcode {
         case 0x00: return noOp()
         case 0x01: return loadImmediateShortIntoPair(&bc)
@@ -440,7 +437,7 @@ extension CPU {
         case 0xFE: return compareByteToA()
         case 0xFF: return restart(offset: 7)
             
-        default: fatalError("Encountered unknown 8-bit opcode: \(opcode).")
+        default: Coordinator.instance.crash(message: "Encountered unknown 8-bit opcode: \(opcode).")
         }
         
         return 0 // No instruction for opcode.
@@ -485,7 +482,7 @@ extension CPU {
         // Stop instruction is two bytes long, so we need to read the next byte as well.
         // 0x10, 0x00
         stopFlag = true
-        guard fetchNextByte() == 0x00 else { fatalError("Second byte of STOP instruction was not 0x00.") }
+        guard fetchNextByte() == 0x00 else { Coordinator.instance.crash(message: "Second byte of STOP instruction was not 0x00.") }
         return 1
     }
     
@@ -1047,7 +1044,6 @@ extension CPU {
     
     private func execute16BitInstruction() -> Int {
         let opcode = fetchNextByte()
-//        print("Executing 8-Bit Instruction: \(opcode.hexString())")
         let registerId = opcode.lowNibble
         let usesHL = (registerId == 0x6) || (registerId == 0xE)
         
@@ -1097,7 +1093,7 @@ extension CPU {
             setBit(opcode: opcode)
             return usesHL ? 4 : 2
             
-        default: fatalError("Unhandled opcode found. Got \(opcode).")
+        default: Coordinator.instance.crash(message: "Unhandled opcode found. Got \(opcode).")
         }
     }
 }
@@ -1118,7 +1114,7 @@ extension CPU {
         case 0x5, 0xD: return l
         case 0x6, 0xE: return GameBoy.instance.mmu.safeReadValue(globalAddress: hl)
         case 0x7, 0xF: return a
-        default: fatalError("Failed to get byte register for opcode: \(opcode)")
+        default: Coordinator.instance.crash(message: "Failed to get byte register for opcode: \(opcode)")
         }
     }
     
@@ -1134,7 +1130,7 @@ extension CPU {
         case 0x5, 0xD: l = value
         case 0x6, 0xE: GameBoy.instance.mmu.safeWriteValue(value, globalAddress: hl)
         case 0x7, 0xF: a = value
-        default: fatalError("Failed to set byte register for opcode: \(opcode)")
+        default: Coordinator.instance.crash(message: "Failed to set byte register for opcode: \(opcode)")
         }
     }
 }

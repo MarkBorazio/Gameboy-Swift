@@ -104,7 +104,7 @@ extension MasterClock {
         case 0b01: return 16 // 262144 Hz
         case 0b10: return 64 // 65536 Hz
         case 0b11: return 256 // 16384 Hz
-        default: fatalError("This should never be reached.")
+        default: Coordinator.instance.crash(message: "This should never be reached.")
         }
     }
     

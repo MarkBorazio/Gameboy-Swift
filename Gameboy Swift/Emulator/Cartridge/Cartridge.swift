@@ -58,7 +58,7 @@ struct Cartridge {
         case Self.sixteenRamBanks: numberOfRamBanks = 16
         case Self.eightRamBanks: numberOfRamBanks = 8
         default:
-            fatalError("Got unrecognised number of ram banks: \(numberOfRamBanksRaw.hexString())")
+            Coordinator.instance.crash(message: "Got unrecognised number of ram banks: \(numberOfRamBanksRaw.hexString())")
         }
         
         // MBC
@@ -66,13 +66,13 @@ struct Cartridge {
         switch cartridgeType {
         case Self.mbcType0: mbc = MBC0(rom: rom)
         case Self.mbcType1: mbc = MBC1(rom: rom, numberOfRomBanks: numberOfRomBanks, numberOfRamBanks: numberOfRamBanks)
-        case Self.mbcType2: fatalError("MBC2 not yet implemented")
+        case Self.mbcType2: Coordinator.instance.crash(message: "MBC2 not yet implemented")
         case Self.mbcType3: mbc = MBC3(rom: rom, numberOfRomBanks: numberOfRomBanks, numberOfRamBanks: numberOfRamBanks, saveData: saveData)
-        case Self.mbcType5: fatalError("MBC5 not yet implemented")
-        case Self.mbcType6: fatalError("MBC6 not yet implemented")
-        case Self.mbcType7: fatalError("MBC7 not yet implemented")
+        case Self.mbcType5: Coordinator.instance.crash(message: "MBC5 not yet implemented")
+        case Self.mbcType6: Coordinator.instance.crash(message: "MBC6 not yet implemented")
+        case Self.mbcType7: Coordinator.instance.crash(message: "MBC7 not yet implemented")
         default:
-            fatalError("Got unrecognised cartridge Type: \(cartridgeType.hexString())")
+            Coordinator.instance.crash(message: "Got unrecognised cartridge Type: \(cartridgeType.hexString())")
         }
     }
     

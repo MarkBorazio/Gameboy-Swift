@@ -19,7 +19,7 @@ class SoundChannel1: SquareWaveChannel {
         case Memory.addressNR12: return nrX2
         case Memory.addressNR13: return nrX3
         case Memory.addressNR14: return nrX4 & 0b0100_0000
-        default: fatalError("Unknown SoundChannel1 read address received. Got \(address.hexString()).")
+        default: Coordinator.instance.crash(message: "Unknown SoundChannel1 read address received. Got \(address.hexString()).")
         }
     }
     
@@ -30,7 +30,7 @@ class SoundChannel1: SquareWaveChannel {
         case Memory.addressNR12: nrX2 = value
         case Memory.addressNR13: nrX3 = value
         case Memory.addressNR14: nrX4 = value
-        default: fatalError("Unknown SoundChannel1 address received. Got \(address.hexString()).")
+        default: Coordinator.instance.crash(message: "Unknown SoundChannel1 address received. Got \(address.hexString()).")
         }
     }
 }
