@@ -17,8 +17,6 @@ struct ColourPalette {
             let bitShiftLength = id * bitsPerColourID
             return (palette >> bitShiftLength) & bitMask
         }()
-        
-        var debug = false
     }
 
     // First bit pair is for colour ID 0
@@ -27,17 +25,14 @@ struct ColourPalette {
     // Fourth bit pair is for colour ID 3
     // We can use the value of the colour ID to index each bit pair
     static func getColour(pixelData: PixelData) -> UInt32 {
-        if pixelData.debug {
-            return UInt32(bytes: [0xA0, 0xB0, 0xC0, 0x0B])!
-        }
         
         let bitShiftLength = pixelData.id * bitsPerColourID
         let rawColour = (pixelData.palette >> bitShiftLength) & bitMask
         switch rawColour {
-        case 0b00: return white
-        case 0b01: return lightGrey
-        case 0b10: return darkGrey
-        case 0b11: return black
+        case Self.whiteRaw: return white
+        case Self.lightGreyRaw: return lightGrey
+        case Self.darkGreyRaw: return darkGrey
+        case Self.blackRaw: return black
         default: fatalError()
         }
     }
@@ -49,10 +44,10 @@ extension ColourPalette {
     private static let bitsPerColourID: UInt8 = 2
     private static let bitMask: UInt8 = 0b11
     
-    static let whiteColourId: UInt8 = 0b00
-    static let lightGreyColourId: UInt8 = 0b01
-    static let darkGreyColourId: UInt8 = 0b10
-    static let blackColourId: UInt8 = 0b11
+    private static let whiteRaw: UInt8 = 0b00
+    private static let lightGreyRaw: UInt8 = 0b01
+    private static let darkGreyRaw: UInt8 = 0b10
+    private static let blackRaw: UInt8 = 0b11
     
     private static let white = UInt32(bytes: [0xFF, 0xFF, 0xFF, 0xFF])!
     private static let lightGrey = UInt32(bytes: [0xCC, 0xCC, 0xCC, 0xFF])!

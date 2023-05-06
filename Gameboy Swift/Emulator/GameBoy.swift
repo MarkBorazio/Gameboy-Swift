@@ -55,10 +55,9 @@ class GameBoy {
         let saveDataURL = cartridge.saveDataURL
         let saveData = cartridge.getRAMSnapshot()
         
-        if (FileManager.default.createFile(atPath: saveDataURL.path, contents: saveData, attributes: nil)) {
-            print("File created successfully.")
-        } else {
-            print("File not created.")
+        let saveWasSuccessful = FileManager.default.createFile(atPath: saveDataURL.path, contents: saveData, attributes: nil)
+        if !saveWasSuccessful {
+            print("Failed to save file.")
         }
     }
     

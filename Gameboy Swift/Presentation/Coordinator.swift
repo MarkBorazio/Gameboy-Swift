@@ -50,12 +50,13 @@ class Coordinator: NSObject {
     }
     
     func startGameBoy(romURL: URL) {
-        try! GameBoy.instance.loadCartridge(romURL: romURL, skipBootROM: true)
-        GameBoy.instance.clock.startTicking()
+        try! GameBoy.instance.loadCartridge(romURL: romURL, skipBootROM: false)
         
         window.contentViewController = ViewController()
         window.title = romURL.deletingPathExtension().lastPathComponent
         window.makeKeyAndOrderFront(nil)
+        
+        GameBoy.instance.clock.startTicking()
     }
     
     func stopGameBoy() {
