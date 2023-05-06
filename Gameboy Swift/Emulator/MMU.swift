@@ -48,6 +48,7 @@ class MMU {
         safeWriteValue(0x00, globalAddress: Memory.addressWindowY)
         safeWriteValue(0x00, globalAddress: Memory.addressWindowX)
         safeWriteValue(0x00, globalAddress: Memory.interruptRegisterAddress)
+        isBootRomOverlayed = false
     }
     
     func safeReadValue(globalAddress: UInt16) -> UInt8 {
