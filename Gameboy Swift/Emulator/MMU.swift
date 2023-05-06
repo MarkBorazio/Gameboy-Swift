@@ -82,12 +82,7 @@ class MMU {
         case Memory.addressJoypad:
             return GameBoy.instance.joypad.readJoypad()
             
-        case Memory.addressGlobalAPURange,
-            Memory.addressChannel1Range,
-            Memory.addressChannel2Range,
-            Memory.addressChannel3Range,
-            Memory.addressChannel3WavePatternsRange,
-            Memory.addressChannel4Range:
+        case Memory.addressAPURange:
             return GameBoy.instance.apu.read(address: globalAddress)
             
         case Memory.addressDIV:
@@ -122,12 +117,7 @@ class MMU {
         case Memory.videoRamAddressRange:
             GameBoy.instance.ppu.writeVRAM(globalAddress: globalAddress, value: value)
             
-        case Memory.addressGlobalAPURange,
-            Memory.addressChannel1Range,
-            Memory.addressChannel2Range,
-            Memory.addressChannel3Range,
-            Memory.addressChannel3WavePatternsRange,
-            Memory.addressChannel4Range:
+        case Memory.addressAPURange:
             GameBoy.instance.apu.write(value, address: globalAddress)
             
         case Memory.biosDeactivateAddress:

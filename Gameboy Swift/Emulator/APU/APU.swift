@@ -41,11 +41,12 @@ class APU {
         
         #if RELEASE
         synth.volume = 0.1
-        synth.start()
         #else
+        synth.volume = 0.0
         print("Audio is disabled for the debug scheme. Use a release scheme if you want to hear audio.")
         #endif
 
+        synth.start()
     }
     
     func read(address: UInt16) -> UInt8 {
@@ -57,7 +58,7 @@ class APU {
             return nr51
         
         case Memory.addressNR52:
-            return nr52
+            return nr52 | 0x70
             
         case Memory.addressChannel1Range:
             return channel1.read(address: address)
@@ -70,6 +71,9 @@ class APU {
             
         case Memory.addressChannel4Range:
             return channel4.read(address: address)
+            
+        case Memory.addressAPUUnusedRange:
+            return 0xFF
             
         default:
             Coordinator.instance.crash(message: "Unhandled APU read address received. Got: \(address.hexString()).")
@@ -100,6 +104,9 @@ class APU {
                 
             case Memory.addressChannel4Range:
                 channel4.write(value, address: address)
+                
+            case Memory.addressAPUUnusedRange:
+                break
                 
             default:
                 Coordinator.instance.crash(message: "Unhandled APU write address received. Got: \(address.hexString()).")

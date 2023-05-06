@@ -10,7 +10,7 @@ import Foundation
 // Custom Wave Channel
 class SoundChannel3 {
     
-    private static let lengthTime: UInt8 = 64
+    private static let lengthTime: UInt8 = 255
     
     var isEnabled = false
     
@@ -76,11 +76,11 @@ extension SoundChannel3 {
     
     func read(address: UInt16) -> UInt8 {
         switch address {
-        case Memory.addressNR30: return nr30
-        case Memory.addressNR31: return 0 // Write only
-        case Memory.addressNR32: return nr32
-        case Memory.addressNR33: return 0 // Write only
-        case Memory.addressNR34: return nr34 & 0b0100_0000
+        case Memory.addressNR30: return nr30 | 0x7F
+        case Memory.addressNR31: return 0xFF // Write only
+        case Memory.addressNR32: return nr32 | 0x9F
+        case Memory.addressNR33: return 0xFF // Write only
+        case Memory.addressNR34: return nr34 | 0xBF
         case Memory.addressChannel3WavePatternsRange: return readWaveRAM(globalAddress: address)
         default: Coordinator.instance.crash(message: "Unknown SoundChannel3 read address received. Got \(address.hexString()).")
         }

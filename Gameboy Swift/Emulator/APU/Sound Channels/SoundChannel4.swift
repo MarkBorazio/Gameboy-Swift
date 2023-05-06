@@ -15,6 +15,7 @@ class SoundChannel4 {
     var isEnabled = false
     private var isDACEnabled = false // TODO: Fade out when set to false
     
+    private var nr40: UInt8 = 0
     private var nr41: UInt8 = 0
     private var nr42: UInt8 = 0
     private var nr43: UInt8 = 0
@@ -83,16 +84,18 @@ extension SoundChannel4 {
     
     func read(address: UInt16) -> UInt8 {
         switch address {
-        case Memory.addressNR41: return 0 // Write only
+        case Memory.addressNR40: return 0xFF // Write only
+        case Memory.addressNR41: return 0xFF // Write only
         case Memory.addressNR42: return nr42
         case Memory.addressNR43: return nr43
-        case Memory.addressNR44: return nr44
+        case Memory.addressNR44: return nr44 | 0xBF
         default: Coordinator.instance.crash(message: "Unknown SoundChannel4 read address received. Got \(address.hexString()).")
         }
     }
     
     func write(_ value: UInt8, address: UInt16) {
         switch address {
+        case Memory.addressNR40: nr40 = value
         case Memory.addressNR41: nr41 = value
         case Memory.addressNR42: nr42 = value
         case Memory.addressNR43: nr43 = value

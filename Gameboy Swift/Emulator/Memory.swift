@@ -144,26 +144,29 @@ enum Memory {
     
     
     // MARK: - APU
+    static let addressAPURange: ClosedRange<UInt16> = 0xFF10...0xFF3F
+    static let addressAPUUnusedRange: ClosedRange<UInt16> = 0xFF27...0xFF2F
     
-    static let addressGlobalAPURange: ClosedRange<UInt16> = 0xFF24...0xFF26
+    static let addressAPURegistersRange: ClosedRange<UInt16> = addressNR50...addressNR52
     static let addressNR50: UInt16 = 0xFF24
     static let addressNR51: UInt16 = 0xFF25
     static let addressNR52: UInt16 = 0xFF26
     
-    static let addressChannel1Range: ClosedRange<UInt16> = 0xFF10...0xFF14
+    static let addressChannel1Range: ClosedRange<UInt16> = addressNR10...addressNR14
     static let addressNR10: UInt16 = 0xFF10
     static let addressNR11: UInt16 = 0xFF11
     static let addressNR12: UInt16 = 0xFF12
     static let addressNR13: UInt16 = 0xFF13
     static let addressNR14: UInt16 = 0xFF14
     
-    static let addressChannel2Range: ClosedRange<UInt16> = 0xFF16...0xFF19
+    static let addressChannel2Range: ClosedRange<UInt16> = addressNR20...addressNR24
+    static let addressNR20: UInt16 = 0xFF15
     static let addressNR21: UInt16 = 0xFF16
     static let addressNR22: UInt16 = 0xFF17
     static let addressNR23: UInt16 = 0xFF18
     static let addressNR24: UInt16 = 0xFF19
     
-    static let addressChannel3Range: ClosedRange<UInt16> = 0xFF1A...0xFF1E
+    static let addressChannel3Range: ClosedRange<UInt16> = addressNR30...addressNR34
     static let addressNR30: UInt16 = 0xFF1A
     static let addressNR31: UInt16 = 0xFF1B
     static let addressNR32: UInt16 = 0xFF1C
@@ -171,7 +174,8 @@ enum Memory {
     static let addressNR34: UInt16 = 0xFF1E
     static let addressChannel3WavePatternsRange: ClosedRange<UInt16> = 0xFF30...0xFF3F
     
-    static let addressChannel4Range: ClosedRange<UInt16> = 0xFF20...0xFF23
+    static let addressChannel4Range: ClosedRange<UInt16> = addressNR40...addressNR44
+    static let addressNR40: UInt16 = 0xFF1F
     static let addressNR41: UInt16 = 0xFF20
     static let addressNR42: UInt16 = 0xFF21
     static let addressNR43: UInt16 = 0xFF22

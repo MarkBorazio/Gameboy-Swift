@@ -11,7 +11,7 @@ import AVFAudio
 // Used for common behaviour between Channel 1 and Channel 2
 class SquareWaveChannel {
     
-    private static let lengthTime: UInt8 = 255
+    private static let lengthTime: UInt8 = 64
     
     var isEnabled = false
     private var isDACEnabled = false // TODO: Fade out when set to false

@@ -14,11 +14,11 @@ class SoundChannel1: SquareWaveChannel {
     
     func read(address: UInt16) -> UInt8 {
         switch address {
-        case Memory.addressNR10: return nrX0
-        case Memory.addressNR11: return nrX1 & 0b1100_0000
+        case Memory.addressNR10: return nrX0 | 0x80
+        case Memory.addressNR11: return nrX1 | 0x3F
         case Memory.addressNR12: return nrX2
-        case Memory.addressNR13: return nrX3
-        case Memory.addressNR14: return nrX4 & 0b0100_0000
+        case Memory.addressNR13: return 0xFF // Write Only
+        case Memory.addressNR14: return nrX4 | 0xBF
         default: Coordinator.instance.crash(message: "Unknown SoundChannel1 read address received. Got \(address.hexString()).")
         }
     }
