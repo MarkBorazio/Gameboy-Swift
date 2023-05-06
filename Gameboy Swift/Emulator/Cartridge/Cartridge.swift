@@ -33,21 +33,13 @@ struct Cartridge {
         
         // ROM Banks
         let numberOfRomBanks: Int
-        let numberOfRomBanksRaw = rom[Memory.numberOfRomBanksAddress]
-        switch numberOfRomBanksRaw {
-        case Self.numRomBanks2: numberOfRomBanks = 2
-        case Self.numRomBanks4: numberOfRomBanks = 4
-        case Self.numRomBanks8: numberOfRomBanks = 8
-        case Self.numRomBanks16: numberOfRomBanks = 16
-        case Self.numRomBanks32: numberOfRomBanks = 32
-        case Self.numRomBanks64: numberOfRomBanks = 64
-        case Self.numRomBanks128: numberOfRomBanks = 128
-        case Self.numRomBanks256: numberOfRomBanks = 256
-        case Self.numRomBanks512: numberOfRomBanks = 512
-        default:
-            fatalError("Got unrecognised number of rom banks: \(numberOfRomBanksRaw.hexString())")
+        let numberOfRomBanksShift = rom[Memory.numberOfRomBanksAddress]
+        if Self.validNumRomBanksShift.contains(numberOfRomBanksShift) {
+            numberOfRomBanks = 2 << numberOfRomBanksShift
+        } else {
+            Coordinator.instance.crash(message: "Got unrecognised number of rom banks: \(numberOfRomBanksShift.hexString())")
         }
-        
+    
         // RAM Banks
         let numberOfRamBanks: Int
         let numberOfRamBanksRaw = rom[Memory.numberOfRamBanksAddress]
@@ -104,15 +96,7 @@ extension Cartridge {
     
     
     // Rom Bank
-    private static let numRomBanks2: UInt8 = 0x0
-    private static let numRomBanks4: UInt8 = 0x1
-    private static let numRomBanks8: UInt8 = 0x2
-    private static let numRomBanks16: UInt8 = 0x3
-    private static let numRomBanks32: UInt8 = 0x4
-    private static let numRomBanks64: UInt8 = 0x5
-    private static let numRomBanks128: UInt8 = 0x6
-    private static let numRomBanks256: UInt8 = 0x7
-    private static let numRomBanks512: UInt8 = 0x8
+    private static let validNumRomBanksShift: ClosedRange<UInt8> = 0...8
     
     // Ram Bank
     static let ramBankSize: Int = 8 * 1024 // 8KB
