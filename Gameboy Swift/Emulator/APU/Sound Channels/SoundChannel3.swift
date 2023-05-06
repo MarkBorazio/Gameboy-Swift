@@ -99,14 +99,14 @@ extension SoundChannel3 {
     }
     
     private func readWaveRAM(globalAddress: UInt16) -> UInt8 {
-        let sampleIndex = globalAddress - Memory.addressChannel3WavePatternsRange.lowerBound
+        let sampleIndex = (globalAddress - Memory.addressChannel3WavePatternsRange.lowerBound) * 2
         let highNibble = sampleBuffer[sampleIndex] & 0xF
         let lowNibble = sampleBuffer[sampleIndex+1] & 0xF
         return highNibble << 4 | lowNibble
     }
     
     private func writeWaveRAM(_ value: UInt8, globalAddress: UInt16) {
-        let sampleIndex = globalAddress - Memory.addressChannel3WavePatternsRange.lowerBound
+        let sampleIndex = (globalAddress - Memory.addressChannel3WavePatternsRange.lowerBound) * 2
         sampleBuffer[sampleIndex] = value.highNibble
         sampleBuffer[sampleIndex+1] = value.lowNibble
     }

@@ -312,9 +312,7 @@ extension APU {
                 channel3.write(0, address: $0)
             }
             
-            Memory.addressChannel3WavePatternsRange.forEach {
-                channel3.write(0, address: $0)
-            }
+            // Don't clear wave RAM
             
             Memory.addressChannel4Range.forEach {
                 channel4.write(0, address: $0)

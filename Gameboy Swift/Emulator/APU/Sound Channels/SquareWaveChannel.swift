@@ -14,11 +14,19 @@ class SquareWaveChannel {
     private static let lengthTime: UInt8 = 64
     
     var isEnabled = false
-    private var isDACEnabled = false // TODO: Fade out when set to false
+    private var isDACEnabled: Bool { // TODO: Fade out when set to false
+        (nrX2 & 0b1111_1000) != 0
+    }
     
     var nrX0: UInt8 = 0
     var nrX1: UInt8 = 0
-    var nrX2: UInt8 = 0
+    var nrX2: UInt8 = 0 {
+        didSet {
+            if !isDACEnabled {
+                isEnabled = false
+            }
+        }
+    }
     var nrX3: UInt8 = 0
     var nrX4: UInt8 = 0 {
         didSet {
@@ -163,7 +171,6 @@ extension SquareWaveChannel {
         amplitudeSweepPace = nrX2 & 0b111
         amplitudeSweepAddition = nrX2.checkBit(3)
         amplitudeRaw = (nrX2 & 0b1111_0000) >> 4
-        isDACEnabled = (nrX2 & 0b1111_1000) != 0
         
         amplitudeSweepCounter = Int(amplitudeSweepPace) // Not sure if this should be done here
         

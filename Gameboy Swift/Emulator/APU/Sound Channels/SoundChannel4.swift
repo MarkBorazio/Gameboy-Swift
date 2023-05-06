@@ -13,11 +13,19 @@ class SoundChannel4 {
     private static let lengthTime: UInt8 = 64
     
     var isEnabled = false
-    private var isDACEnabled = false // TODO: Fade out when set to false
+    private var isDACEnabled: Bool { // TODO: Fade out when set to false
+        (nr42 & 0b1111_1000) != 0
+    }
     
     private var nr40: UInt8 = 0
     private var nr41: UInt8 = 0
-    private var nr42: UInt8 = 0
+    private var nr42: UInt8 = 0 {
+        didSet {
+            if !isDACEnabled {
+                isEnabled = false
+            }
+        }
+    }
     private var nr43: UInt8 = 0
     private var nr44: UInt8 = 0 {
         didSet {
@@ -125,7 +133,6 @@ extension SoundChannel4 {
         amplitudeSweepPace = nr42 & 0b111
         amplitudeSweepAddition = nr42.checkBit(3)
         amplitudeRaw = (nr42 & 0b1111_0000) >> 4
-        isDACEnabled = (nr42 & 0b1111_1000) != 0
         
         amplitudeSweepCounter = Int(amplitudeSweepPace) // Not sure if this should be done here
         
