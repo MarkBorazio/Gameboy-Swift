@@ -23,6 +23,9 @@ class GameBoy {
     
     weak var screenRenderDelegate: ScreenRenderDelegate?
     
+    private var periodicSaveTimer: Timer?
+    private static let saveIntervalSeconds: TimeInterval = 5
+    
     func loadCartridge(romURL: URL, skipBootROM: Bool) throws {
         resetState()
         cartridge = try Cartridge(romURL: romURL)
@@ -31,9 +34,14 @@ class GameBoy {
             mmu.skipBootRom()
             cpu.skipBootRom()
         }
+        
+        setupPeriodicSaving()
     }
     
     func removeCartridge() {
+        periodicSaveTimer?.invalidate()
+        periodicSaveTimer = nil
+        
         resetState()
         cartridge = nil
     }
@@ -47,6 +55,15 @@ class GameBoy {
         ppu = PPU()
         apu = APU()
         joypad = Joypad()
+    }
+    
+    private func setupPeriodicSaving() {
+        periodicSaveTimer = .scheduledTimer(
+            withTimeInterval: Self.saveIntervalSeconds,
+            repeats: true
+        ) { _ in
+            self.saveDataToFile()
+        }
     }
     
     func saveDataToFile() {

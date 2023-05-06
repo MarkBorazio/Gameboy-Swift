@@ -27,6 +27,8 @@ class MasterClock {
     var tmaRegister: UInt8 = 0
     private(set) var tacRegister: UInt8 = 0
     
+    // Game speed is synced by audio.
+    // This results in almost no audio pops, but more screen tearing than syncing via frame duration.
     func startTicking() {
         isTicking = true
         timerQueue.async {

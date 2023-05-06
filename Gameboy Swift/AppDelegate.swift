@@ -7,9 +7,6 @@
 
 import Cocoa
 
-// TODO:
-// - Periodic saving
-
 class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
