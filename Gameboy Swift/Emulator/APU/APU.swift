@@ -39,8 +39,13 @@ class APU {
         let tCyclesPerSampleDouble = Double(MasterClock.tCyclesHz) / synth.sampleRate
         tCyclesPerSample = Int(tCyclesPerSampleDouble.rounded(.awayFromZero))
         
+        #if RELEASE
         synth.volume = 0.1
         synth.start()
+        #else
+        print("Audio is disabled for the debug scheme. Use a release scheme if you want to hear audio.")
+        #endif
+
     }
     
     func read(address: UInt16) -> UInt8 {
