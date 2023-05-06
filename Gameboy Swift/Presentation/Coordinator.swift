@@ -50,7 +50,7 @@ class Coordinator: NSObject {
     }
     
     func startGameBoy(romURL: URL) {
-        try! GameBoy.instance.loadCartridge(romURL: romURL, skipBootROM: false)
+        try! GameBoy.instance.loadCartridge(romURL: romURL, skipBootROM: true)
         
         window.contentViewController = ViewController()
         window.title = romURL.deletingPathExtension().lastPathComponent
@@ -62,6 +62,19 @@ class Coordinator: NSObject {
     func stopGameBoy() {
         GameBoy.instance.saveDataToFile()
         GameBoy.instance.removeCartridge()
+    }
+    
+    func crash(message: String) -> Never {
+        stopGameBoy()
+        
+        let alert = NSAlert()
+        alert.messageText = "Error"
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+        
+        objc_terminate()
     }
 }
 
