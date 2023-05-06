@@ -210,15 +210,7 @@ extension SquareWaveChannel {
     private func triggerChannelIfRequired() {
         let shouldTrigger = nrX4.checkBit(7)
         guard shouldTrigger else { return }
-        
-        let dacWasOff = !isDACEnabled
-        
         triggerChannel()
-        
-        // Note that if the channel's DAC is off, after the above actions occur the channel will be immediately disabled again.
-        if dacWasOff {
-            isEnabled = false
-        }
     }
     
     private func triggerChannel() {
