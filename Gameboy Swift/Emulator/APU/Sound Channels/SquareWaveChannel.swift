@@ -35,6 +35,8 @@ class SquareWaveChannel {
     private var dutyCycleBitPointer: Int = 0
     private var lengthTimer: UInt8 = 0
     
+    private var wavelengthShadow: UInt16 = 0
+    private var wavelengthSweepEnabled = false
     private var wavelengthSweepCounter = 0
 
     private var amplitudeRaw: UInt8 = 0
@@ -68,9 +70,9 @@ class SquareWaveChannel {
     }
     
     func tickWavelengthSweepCounter() {
-        wavelengthSweepCounter += 1
-        if wavelengthSweepCounter == wavelengthSweepPace {
-            wavelengthSweepCounter = 0
+        wavelengthSweepCounter -= 1
+        if wavelengthSweepCounter <= 0 {
+            reloadWavelengthSweepTimer()
             iterateWavelengthSweep()
         }
     }
@@ -80,37 +82,68 @@ class SquareWaveChannel {
 
 extension SquareWaveChannel {
     
-    private var wavelengthSweepSlope: UInt8 {
+    private var wavelengthSweepShift: UInt8 {
         nrX0 & 0b111
     }
     
     private var wavelengthSweepAddition: Bool {
-        nrX0.checkBit(3)
+        !nrX0.checkBit(3)
     }
     
-    private var wavelengthSweepPace: UInt8 {
+    private var wavelengthSweepPeriod: UInt8 {
         (nrX0 & 0b0111_0000) >> 4
     }
 
+    // Ref: https://nightshade256.github.io/2021/03/27/gb-sound-emulation.html
     private func iterateWavelengthSweep() {
-        let arithmeticFuction: ((UInt16, UInt16) -> UInt16) = wavelengthSweepAddition ? (+) : (-)
-        let divisor = pow(2.0, Float(wavelengthSweepSlope))
-        let difference = wavelength / UInt16(divisor)
-        let newWavelength = arithmeticFuction(wavelength, difference)
-
-        let didOverflow = newWavelength.checkBit(11)
-        if didOverflow && wavelengthSweepAddition {
-            isEnabled = false
-        }
-
-        if isEnabled {
-            let sweepIterationsEnabled = wavelengthSweepSlope != 0
-            if sweepIterationsEnabled {
-                wavelength = newWavelength & 0b111_1111_1111 // 11 bits wide
+        if wavelengthSweepEnabled && wavelengthSweepPeriod != 0 {
+            let newWavelength = calculateNewWavelength()
+            
+            let didOverflow = newWavelength >= 2048
+            if !didOverflow && wavelengthSweepShift != 0 {
+                wavelength = newWavelength
+                wavelengthShadow = newWavelength
+                
+                calculateNewWavelength() // Do this again to disable channel if required. We discard the result intentionally.
             }
         }
-
-        // TODO: Should this run again as per https://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware ?
+    }
+    
+    @discardableResult
+    private func calculateNewWavelength() -> UInt16 {
+        let differential = wavelengthShadow >> wavelengthSweepShift
+        let newWavelength: UInt16
+        if wavelengthSweepAddition {
+            newWavelength = wavelengthShadow + differential
+        } else {
+            newWavelength = wavelengthShadow - differential
+        }
+        
+        let didOverflow = newWavelength >= 2048
+        if didOverflow {
+            isEnabled = false
+        }
+        
+        return newWavelength
+    }
+    
+    private func reloadWavelengthSweepTimer() {
+        // Period of 0 is treated as a period of 8
+        if wavelengthSweepPeriod > 0 {
+            wavelengthSweepCounter = Int(wavelengthSweepPeriod)
+        } else {
+            wavelengthSweepCounter = 8
+        }
+    }
+    
+    private func triggerWavelengthSweep() {
+        wavelengthShadow = wavelength
+        reloadWavelengthSweepTimer()
+        wavelengthSweepEnabled = wavelengthSweepPeriod != 0 || wavelengthSweepShift != 0
+        
+        if wavelengthSweepShift != 0 {
+            calculateNewWavelength()
+        }
     }
 }
 
@@ -120,6 +153,10 @@ extension SquareWaveChannel {
     
     private static let maxLengthTime: UInt8 = 64
     
+    var initialLengthTimerValue: UInt8 {
+        nrX1 & 0b0011_1111
+    }
+    
     // `dutyCyclePatternPointer` is used to retrieve the duty cycle from this array
     private static let dutyCyclePatterns: [UInt8] = [
         0b00000001, // 12.5%
@@ -127,10 +164,6 @@ extension SquareWaveChannel {
         0b00001111, // 50%
         0b11111100 // 75%
     ]
-    
-    var initialLengthTimerValue: UInt8 {
-        nrX1 & 0b0011_1111
-    }
     
     var dutyCyclePatternPointer: UInt8 {
         (nrX1 & 0b1100_0000) >> 6
@@ -231,7 +264,9 @@ extension SquareWaveChannel {
         if lengthTimer == 0 {
             lengthTimer = Self.maxLengthTime
         }
+
         frequencyTimer = Self.calculateInitialFrequencyTimer(wavelength: wavelength)
         triggerAmplitudeSweep()
+        triggerWavelengthSweep()
     }
 }
