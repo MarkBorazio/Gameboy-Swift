@@ -19,6 +19,9 @@
 		4D3125192A03F38000A09A56 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3125182A03F38000A09A56 /* main.swift */; };
 		4D31251B2A03F6AA00A09A56 /* Coordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D31251A2A03F6AA00A09A56 /* Coordinator.swift */; };
 		4D3125202A061EB000A09A56 /* GameBoy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D31251F2A061EB000A09A56 /* GameBoy.swift */; };
+		4D3127282A07FFD200A09A56 /* SwitchMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3127272A07FFD200A09A56 /* SwitchMenuItem.swift */; };
+		4D31272A2A08057A00A09A56 /* DebugProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3127292A08057A00A09A56 /* DebugProperties.swift */; };
+		4D31272C2A08085D00A09A56 /* SliderMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D31272B2A08085D00A09A56 /* SliderMenuItem.swift */; };
 		4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9129E6E56B00E2E68F /* Memory.swift */; };
 		4D7E7C9729EBA66300E2E68F /* MemoryBankController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */; };
 		4D7E7C9929EBA93100E2E68F /* MBC1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9829EBA93100E2E68F /* MBC1.swift */; };
@@ -73,6 +76,9 @@
 		4D3125182A03F38000A09A56 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		4D31251A2A03F6AA00A09A56 /* Coordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Coordinator.swift; sourceTree = "<group>"; };
 		4D31251F2A061EB000A09A56 /* GameBoy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBoy.swift; sourceTree = "<group>"; };
+		4D3127272A07FFD200A09A56 /* SwitchMenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchMenuItem.swift; sourceTree = "<group>"; };
+		4D3127292A08057A00A09A56 /* DebugProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugProperties.swift; sourceTree = "<group>"; };
+		4D31272B2A08085D00A09A56 /* SliderMenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliderMenuItem.swift; sourceTree = "<group>"; };
 		4D7E7C9129E6E56B00E2E68F /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
 		4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryBankController.swift; sourceTree = "<group>"; };
 		4D7E7C9829EBA93100E2E68F /* MBC1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBC1.swift; sourceTree = "<group>"; };
@@ -167,12 +173,22 @@
 			path = "Sound Channels";
 			sourceTree = "<group>";
 		};
+		4D3127262A07FFC400A09A56 /* Menu Items */ = {
+			isa = PBXGroup;
+			children = (
+				4D3127272A07FFD200A09A56 /* SwitchMenuItem.swift */,
+				4D31272B2A08085D00A09A56 /* SliderMenuItem.swift */,
+			);
+			path = "Menu Items";
+			sourceTree = "<group>";
+		};
 		4D73306C29C73BD900E4E5E6 /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
 				4D31251A2A03F6AA00A09A56 /* Coordinator.swift */,
 				6070722E26BFA814002E7119 /* ViewController.swift */,
 				4DAEF4E229D98A1C00F41DFC /* GameBoyView.swift */,
+				4D3127262A07FFC400A09A56 /* Menu Items */,
 			);
 			path = Presentation;
 			sourceTree = "<group>";
@@ -273,6 +289,7 @@
 				4D0BFAA729E59D100009164D /* Joypad.swift */,
 				4D7E7C9129E6E56B00E2E68F /* Memory.swift */,
 				6055A78026E48E5400987457 /* ColourPalette.swift */,
+				4D3127292A08057A00A09A56 /* DebugProperties.swift */,
 			);
 			path = Emulator;
 			sourceTree = "<group>";
@@ -421,6 +438,7 @@
 				4D7E7C9B29EBB24400E2E68F /* MBC0.swift in Sources */,
 				4D106A7E29CFFB5500EBAAC1 /* MasterClock.swift in Sources */,
 				4D31251129FCF3CF00A09A56 /* SoundChannel4.swift in Sources */,
+				4D31272A2A08057A00A09A56 /* DebugProperties.swift in Sources */,
 				4D3124E529F56BE600A09A56 /* SoundChannel1.swift in Sources */,
 				4D3124DA29F5661600A09A56 /* Synth.swift in Sources */,
 				605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */,
@@ -428,6 +446,7 @@
 				4D3124EF29FAACD200A09A56 /* SquareWaveChannel.swift in Sources */,
 				4D0BFAA829E59D100009164D /* Joypad.swift in Sources */,
 				6070726126BFCFA5002E7119 /* Array+UIntSubscript.swift in Sources */,
+				4D31272C2A08085D00A09A56 /* SliderMenuItem.swift in Sources */,
 				4D7E7C9729EBA66300E2E68F /* MemoryBankController.swift in Sources */,
 				4DAEF4E329D98A1C00F41DFC /* GameBoyView.swift in Sources */,
 				4D7E7C9929EBA93100E2E68F /* MBC1.swift in Sources */,
@@ -440,6 +459,7 @@
 				4D31251329FD72EC00A09A56 /* SoundChannel3.swift in Sources */,
 				4D7E7C9D29EBB88000E2E68F /* MBC3.swift in Sources */,
 				6070722D26BFA814002E7119 /* AppDelegate.swift in Sources */,
+				4D3127282A07FFD200A09A56 /* SwitchMenuItem.swift in Sources */,
 				4D3124E729F6C1E600A09A56 /* SoundChannel2.swift in Sources */,
 				605AFBA626C810680040E608 /* BinaryInteger+Extensions.swift in Sources */,
 				6070725A26BFB650002E7119 /* CPU.swift in Sources */,

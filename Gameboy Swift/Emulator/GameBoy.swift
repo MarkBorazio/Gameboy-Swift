@@ -13,7 +13,6 @@ class GameBoy {
     private init () {}
     
     var cartridge: Cartridge?
-    
     private(set) var clock = MasterClock()
     private(set) var mmu = MMU()
     private(set) var cpu = CPU()
@@ -21,6 +20,7 @@ class GameBoy {
     private(set) var apu = APU()
     private(set) var joypad = Joypad()
     
+    var debugProperties = DebugProperties()
     weak var screenRenderDelegate: ScreenRenderDelegate?
     
     private var periodicSaveTimer: Timer?

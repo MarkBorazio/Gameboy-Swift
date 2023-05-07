@@ -26,13 +26,15 @@ struct ColourPalette {
     // We can use the value of the colour ID to index each bit pair
     static func getColour(pixelData: PixelData) -> UInt32 {
         
+        let debugProperties = GameBoy.instance.debugProperties
+        
         let bitShiftLength = pixelData.id * bitsPerColourID
         let rawColour = (pixelData.palette >> bitShiftLength) & bitMask
         switch rawColour {
-        case Self.whiteRaw: return white
-        case Self.lightGreyRaw: return lightGrey
-        case Self.darkGreyRaw: return darkGrey
-        case Self.blackRaw: return black
+        case Self.whiteRaw: return debugProperties.colour1 ?? white
+        case Self.lightGreyRaw: return debugProperties.colour2 ?? lightGrey
+        case Self.darkGreyRaw: return debugProperties.colour3 ?? darkGrey
+        case Self.blackRaw: return debugProperties.colour4 ?? black
         default: Coordinator.instance.crash(message: "Invalid colour ID found. Got \(rawColour.hexString()).")
         }
     }
@@ -49,8 +51,8 @@ extension ColourPalette {
     private static let darkGreyRaw: UInt8 = 0b10
     private static let blackRaw: UInt8 = 0b11
     
-    private static let white = UInt32(bytes: [0xFF, 0xFF, 0xFF, 0xFF])!
-    private static let lightGrey = UInt32(bytes: [0xCC, 0xCC, 0xCC, 0xFF])!
-    private static let darkGrey = UInt32(bytes: [0x77, 0x77, 0x77, 0xFF])!
-    private static let black = UInt32(bytes: [0x00, 0x00, 0x00, 0xFF])!
+    static let white = UInt32(bytes: [0xFF, 0xFF, 0xFF, 0xFF])!
+    static let lightGrey = UInt32(bytes: [0xCC, 0xCC, 0xCC, 0xFF])!
+    static let darkGrey = UInt32(bytes: [0x77, 0x77, 0x77, 0xFF])!
+    static let black = UInt32(bytes: [0x00, 0x00, 0x00, 0xFF])!
 }

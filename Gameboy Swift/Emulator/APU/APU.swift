@@ -191,19 +191,21 @@ extension APU {
         let channel3Sample = channel3.dacOutput()
         let channel4Sample = channel4.dacOutput()
         
+        let debugProperties = GameBoy.instance.debugProperties
+        
         let leftChannelSamples: [Float] = [
-            channel1Left ? channel1Sample : 0,
-            channel2Left ? channel2Sample : 0,
-            channel3Left ? channel3Sample : 0,
-            channel4Left ? channel4Sample : 0,
+            channel1Left && debugProperties.isChannel1Enabled ? channel1Sample : 0,
+            channel2Left && debugProperties.isChannel2Enabled ? channel2Sample : 0,
+            channel3Left && debugProperties.isChannel3Enabled ? channel3Sample : 0,
+            channel4Left && debugProperties.isChannel4Enabled ? channel4Sample : 0,
         ]
         let leftSample = Self.mixChannelSamples(samples: leftChannelSamples, rawVolume: leftVolume)
         
         let rightChannelSamples: [Float] = [
-            channel1Right ? channel1Sample : 0,
-            channel2Right ? channel2Sample : 0,
-            channel3Right ? channel3Sample : 0,
-            channel4Right ? channel4Sample : 0,
+            channel1Right && debugProperties.isChannel1Enabled ? channel1Sample : 0,
+            channel2Right && debugProperties.isChannel2Enabled ? channel2Sample : 0,
+            channel3Right && debugProperties.isChannel3Enabled ? channel3Sample : 0,
+            channel4Right && debugProperties.isChannel4Enabled ? channel4Sample : 0,
         ]
         let rightSample = Self.mixChannelSamples(samples: rightChannelSamples, rawVolume: rightVolume)
         
