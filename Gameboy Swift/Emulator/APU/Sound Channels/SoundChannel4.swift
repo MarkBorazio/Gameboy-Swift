@@ -10,20 +10,15 @@ import Foundation
 // Noise channel with amplitude envelope
 class SoundChannel4 {
     
-    private static let lengthTime: UInt8 = 64
-    
-    var isEnabled = false
-    private var isDACEnabled: Bool { // TODO: Fade out when set to false
-        (nr42 & 0b1111_1000) != 0
-    }
-    
     private var nr40: UInt8 = 0
-    private var nr41: UInt8 = 0
+    private var nr41: UInt8 = 0 {
+        didSet {
+            reloadLengthTimer()
+        }
+    }
     private var nr42: UInt8 = 0 {
         didSet {
-            if !isDACEnabled {
-                isEnabled = false
-            }
+            disableChannelIfRequired()
         }
     }
     private var nr43: UInt8 = 0
@@ -32,6 +27,9 @@ class SoundChannel4 {
             triggerChannelIfRequired()
         }
     }
+    
+    var isEnabled = false
+    
     private var lsfr: UInt16 = 0 // Linear Feedback Shift Register
     
     private var lengthTimer: UInt8 = 0
@@ -53,36 +51,6 @@ class SoundChannel4 {
         let dacOutput = (-Float(dacInput) / 7.5) + 1.0
         
         return dacOutput
-    }
-    
-    func tickLengthTimer() {
-        guard lengthTimerEnabled else { return }
-        
-        if lengthTimer > 0 {
-            lengthTimer -= 1
-        }
-        if lengthTimer == 0 {
-            lengthTimer = Self.lengthTime - initialLengthTimerValue
-            isEnabled = false
-        }
-    }
-    
-    func tickAmplitudeSweepCounter() {
-        guard amplitudeSweepPace != 0 else { return }
-        
-        amplitudeSweepCounter -= 1
-        if amplitudeSweepCounter <= 0 {
-            amplitudeSweepCounter = Int(amplitudeSweepPace)
-            iterateAmplitudeSweep()
-        }
-    }
-    
-    func tickFrequencyTimer(tCycles: Int) {
-        frequencyTimer -= tCycles
-        if frequencyTimer <= 0 {
-            frequencyTimer += frequencyLSFR
-            iterateLSFR()
-        }
     }
 }
 
@@ -118,16 +86,36 @@ extension SoundChannel4 {
 
 extension SoundChannel4 {
     
+    private static let maxLengthTime: UInt8 = 64
+    
     var initialLengthTimerValue: UInt8 {
         nr41 & 0b0011_1111
     }
+    
+    private func reloadLengthTimer() {
+        lengthTimer = Self.maxLengthTime - initialLengthTimerValue
+    }
+    
+    func tickLengthTimer() {
+        guard lengthTimerEnabled else { return }
+        if lengthTimer > 0 {
+            lengthTimer -= 1
+        }
+        if lengthTimer == 0 {
+            isEnabled = false
+        }
+    }
 }
 
-// MARK: - NR42: Amplitude Sweep
+// MARK: - NR42: Amplitude Sweep and DAC Enable
 
 extension SoundChannel4 {
     
     private static let amplitudeRawRange = 0x0...0xF
+    
+    private var isDACEnabled: Bool { // TODO: Fade out when set to false
+        (nr42 & 0b1111_1000) != 0
+    }
     
     private func triggerAmplitudeSweep() {
         amplitudeSweepPace = nr42 & 0b111
@@ -135,12 +123,6 @@ extension SoundChannel4 {
         amplitudeRaw = (nr42 & 0b1111_0000) >> 4
         
         amplitudeSweepCounter = Int(amplitudeSweepPace) // Not sure if this should be done here
-        
-        // Disabling DAC disables channel
-        // Enabling DAC does not enable channel
-        if !isDACEnabled {
-            isEnabled = false
-        }
     }
     
     private func iterateAmplitudeSweep() {
@@ -149,6 +131,22 @@ extension SoundChannel4 {
         
         if Self.amplitudeRawRange.contains(newAmplitudeRaw) {
             amplitudeRaw = UInt8(newAmplitudeRaw)
+        }
+    }
+    
+    private func disableChannelIfRequired() {
+        if !isDACEnabled {
+            isEnabled = false
+        }
+    }
+    
+    func tickAmplitudeSweepCounter() {
+        guard amplitudeSweepPace != 0 else { return }
+        
+        amplitudeSweepCounter -= 1
+        if amplitudeSweepCounter <= 0 {
+            amplitudeSweepCounter = Int(amplitudeSweepPace)
+            iterateAmplitudeSweep()
         }
     }
 }
@@ -201,6 +199,14 @@ extension SoundChannel4 {
         
         lsfr = lsfr >> 1
     }
+    
+    func tickFrequencyTimer(tCycles: Int) {
+        frequencyTimer -= tCycles
+        if frequencyTimer <= 0 {
+            frequencyTimer += frequencyLSFR
+            iterateLSFR()
+        }
+    }
 }
 
 // MARK: - NR44: Control
@@ -219,10 +225,10 @@ extension SoundChannel4 {
     }
     
     private func triggerChannel() {
-        isEnabled = true
+        isEnabled = isDACEnabled
         
         if lengthTimer == 0 {
-            lengthTimer = Self.lengthTime
+            lengthTimer = Self.maxLengthTime
         }
         
         frequencyTimer = frequencyLSFR

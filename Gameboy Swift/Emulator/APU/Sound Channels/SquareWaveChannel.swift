@@ -11,20 +11,15 @@ import AVFAudio
 // Used for common behaviour between Channel 1 and Channel 2
 class SquareWaveChannel {
     
-    private static let lengthTime: UInt8 = 64
-    
-    var isEnabled = false
-    private var isDACEnabled: Bool { // TODO: Fade out when set to false
-        (nrX2 & 0b1111_1000) != 0
-    }
-    
     var nrX0: UInt8 = 0
-    var nrX1: UInt8 = 0
+    var nrX1: UInt8 = 0 {
+        didSet {
+            reloadLengthTimer()
+        }
+    }
     var nrX2: UInt8 = 0 {
         didSet {
-            if !isDACEnabled {
-                isEnabled = false
-            }
+            disableChannelIfRequired()
         }
     }
     var nrX3: UInt8 = 0
@@ -34,6 +29,8 @@ class SquareWaveChannel {
         }
     }
 
+    var isEnabled = false
+    
     private var frequencyTimer: Int = calculateInitialFrequencyTimer(wavelength: 0)
     private var dutyCycleBitPointer: Int = 0
     private var lengthTimer: UInt8 = 0
@@ -47,6 +44,14 @@ class SquareWaveChannel {
     
     private static func calculateInitialFrequencyTimer(wavelength: UInt16) -> Int {
          (2048 - Int(wavelength)) * 4
+    }
+    
+    func tickFrequencyTimer(tCycles: Int) {
+        frequencyTimer -= tCycles
+        if frequencyTimer <= 0 {
+            frequencyTimer += Self.calculateInitialFrequencyTimer(wavelength: wavelength)
+            dutyCycleBitPointer = (dutyCycleBitPointer + 1) & 0b111
+        }
     }
     
     func dacOutput() -> Float {
@@ -69,37 +74,6 @@ class SquareWaveChannel {
             iterateWavelengthSweep()
         }
     }
-    
-    func tickLengthTimer() {
-        guard lengthTimerEnabled else { return }
-        if lengthTimer > 0 {
-            lengthTimer -= 1
-            
-        }
-        if lengthTimer == 0 {
-            lengthTimer = Self.lengthTime - initialLengthTimerValue
-            isEnabled = false
-        }
-    }
-    
-    func tickAmplitudeSweepCounter() {
-        guard amplitudeSweepPace != 0 else { return }
-        
-        amplitudeSweepCounter -= 1
-        if amplitudeSweepCounter <= 0 {
-            amplitudeSweepCounter = Int(amplitudeSweepPace)
-            iterateAmplitudeSweep()
-        }
-    }
-    
-    func tickFrequencyTimer(tCycles: Int) {
-        frequencyTimer -= tCycles
-        if frequencyTimer <= 0 {
-            frequencyTimer += Self.calculateInitialFrequencyTimer(wavelength: wavelength)
-            dutyCycleBitPointer = (dutyCycleBitPointer + 1) & 0b111
-        }
-    }
-
 }
 
 // MARK: - NRX0 Wavelength Sweep
@@ -144,6 +118,8 @@ extension SquareWaveChannel {
 
 extension SquareWaveChannel {
     
+    private static let maxLengthTime: UInt8 = 64
+    
     // `dutyCyclePatternPointer` is used to retrieve the duty cycle from this array
     private static let dutyCyclePatterns: [UInt8] = [
         0b00000001, // 12.5%
@@ -159,13 +135,32 @@ extension SquareWaveChannel {
     var dutyCyclePatternPointer: UInt8 {
         (nrX1 & 0b1100_0000) >> 6
     }
+    
+    private func reloadLengthTimer() {
+        lengthTimer = Self.maxLengthTime - initialLengthTimerValue
+    }
+    
+    func tickLengthTimer() {
+        guard lengthTimerEnabled else { return }
+        
+        if lengthTimer > 0 {
+            lengthTimer -= 1
+        }
+        if lengthTimer == 0 {
+            isEnabled = false
+        }
+    }
 }
 
-// MARK: - NRX2: Amplitude Sweep
+// MARK: - NRX2: Amplitude Sweep and DAC Enable
 
 extension SquareWaveChannel {
     
     private static let amplitudeRawRange = 0x0...0xF
+    
+    private var isDACEnabled: Bool { // TODO: Fade out when set to false
+        (nrX2 & 0b1111_1000) != 0
+    }
     
     private func triggerAmplitudeSweep() {
         amplitudeSweepPace = nrX2 & 0b111
@@ -173,12 +168,6 @@ extension SquareWaveChannel {
         amplitudeRaw = (nrX2 & 0b1111_0000) >> 4
         
         amplitudeSweepCounter = Int(amplitudeSweepPace) // Not sure if this should be done here
-        
-        // Disabling DAC disables channel
-        // Enabling DAC does not enable channel
-        if !isDACEnabled {
-            isEnabled = false
-        }
     }
     
     private func iterateAmplitudeSweep() {
@@ -187,6 +176,22 @@ extension SquareWaveChannel {
         
         if Self.amplitudeRawRange.contains(newAmplitudeRaw) {
             amplitudeRaw = UInt8(newAmplitudeRaw)
+        }
+    }
+    
+    private func disableChannelIfRequired() {
+        if !isDACEnabled {
+            isEnabled = false
+        }
+    }
+    
+    func tickAmplitudeSweepCounter() {
+        guard amplitudeSweepPace != 0 else { return }
+        
+        amplitudeSweepCounter -= 1
+        if amplitudeSweepCounter <= 0 {
+            amplitudeSweepCounter = Int(amplitudeSweepPace)
+            iterateAmplitudeSweep()
         }
     }
 }
@@ -221,13 +226,12 @@ extension SquareWaveChannel {
     }
     
     private func triggerChannel() {
-        isEnabled = true
+        isEnabled = isDACEnabled
         
         if lengthTimer == 0 {
-            lengthTimer = Self.lengthTime
+            lengthTimer = Self.maxLengthTime
         }
         frequencyTimer = Self.calculateInitialFrequencyTimer(wavelength: wavelength)
-
         triggerAmplitudeSweep()
     }
 }

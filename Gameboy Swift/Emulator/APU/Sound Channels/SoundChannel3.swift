@@ -10,16 +10,16 @@ import Foundation
 // Custom Wave Channel
 class SoundChannel3 {
     
-    private static let lengthTime: UInt8 = 255
-    
-    var isEnabled = false
-    
     private var nr30: UInt8 = 0 {
         didSet {
             disableChannelIfRequired()
         }
     }
-    private var nr31: UInt8 = 0
+    private var nr31: UInt8 = 0 {
+        didSet {
+            reloadLengthTimer()
+        }
+    }
     private var nr32: UInt8 = 0
     private var nr33: UInt8 = 0
     private var nr34: UInt8 = 0 {
@@ -27,14 +27,25 @@ class SoundChannel3 {
             triggerChannelIfRequired()
         }
     }
+    
+    var isEnabled = false
+    
     private var sampleBuffer: [UInt8] = Array(repeating: 0, count: 32) // Wave Pattern RAM
     private var samplePointer: Int = 1 // Starts at 1, apparently
     
     private var frequencyTimer: Int = calculateInitialFrequencyTimer(wavelength: 0)
-    private var lengthTimer: UInt8 = 0
+    private var lengthTimer: Int = 0
     
     private static func calculateInitialFrequencyTimer(wavelength: UInt16) -> Int {
          (2048 - Int(wavelength)) * 4
+    }
+    
+    func tickFrequencyTimer(tCycles: Int) {
+        frequencyTimer -= tCycles
+        if frequencyTimer <= 0 {
+            frequencyTimer += Self.calculateInitialFrequencyTimer(wavelength: wavelength)
+            samplePointer = (samplePointer + 1) & 31 // Equivalent to `(samplePointer + 1) % 32`
+        }
     }
     
     func dacOutput() -> Float {
@@ -48,25 +59,6 @@ class SoundChannel3 {
         let dacOutput = (-Float(dacInput) / 7.5) + 1.0
         
         return dacOutput
-    }
-    
-    func tickLengthTimer() {
-        guard lengthTimerEnabled else { return }
-        if lengthTimer > 0 {
-            lengthTimer -= 1
-        }
-        if lengthTimer == 0 {
-            lengthTimer = Self.lengthTime - initialLengthTimerValue
-            isEnabled = false
-        }
-    }
-    
-    func tickFrequencyTimer(tCycles: Int) {
-        frequencyTimer -= tCycles
-        if frequencyTimer <= 0 {
-            frequencyTimer += Self.calculateInitialFrequencyTimer(wavelength: wavelength)
-            samplePointer = (samplePointer + 1) & 31 // Equivalent to `(samplePointer + 1) % 32`
-        }
     }
 }
 
@@ -131,8 +123,24 @@ extension SoundChannel3 {
 
 extension SoundChannel3 {
     
+    private static let maxLengthTime: Int = 256
+    
     private var initialLengthTimerValue: UInt8 {
         nr31
+    }
+    
+    private func reloadLengthTimer() {
+        lengthTimer = Self.maxLengthTime - Int(initialLengthTimerValue)
+    }
+    
+    func tickLengthTimer() {
+        guard lengthTimerEnabled else { return }
+        if lengthTimer > 0 {
+            lengthTimer -= 1
+        }
+        if lengthTimer == 0 {
+            isEnabled = false
+        }
     }
 }
 
@@ -190,18 +198,12 @@ extension SoundChannel3 {
     }
     
     private func triggerChannel() {
-        isEnabled = true
+        isEnabled = isDACEnabled
         
         if lengthTimer == 0 {
-            lengthTimer = Self.lengthTime
+            lengthTimer = Self.maxLengthTime
         }
         frequencyTimer = Self.calculateInitialFrequencyTimer(wavelength: wavelength)
         samplePointer = 0
-        
-        // Disabling DAC disables channel
-        // Enabling DAC does not enable channel
-        if !isDACEnabled {
-            isEnabled = false
-        }
     }
 }
