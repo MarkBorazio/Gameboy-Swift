@@ -21,6 +21,7 @@ class Coordinator: NSObject {
     private override init() {
         super.init()
         
+        window.backgroundColor = .black
         window.center()
         window.delegate = self
         window.isReleasedWhenClosed = false
@@ -96,29 +97,29 @@ extension Coordinator {
     }
     
     private func constructDebugMenuItem() -> NSMenuItem {
-        let channel1Switch = SwitchMenuItem(isOn: true) { isOn in
+        let channel1Switch = SwitchMenuItem(title: "Channel 1", initialIsOnValue: true) { isOn in
             GameBoy.instance.debugProperties.isChannel1Enabled = isOn
         }
-        let channel2Switch = SwitchMenuItem(isOn: true) { isOn in
+        let channel2Switch = SwitchMenuItem(title: "Channel 2", initialIsOnValue: true) { isOn in
             GameBoy.instance.debugProperties.isChannel2Enabled = isOn
         }
-        let channel3Switch = SwitchMenuItem(isOn: true) { isOn in
+        let channel3Switch = SwitchMenuItem(title: "Channel 3", initialIsOnValue: true) { isOn in
             GameBoy.instance.debugProperties.isChannel3Enabled = isOn
         }
-        let channel4Switch = SwitchMenuItem(isOn: true) { isOn in
+        let channel4Switch = SwitchMenuItem(title: "Channel 4", initialIsOnValue: true) { isOn in
             GameBoy.instance.debugProperties.isChannel4Enabled = isOn
         }
         
-        let colour1Slider = SliderMenuItem(value: ColourPalette.white) { newValue in
+        let colour1Slider = RGBASliderMenuItem(title: "Colour ID 0", initialRGBAValue: ColourPalette.white) { newValue in
             GameBoy.instance.debugProperties.colour1 = newValue
         }
-        let colour2Slider = SliderMenuItem(value: ColourPalette.lightGrey) { newValue in
+        let colour2Slider = RGBASliderMenuItem(title: "Colour ID 1", initialRGBAValue: ColourPalette.lightGrey) { newValue in
             GameBoy.instance.debugProperties.colour2 = newValue
         }
-        let colour3Slider = SliderMenuItem(value: ColourPalette.darkGrey) { newValue in
+        let colour3Slider = RGBASliderMenuItem(title: "Colour ID 2", initialRGBAValue: ColourPalette.darkGrey) { newValue in
             GameBoy.instance.debugProperties.colour3 = newValue
         }
-        let colour4Slider = SliderMenuItem(value: ColourPalette.black) { newValue in
+        let colour4Slider = RGBASliderMenuItem(title: "Colour ID 3", initialRGBAValue: ColourPalette.black) { newValue in
             GameBoy.instance.debugProperties.colour4 = newValue
         }
         
@@ -128,10 +129,14 @@ extension Coordinator {
             channel2Switch,
             channel3Switch,
             channel4Switch,
+            .separator(),
             colour1Slider,
+            .separator(),
             colour2Slider,
+            .separator(),
             colour3Slider,
-            colour4Slider,
+            .separator(),
+            colour4Slider
         ]
         
         let debugMenuItem = NSMenuItem()

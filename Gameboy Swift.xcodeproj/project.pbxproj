@@ -21,7 +21,8 @@
 		4D3125202A061EB000A09A56 /* GameBoy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D31251F2A061EB000A09A56 /* GameBoy.swift */; };
 		4D3127282A07FFD200A09A56 /* SwitchMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3127272A07FFD200A09A56 /* SwitchMenuItem.swift */; };
 		4D31272A2A08057A00A09A56 /* DebugProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3127292A08057A00A09A56 /* DebugProperties.swift */; };
-		4D31272C2A08085D00A09A56 /* SliderMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D31272B2A08085D00A09A56 /* SliderMenuItem.swift */; };
+		4D31272C2A08085D00A09A56 /* RGBASliderMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D31272B2A08085D00A09A56 /* RGBASliderMenuItem.swift */; };
+		4D31272E2A093D3400A09A56 /* MenuItem+Convenience.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D31272D2A093D3400A09A56 /* MenuItem+Convenience.swift */; };
 		4D7E7C9229E6E56B00E2E68F /* Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9129E6E56B00E2E68F /* Memory.swift */; };
 		4D7E7C9729EBA66300E2E68F /* MemoryBankController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */; };
 		4D7E7C9929EBA93100E2E68F /* MBC1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7E7C9829EBA93100E2E68F /* MBC1.swift */; };
@@ -78,7 +79,8 @@
 		4D31251F2A061EB000A09A56 /* GameBoy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBoy.swift; sourceTree = "<group>"; };
 		4D3127272A07FFD200A09A56 /* SwitchMenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchMenuItem.swift; sourceTree = "<group>"; };
 		4D3127292A08057A00A09A56 /* DebugProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugProperties.swift; sourceTree = "<group>"; };
-		4D31272B2A08085D00A09A56 /* SliderMenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliderMenuItem.swift; sourceTree = "<group>"; };
+		4D31272B2A08085D00A09A56 /* RGBASliderMenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RGBASliderMenuItem.swift; sourceTree = "<group>"; };
+		4D31272D2A093D3400A09A56 /* MenuItem+Convenience.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MenuItem+Convenience.swift"; sourceTree = "<group>"; };
 		4D7E7C9129E6E56B00E2E68F /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
 		4D7E7C9629EBA66300E2E68F /* MemoryBankController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryBankController.swift; sourceTree = "<group>"; };
 		4D7E7C9829EBA93100E2E68F /* MBC1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBC1.swift; sourceTree = "<group>"; };
@@ -177,7 +179,8 @@
 			isa = PBXGroup;
 			children = (
 				4D3127272A07FFD200A09A56 /* SwitchMenuItem.swift */,
-				4D31272B2A08085D00A09A56 /* SliderMenuItem.swift */,
+				4D31272B2A08085D00A09A56 /* RGBASliderMenuItem.swift */,
+				4D31272D2A093D3400A09A56 /* MenuItem+Convenience.swift */,
 			);
 			path = "Menu Items";
 			sourceTree = "<group>";
@@ -443,10 +446,11 @@
 				4D3124DA29F5661600A09A56 /* Synth.swift in Sources */,
 				605AFB9E26C7CA760040E608 /* ByteConvertible.swift in Sources */,
 				6070725C26BFC47E002E7119 /* MMU.swift in Sources */,
+				4D31272E2A093D3400A09A56 /* MenuItem+Convenience.swift in Sources */,
 				4D3124EF29FAACD200A09A56 /* SquareWaveChannel.swift in Sources */,
 				4D0BFAA829E59D100009164D /* Joypad.swift in Sources */,
 				6070726126BFCFA5002E7119 /* Array+UIntSubscript.swift in Sources */,
-				4D31272C2A08085D00A09A56 /* SliderMenuItem.swift in Sources */,
+				4D31272C2A08085D00A09A56 /* RGBASliderMenuItem.swift in Sources */,
 				4D7E7C9729EBA66300E2E68F /* MemoryBankController.swift in Sources */,
 				4DAEF4E329D98A1C00F41DFC /* GameBoyView.swift in Sources */,
 				4D7E7C9929EBA93100E2E68F /* MBC1.swift in Sources */,

@@ -10,19 +10,31 @@ import Cocoa
 class SwitchMenuItem: NSMenuItem {
     
     private var onTap: ((Bool) -> Void)?
-    private let switchView = NSSwitch(frame: CGRect(x: 0, y: 0, width: 100, height: 30))
+    private let switchView = NSSwitch()
     
-    convenience init(isOn: Bool, onTap: @escaping ((Bool) -> Void)) {
+    convenience init(title: String, initialIsOnValue: Bool, onTap: @escaping ((Bool) -> Void)) {
         self.init()
         
         self.onTap = onTap
         
-        switchView.state = isOn ? .on : .off
-        
+        switchView.state = initialIsOnValue ? .on : .off
         switchView.target = self
         switchView.action = #selector(switchTapped)
         
-        view = switchView
+        let titleLabel = NSTextField(labelWithString: title)
+        NSLayoutConstraint.activate([
+            titleLabel.widthAnchor.constraint(equalToConstant: 70)
+        ])
+        
+        let stackView = NSStackView(views: [
+            titleLabel,
+            NSView(), // Spacer
+            switchView
+        ])
+        stackView.orientation = .horizontal
+        
+        let containerView = Self.embedInContainerView(stackView)
+        view = containerView
     }
     
     @objc private func switchTapped() {

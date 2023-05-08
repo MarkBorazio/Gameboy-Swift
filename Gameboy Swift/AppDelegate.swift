@@ -8,7 +8,6 @@
 import Cocoa
 
 // TODO:
-// - Add separate debug sliders for each RGB value for each colour
 // - Add debug menu item to open saves folder
 // - Add something to PPU/MasterClock to make sure that frame is drawn only when it completes
 // - Continue updating APU to pass more tests
