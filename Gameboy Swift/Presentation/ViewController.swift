@@ -14,18 +14,11 @@ class ViewController: NSViewController {
         let containerView = NSView(frame: .init(origin: .zero, size: .init(width: 500, height: 500)))
         let gameBoyView = GameBoyView()
         
-        gameBoyView.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(gameBoyView)
         
         NSLayoutConstraint.activate([
-            gameBoyView.heightAnchor.constraint(greaterThanOrEqualToConstant: 500),
-            gameBoyView.widthAnchor.constraint(greaterThanOrEqualToConstant: 500),
-            
-            gameBoyView.widthAnchor.constraint(equalTo: gameBoyView.heightAnchor, multiplier: 160/144),
-            
             gameBoyView.widthAnchor.constraint(lessThanOrEqualTo: containerView.widthAnchor),
             gameBoyView.heightAnchor.constraint(lessThanOrEqualTo: containerView.heightAnchor),
-            
             gameBoyView.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
             gameBoyView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
         ])

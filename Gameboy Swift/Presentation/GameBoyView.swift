@@ -29,6 +29,8 @@ class GameBoyView: NSView {
         self.wantsLayer = true
         layer?.magnificationFilter = .nearest
         
+        translatesAutoresizingMaskIntoConstraints = false
+        
         let heightConstraint = heightAnchor.constraint(greaterThanOrEqualToConstant: 500)
         let widthConstraint = widthAnchor.constraint(greaterThanOrEqualToConstant: 500)
             
