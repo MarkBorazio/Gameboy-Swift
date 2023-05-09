@@ -8,6 +8,8 @@
 import Foundation
 
 struct DebugProperties {
+    var useExtendedResolution = false
+    
     var isChannel1Enabled = true
     var isChannel2Enabled = true
     var isChannel3Enabled = true

@@ -21,10 +21,10 @@ class ViewController: NSViewController {
             gameBoyView.heightAnchor.constraint(greaterThanOrEqualToConstant: 500),
             gameBoyView.widthAnchor.constraint(greaterThanOrEqualToConstant: 500),
             
+            gameBoyView.widthAnchor.constraint(equalTo: gameBoyView.heightAnchor, multiplier: 160/144),
+            
             gameBoyView.widthAnchor.constraint(lessThanOrEqualTo: containerView.widthAnchor),
             gameBoyView.heightAnchor.constraint(lessThanOrEqualTo: containerView.heightAnchor),
-            
-            gameBoyView.widthAnchor.constraint(equalTo: gameBoyView.heightAnchor, multiplier: 160/144),
             
             gameBoyView.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
             gameBoyView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),

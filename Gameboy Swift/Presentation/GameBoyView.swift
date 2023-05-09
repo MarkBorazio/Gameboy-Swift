@@ -9,10 +9,11 @@ import Cocoa
 
 class GameBoyView: NSView {
     
-    private static let pixelWidth = 160
-    private static let pixelHeight = 144
     private let colourSpace = CGColorSpaceCreateDeviceRGB()
     private let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
+    
+    lazy var aspectRatioConstraint = widthAnchor.constraint(equalTo: heightAnchor, multiplier: CGFloat(GameBoy.pixelWidth)/CGFloat(GameBoy.pixelHeight))
+    lazy var extendedAspectRatioConstraint = widthAnchor.constraint(equalTo: heightAnchor, multiplier: CGFloat(GameBoy.extendedPixelWidth)/CGFloat(GameBoy.extendedPixelHeight))
     
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -27,6 +28,15 @@ class GameBoyView: NSView {
     private func initialise() {
         self.wantsLayer = true
         layer?.magnificationFilter = .nearest
+        
+        let heightConstraint = heightAnchor.constraint(greaterThanOrEqualToConstant: 500)
+        let widthConstraint = widthAnchor.constraint(greaterThanOrEqualToConstant: 500)
+            
+        NSLayoutConstraint.activate([
+            heightConstraint,
+            widthConstraint,
+            aspectRatioConstraint
+        ])
     }
 }
 
@@ -34,15 +44,21 @@ class GameBoyView: NSView {
 
 extension GameBoyView: ScreenRenderDelegate {
     
-    func renderScreen(screenData: [ColourPalette.PixelData]) {
+    func renderScreen(screenData: [ColourPalette.PixelData], isExtendedResolution: Bool) {
+        let width = isExtendedResolution ? GameBoy.extendedPixelWidth : GameBoy.pixelWidth
+        let height = isExtendedResolution ? GameBoy.extendedPixelHeight : GameBoy.pixelHeight
+        
+        aspectRatioConstraint.isActive = !isExtendedResolution
+        extendedAspectRatioConstraint.isActive = isExtendedResolution
+        
         DispatchQueue.main.async { [unowned self] in
             var mutableColours = screenData.map(ColourPalette.getColour)
             let someContext = CGContext(
                 data: &mutableColours,
-                width: Self.pixelWidth,
-                height: Self.pixelHeight,
+                width: width,
+                height: height,
                 bitsPerComponent: UInt8.bitWidth,
-                bytesPerRow: Self.pixelWidth * MemoryLayout<UInt32>.size,
+                bytesPerRow: width * MemoryLayout<UInt32>.size,
                 space: colourSpace,
                 bitmapInfo: bitmapInfo.rawValue
             )!

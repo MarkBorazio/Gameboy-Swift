@@ -21,7 +21,7 @@ class PPU {
     
     var screenData: [ColourPalette.PixelData] = Array(
         repeating: .init(id: 0, palette: 0),
-        count: pixelHeight * pixelWidth
+        count: GameBoy.pixelHeight * GameBoy.pixelWidth
     )
     
     func readVRAM(globalAddress: UInt16) -> UInt8 {
@@ -131,7 +131,7 @@ extension PPU {
     
     private func drawScanline() {
         // Don't bother rendering if scanline is off screen
-        guard (currentScanlineIndex < Self.pixelHeight) else { return }
+        guard (currentScanlineIndex < GameBoy.pixelHeight) else { return }
         
         let renderTilesAndWindowEnabled = controlRegister.checkBit(Memory.bgAndWindowEnabledBitIndex)
         let renderSpritesEnabled = controlRegister.checkBit(Memory.objectsEnabledBitIndex)
@@ -193,7 +193,7 @@ extension PPU {
                 let colourID = getColourId(pixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2, flipX: false)
                 
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
-                let globalPixelIndex = Int(currentScanlineIndex) * Self.pixelWidth + scanlinePixelIndex
+                let globalPixelIndex = Int(currentScanlineIndex) * GameBoy.pixelWidth + scanlinePixelIndex
                 screenData[globalPixelIndex] = pixelData
             }
         }
@@ -245,7 +245,7 @@ extension PPU {
                 // Use colour ID to get colour from palette
                 let colourID = getColourId(pixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2, flipX: false)
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
-                let globalPixelIndex = Int(currentScanlineIndex) * Self.pixelWidth + scanlinePixelIndex
+                let globalPixelIndex = Int(currentScanlineIndex) * GameBoy.pixelWidth + scanlinePixelIndex
                 screenData[globalPixelIndex] = pixelData
             }
         }
@@ -308,7 +308,7 @@ extension PPU {
                 guard colourID != 0 else { continue }
 
                 let globalXco = Int(xCo) &+ pixelIndex
-                let screenDataIndex = Int(currentScanlineIndex) * Self.pixelWidth + Int(globalXco)
+                let screenDataIndex = Int(currentScanlineIndex) * GameBoy.pixelWidth + Int(globalXco)
                 guard screenDataIndex < screenData.count else { return }
                 
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
@@ -371,12 +371,8 @@ extension PPU {
     // VRAM
     private static let vRamSize = 8 * 1024 // 8KB
     
-    // Resolution
-    private static let pixelWidth = 160
-    private static let pixelHeight = 144
-    
     // Scanlines
-    private static let visibleScanlinePixelsRange: ClosedRange<Int> = 0...pixelWidth-1
+    private static let visibleScanlinePixelsRange: ClosedRange<Int> = 0...GameBoy.pixelWidth-1
     private static let lastVisibleScanlineIndex: UInt8 = 143
     private static let lastAbsoluteScanlineIndex: UInt8 = 153
     

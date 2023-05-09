@@ -79,10 +79,23 @@ class GameBoy {
     }
     
     func renderScreen() {
-        screenRenderDelegate?.renderScreen(screenData: ppu.screenData)
+        screenRenderDelegate?.renderScreen(screenData: ppu.screenData, isExtendedResolution: debugProperties.useExtendedResolution)
     }
 }
 
+// MARK: - Static Constants
+
+extension GameBoy {
+    // Resolution
+    static let pixelWidth = 160
+    static let pixelHeight = 144
+    
+    static let extendedPixelWidth = 255
+    static let extendedPixelHeight = 255
+}
+
+// MARK: - ScreenRenderDelegate
+
 protocol ScreenRenderDelegate: AnyObject {
-    func renderScreen(screenData: [ColourPalette.PixelData])
+    func renderScreen(screenData: [ColourPalette.PixelData], isExtendedResolution: Bool)
 }
