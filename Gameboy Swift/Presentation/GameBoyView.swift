@@ -50,10 +50,10 @@ extension GameBoyView: ScreenRenderDelegate {
         let width = isExtendedResolution ? GameBoy.extendedPixelWidth : GameBoy.pixelWidth
         let height = isExtendedResolution ? GameBoy.extendedPixelHeight : GameBoy.pixelHeight
         
-        aspectRatioConstraint.isActive = !isExtendedResolution
-        extendedAspectRatioConstraint.isActive = isExtendedResolution
-        
         DispatchQueue.main.async { [unowned self] in
+            aspectRatioConstraint.isActive = !isExtendedResolution
+            extendedAspectRatioConstraint.isActive = isExtendedResolution
+            
             var mutableColours = screenData.map(ColourPalette.getColour)
             let someContext = CGContext(
                 data: &mutableColours,

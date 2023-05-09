@@ -97,6 +97,10 @@ extension Coordinator {
     }
     
     private func constructDebugMenuItem() -> NSMenuItem {
+        let extendedResolutionSwitch = SwitchMenuItem(title: "Extended Resolution", initialIsOnValue: false) { isOn in
+            GameBoy.instance.debugProperties.useExtendedResolution = isOn
+        }
+        
         let channel1Switch = SwitchMenuItem(title: "Channel 1", initialIsOnValue: true) { isOn in
             GameBoy.instance.debugProperties.isChannel1Enabled = isOn
         }
@@ -125,6 +129,8 @@ extension Coordinator {
         
         let debugMenu = NSMenu(title: "Debug")
         debugMenu.items = [
+            extendedResolutionSwitch,
+            .separator(),
             channel1Switch,
             channel2Switch,
             channel3Switch,

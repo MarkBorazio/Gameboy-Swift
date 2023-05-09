@@ -20,11 +20,9 @@ class SwitchMenuItem: NSMenuItem {
         switchView.state = initialIsOnValue ? .on : .off
         switchView.target = self
         switchView.action = #selector(switchTapped)
+        switchView.setContentHuggingPriority(.required, for: .horizontal)
         
         let titleLabel = NSTextField(labelWithString: title)
-        NSLayoutConstraint.activate([
-            titleLabel.widthAnchor.constraint(equalToConstant: 70)
-        ])
         
         let stackView = NSStackView(views: [
             titleLabel,

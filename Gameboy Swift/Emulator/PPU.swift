@@ -8,21 +8,34 @@
 import Foundation
 import Cocoa
 
-
 class PPU {
    
     private var vRam = Array(repeating: UInt8.min, count: vRamSize)
     
+    // Registers
     private var scanlineTimer = 0
     var currentScanlineIndex: UInt8 = 0 // LY
     var coincidenceRegister: UInt8 = 0 // LYC
     var statusRegister: UInt8 = 0 // LCDS
     var controlRegister: UInt8 = 0 // LCDC
     
-    var screenData: [ColourPalette.PixelData] = Array(
-        repeating: .init(id: 0, palette: 0),
-        count: GameBoy.pixelHeight * GameBoy.pixelWidth
-    )
+    // Standard/Extended Resolution Properties
+    private var isUsingExtendedResolution = false
+    private var pixelWidth: Int {
+        isUsingExtendedResolution ? GameBoy.extendedPixelHeight : GameBoy.pixelWidth
+    }
+    private var visibleScanlinePixelsRange: ClosedRange<Int> {
+        isUsingExtendedResolution ? Self.extendedVisibleScanlinePixelsRange : Self.standardVisibleScanlinePixelsRange
+    }
+    private var lastVisibleScanlineIndex: UInt8 {
+        isUsingExtendedResolution ? Self.extendedLastVisibleScanlineIndex : Self.standardLastVisibleScanlineIndex
+    }
+    private var maxTilesPerScanline: UInt8 {
+        isUsingExtendedResolution ? Self.extendedMaxTilesPerScanline : Self.standardMaxTilesPerScanline
+    }
+    
+    // Screen Data
+    var screenData: [ColourPalette.PixelData] = emptyScreenData
     
     func readVRAM(globalAddress: UInt16) -> UInt8 {
         let vRamAddress = globalAddress &- Memory.videoRamAddressRange.lowerBound
@@ -36,6 +49,13 @@ class PPU {
     
     func tick(tCycles: Int) {
         
+        // Only adjust flag at the start of each tick.
+        // That way, we avoid changing the value mid-scanline which could result in an OOB array access.
+        if isUsingExtendedResolution != GameBoy.instance.debugProperties.useExtendedResolution {
+            isUsingExtendedResolution = GameBoy.instance.debugProperties.useExtendedResolution
+            screenData = isUsingExtendedResolution ? Self.extendedEmptyScreenData : Self.emptyScreenData
+        }
+        
         let isLCDEnabled = controlRegister.checkBit(Memory.lcdAndPpuEnabledBitIndex)
         guard isLCDEnabled else {
             updateDisabledLCDStatus()
@@ -48,19 +68,25 @@ class PPU {
         if scanlineTimer >= Self.tCyclesPerScanline {
             scanlineTimer -= Self.tCyclesPerScanline
             
-            switch currentScanlineIndex {
-            case ...Self.lastVisibleScanlineIndex:
+            if currentScanlineIndex <= lastVisibleScanlineIndex {
                 drawScanline()
-                
-            case Self.lastVisibleScanlineIndex &+ 1:
-                GameBoy.instance.mmu.requestVBlankInterrupt()
-                
-            default:
-                break
             }
             
-            currentScanlineIndex += 1
+            if currentScanlineIndex == Self.vBlankScanline {
+                GameBoy.instance.mmu.requestVBlankInterrupt()
+            }
+            
+            currentScanlineIndex &+= 1
             if currentScanlineIndex > Self.lastAbsoluteScanlineIndex {
+                // If in extended mode, we should render the rest of the scanlines all in one go once we pass `lastAbsoluteScanlineIndex` in order to preserve timing.
+                if isUsingExtendedResolution {
+                    let remainingScanlines = currentScanlineIndex...Self.extendedLastVisibleScanlineIndex
+                    for _ in remainingScanlines {
+                        drawScanline()
+                        currentScanlineIndex &+= 1
+                    }
+                }
+                
                 currentScanlineIndex = 0
             }
         }
@@ -85,7 +111,7 @@ class PPU {
         // Clear the current mode
         statusRegister &= ~Self.lcdModeMask
         
-        if currentScanlineIndex > Self.lastVisibleScanlineIndex {
+        if currentScanlineIndex > lastVisibleScanlineIndex {
             newLCDMode = Self.vBlankMode
             statusRegister |= newLCDMode
             interruptRequired = statusRegister.checkBit(Memory.vBlankInterruptEnabledBitIndex)
@@ -130,9 +156,6 @@ class PPU {
 extension PPU {
     
     private func drawScanline() {
-        // Don't bother rendering if scanline is off screen
-        guard (currentScanlineIndex < GameBoy.pixelHeight) else { return }
-        
         let renderTilesAndWindowEnabled = controlRegister.checkBit(Memory.bgAndWindowEnabledBitIndex)
         let renderSpritesEnabled = controlRegister.checkBit(Memory.objectsEnabledBitIndex)
         
@@ -172,7 +195,7 @@ extension PPU {
         let tilePixelOffset = Int(scrollX & 7) // Equivalent to `scollX % 8`
         
         // Iterate through minimum amount of tiles that we need to grab from memory
-        for scanlineTileIndex in 0..<Self.maxTilesPerScanline {
+        for scanlineTileIndex in 0..<maxTilesPerScanline {
             
             // Get memory address of tile
             let firstPixelIndexOfTile = scanlineTileIndex &* Self.pixelsPerTileRow
@@ -187,13 +210,13 @@ extension PPU {
             
             for pixelIndex in Self.tileRowPixelIndices {
                 let scanlinePixelIndex = Int(firstPixelIndexOfTile) + pixelIndex - tilePixelOffset
-                guard Self.visibleScanlinePixelsRange.contains(scanlinePixelIndex) else { continue }
+                guard visibleScanlinePixelsRange.contains(scanlinePixelIndex) else { continue }
                 
                 // Use colour ID to get colour from palette
                 let colourID = getColourId(pixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2, flipX: false)
                 
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
-                let globalPixelIndex = Int(currentScanlineIndex) * GameBoy.pixelWidth + scanlinePixelIndex
+                let globalPixelIndex = Int(currentScanlineIndex) * pixelWidth + scanlinePixelIndex
                 screenData[globalPixelIndex] = pixelData
             }
         }
@@ -225,7 +248,7 @@ extension PPU {
         let windowX = GameBoy.instance.mmu.safeReadValue(globalAddress: Memory.addressWindowX) &- Self.windowXOffset
         
         // Iterate through minimum amount of tiles that we need to grab from memory
-        for scanlineTileIndex in 0..<Self.maxTilesPerScanline {
+        for scanlineTileIndex in 0..<maxTilesPerScanline {
             
             let firstPixelIndexOfTile = scanlineTileIndex &* Self.pixelsPerTileRow &+ windowX
 
@@ -240,12 +263,12 @@ extension PPU {
             
             for pixelIndex in Self.tileRowPixelIndices {
                 let scanlinePixelIndex = Int(firstPixelIndexOfTile) + pixelIndex
-                guard Self.visibleScanlinePixelsRange.contains(scanlinePixelIndex) else { continue }
+                guard visibleScanlinePixelsRange.contains(scanlinePixelIndex) else { continue }
                 
                 // Use colour ID to get colour from palette
                 let colourID = getColourId(pixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2, flipX: false)
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
-                let globalPixelIndex = Int(currentScanlineIndex) * GameBoy.pixelWidth + scanlinePixelIndex
+                let globalPixelIndex = Int(currentScanlineIndex) * pixelWidth + scanlinePixelIndex
                 screenData[globalPixelIndex] = pixelData
             }
         }
@@ -308,7 +331,7 @@ extension PPU {
                 guard colourID != 0 else { continue }
 
                 let globalXco = Int(xCo) &+ pixelIndex
-                let screenDataIndex = Int(currentScanlineIndex) * GameBoy.pixelWidth + Int(globalXco)
+                let screenDataIndex = Int(currentScanlineIndex) * pixelWidth + Int(globalXco)
                 guard screenDataIndex < screenData.count else { return }
                 
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
@@ -371,10 +394,25 @@ extension PPU {
     // VRAM
     private static let vRamSize = 8 * 1024 // 8KB
     
+    // Empty Screen Data
+    private static let emptyScreenData: [ColourPalette.PixelData] = Array(
+        repeating: .init(id: 0, palette: 0xFF),
+        count: GameBoy.pixelHeight * GameBoy.pixelWidth
+    )
+    private static let extendedEmptyScreenData: [ColourPalette.PixelData] = Array(
+        repeating: .init(id: 0, palette: 0xFF),
+        count: GameBoy.extendedPixelWidth * GameBoy.extendedPixelHeight
+    )
+    
     // Scanlines
-    private static let visibleScanlinePixelsRange: ClosedRange<Int> = 0...GameBoy.pixelWidth-1
-    private static let lastVisibleScanlineIndex: UInt8 = 143
-    private static let lastAbsoluteScanlineIndex: UInt8 = 153
+    private static var standardVisibleScanlinePixelsRange: ClosedRange<Int> = 0...GameBoy.pixelWidth-1
+    private static var extendedVisibleScanlinePixelsRange: ClosedRange<Int> = 0...GameBoy.extendedPixelWidth-1
+    
+    private static let standardLastVisibleScanlineIndex: UInt8 = UInt8(GameBoy.pixelHeight-1)
+    private static let extendedLastVisibleScanlineIndex: UInt8 = UInt8(GameBoy.extendedPixelHeight-1)
+    
+    private static let vBlankScanline: UInt8 = 144 // Used for timing, so we don't have an extended version of this
+    private static let lastAbsoluteScanlineIndex: UInt8 = 153 // Used for timing, so we don't have an extended version of this
     
     // Scanline Timing Periods
     private static let tCyclesPerScanline = 456
@@ -393,7 +431,8 @@ extension PPU {
     private static let bytesPerPixelRow: UInt8 = 2
     private static let bytesPerTile: UInt16 = 16
     private static let tilesPerRow: UInt16 = 32
-    private static let maxTilesPerScanline: UInt8 = 21 // Is 21 due to X-axis scroll. 19 complete tiles + two incomplete tiles.
+    private static let standardMaxTilesPerScanline: UInt8 = 21 // Is 21 due to X-axis scroll. 19 complete tiles + two incomplete tiles.
+    private static let extendedMaxTilesPerScanline: UInt8 = 32
     private static let tileRowPixelIndices = 0...Int(pixelsPerTileRow)-1
     
     // Sprites

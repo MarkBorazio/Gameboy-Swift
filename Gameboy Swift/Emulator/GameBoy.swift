@@ -90,8 +90,8 @@ extension GameBoy {
     static let pixelWidth = 160
     static let pixelHeight = 144
     
-    static let extendedPixelWidth = 255
-    static let extendedPixelHeight = 255
+    static let extendedPixelWidth = 256
+    static let extendedPixelHeight = 256
 }
 
 // MARK: - ScreenRenderDelegate
