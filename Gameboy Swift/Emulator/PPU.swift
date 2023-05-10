@@ -159,16 +159,26 @@ extension PPU {
         let renderTilesAndWindowEnabled = controlRegister.checkBit(Memory.bgAndWindowEnabledBitIndex)
         let renderSpritesEnabled = controlRegister.checkBit(Memory.objectsEnabledBitIndex)
         
-        if renderTilesAndWindowEnabled {
+        clearCurrentSpriteRow()
+        
+        if renderTilesAndWindowEnabled && GameBoy.instance.debugProperties.renderTiles {
             renderBackground()
         }
         
-        if renderTilesAndWindowEnabled {
+        if renderTilesAndWindowEnabled && GameBoy.instance.debugProperties.renderWindow {
             renderWindow()
         }
         
-        if renderSpritesEnabled {
+        if renderSpritesEnabled && GameBoy.instance.debugProperties.renderSprites {
             renderSprites()
+        }
+    }
+    
+    private func clearCurrentSpriteRow() {
+        let pixelData = ColourPalette.PixelData(id: 0, palette: 0)
+        visibleScanlinePixelsRange.forEach { scanlinePixelIndex in
+            let globalPixelIndex = Int(currentScanlineIndex) * pixelWidth + scanlinePixelIndex
+            screenData[globalPixelIndex] = pixelData
         }
     }
     

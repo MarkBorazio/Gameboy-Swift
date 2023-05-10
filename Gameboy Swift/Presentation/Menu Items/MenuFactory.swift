@@ -25,6 +25,15 @@ enum MenuFactory {
         let extendedResolutionSwitch = SwitchMenuItem(title: "Extended Resolution", initialIsOnValue: false) { isOn in
             GameBoy.instance.debugProperties.useExtendedResolution = isOn
         }
+        let renderTilesSwitch = SwitchMenuItem(title: "Render Tiles", initialIsOnValue: true) { isOn in
+            GameBoy.instance.debugProperties.renderTiles = isOn
+        }
+        let renderWindowSwitch = SwitchMenuItem(title: "Render Window", initialIsOnValue: true) { isOn in
+            GameBoy.instance.debugProperties.renderWindow = isOn
+        }
+        let renderSpritesSwitch = SwitchMenuItem(title: "Render Sprites", initialIsOnValue: true) { isOn in
+            GameBoy.instance.debugProperties.renderSprites = isOn
+        }
         
         let colour1Slider = RGBASliderMenuItem(title: "Colour ID 0", initialRGBAValue: ColourPalette.white) { newValue in
             GameBoy.instance.debugProperties.colour1 = newValue
@@ -42,6 +51,9 @@ enum MenuFactory {
         let menu = NSMenu(title: "Video")
         menu.items = [
             extendedResolutionSwitch,
+            renderTilesSwitch,
+            renderWindowSwitch,
+            renderSpritesSwitch,
             .separator(),
             colour1Slider,
             .separator(),
