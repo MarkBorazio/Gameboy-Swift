@@ -24,7 +24,6 @@ class GameBoy {
     weak var screenRenderDelegate: ScreenRenderDelegate?
     
     private var periodicSaveTimer: Timer?
-    private static let saveIntervalSeconds: TimeInterval = 5
     
     func loadCartridge(romURL: URL, skipBootROM: Bool) throws {
         resetState()
@@ -86,10 +85,14 @@ class GameBoy {
 // MARK: - Static Constants
 
 extension GameBoy {
-    // Resolution
+    
+    private static let saveIntervalSeconds: TimeInterval = 5
+    
+    // Standard Resolution
     static let pixelWidth = 160
     static let pixelHeight = 144
     
+    // Extended Resolution
     static let extendedPixelWidth = 256
     static let extendedPixelHeight = 256
 }
