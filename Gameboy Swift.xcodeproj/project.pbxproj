@@ -141,6 +141,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4D1255B22A0BE66C003FC005 /* Menu */ = {
+			isa = PBXGroup;
+			children = (
+				4D1255AE2A0BD5FB003FC005 /* MenuFactory.swift */,
+				4D3127262A07FFC400A09A56 /* Menu Items */,
+			);
+			path = Menu;
+			sourceTree = "<group>";
+		};
 		4D3124DF29F5668600A09A56 /* Synth */ = {
 			isa = PBXGroup;
 			children = (
@@ -182,7 +191,6 @@
 		4D3127262A07FFC400A09A56 /* Menu Items */ = {
 			isa = PBXGroup;
 			children = (
-				4D1255AE2A0BD5FB003FC005 /* MenuFactory.swift */,
 				4D1255B02A0BE1F1003FC005 /* CommonMenuItem.swift */,
 				4D3127272A07FFD200A09A56 /* SwitchMenuItem.swift */,
 				4D31272B2A08085D00A09A56 /* RGBASliderMenuItem.swift */,
@@ -197,7 +205,7 @@
 				4D31251A2A03F6AA00A09A56 /* Coordinator.swift */,
 				6070722E26BFA814002E7119 /* ViewController.swift */,
 				4DAEF4E229D98A1C00F41DFC /* GameBoyView.swift */,
-				4D3127262A07FFC400A09A56 /* Menu Items */,
+				4D1255B22A0BE66C003FC005 /* Menu */,
 			);
 			path = Presentation;
 			sourceTree = "<group>";
