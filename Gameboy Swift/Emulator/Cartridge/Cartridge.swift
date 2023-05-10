@@ -16,7 +16,7 @@ struct Cartridge {
     init(romURL: URL) throws {
         self.romURL = romURL
         
-        saveDataURL = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        saveDataURL = try GameBoy.getSavesFolderURL()
             .appendingPathComponent(romURL.deletingPathExtension().lastPathComponent)
             .appendingPathExtension("gbswiftsave")
         

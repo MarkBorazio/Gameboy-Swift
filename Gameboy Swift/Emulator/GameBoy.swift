@@ -82,7 +82,7 @@ class GameBoy {
     }
 }
 
-// MARK: - Static Constants
+// MARK: - Static Constants and Methods
 
 extension GameBoy {
     
@@ -95,6 +95,10 @@ extension GameBoy {
     // Extended Resolution
     static let extendedPixelWidth = 256
     static let extendedPixelHeight = 256
+    
+    static func getSavesFolderURL() throws -> URL {
+        try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+    }
 }
 
 // MARK: - ScreenRenderDelegate

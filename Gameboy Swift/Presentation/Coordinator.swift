@@ -37,7 +37,7 @@ class Coordinator: NSObject {
         dialog.allowsMultipleSelection = false
         dialog.canChooseDirectories = false
 
-        let response = dialog.runModal() // Seems to pause thread until dismissed.
+        let response = dialog.runModal() // Seems to pause everything until dismissed.
         
         guard response == NSApplication.ModalResponse.OK else {
             // User clicked on "Cancel"
@@ -69,15 +69,17 @@ class Coordinator: NSObject {
     
     func crash(message: String) -> Never {
         stopGameBoy()
-        
+        presentWarningModal(title: "Error", message: message)
+        objc_terminate()
+    }
+    
+    func presentWarningModal(title: String, message: String?) {
         let alert = NSAlert()
-        alert.messageText = "Error"
-        alert.informativeText = message
+        alert.messageText = title
+        alert.informativeText = message ?? ""
         alert.alertStyle = .warning
         alert.addButton(withTitle: "OK")
         alert.runModal()
-        
-        objc_terminate()
     }
 }
 

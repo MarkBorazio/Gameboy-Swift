@@ -14,11 +14,34 @@ enum MenuFactory {
         
         appMenu.items = [
             NSMenuItem(), // It seems that the first item always corresponds to the main App Name item
+            constructFileMenu(),
             constructVideoMenu(),
             constructAudioMenu()
         ]
         
         return appMenu
+    }
+    
+    private static func constructFileMenu() -> NSMenuItem {
+        let menu = NSMenu(title: "File")
+        
+        let openSavesFolderItem = CommonMenuItem(title: "Open Saves Folder") {
+            do {
+                let url = try GameBoy.getSavesFolderURL()
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            } catch {
+                Coordinator.instance.presentWarningModal(title: "Failed to open saves folder.", message: nil)
+            }
+        }
+        
+        menu.items = [
+            openSavesFolderItem
+        ]
+        
+        let menuItem = NSMenuItem()
+        menuItem.submenu = menu
+        
+        return menuItem
     }
     
     private static func constructVideoMenu() -> NSMenuItem {
