@@ -307,13 +307,17 @@ extension PPU {
             let yCo = GameBoy.instance.mmu.safeReadValue(globalAddress: spriteDataYCoAddress) &- Self.spriteYOffset
             let xCo = GameBoy.instance.mmu.safeReadValue(globalAddress: spriteDataXCoAddress) &- Self.spriteXOffset
             
-            let spriteBoundsLower = Int(yCo)
-            let spriteBoundsUpper = spriteBoundsLower + spriteHeight
-            let spriteBounds = spriteBoundsLower..<spriteBoundsUpper
-            
             // Check if sprite intercepts with scanline
-            guard spriteBounds.contains(Int(currentScanlineIndex)) else { continue }
-                
+            var scanlineInterceptsSprite = false
+            for spriteRow in 0..<spriteHeight {
+                let spriteRowGlobal = yCo &+ spriteRow
+                if currentScanlineIndex == spriteRowGlobal {
+                    scanlineInterceptsSprite = true
+                    break
+                }
+            }
+            guard scanlineInterceptsSprite else { continue }
+            
             let attributes = GameBoy.instance.mmu.safeReadValue(globalAddress: spriteDataAttributesAddress)
             let renderAboveBackground = !attributes.checkBit(Memory.bgAndWindowOverObjBitIndex)
             let flipY = attributes.checkBit(Memory.yFlipBitIndex)
@@ -342,8 +346,9 @@ extension PPU {
                 // Colour ID 0 is transparent for sprites
                 guard colourID != 0 else { continue }
 
-                let globalXco = Int(xCo) &+ pixelIndex
+                let globalXco = xCo &+ UInt8(pixelIndex)
                 let screenDataIndex = Int(currentScanlineIndex) * pixelWidth + Int(globalXco)
+                
                 guard screenDataIndex < screenData.count else { return }
                 
                 let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
@@ -352,7 +357,7 @@ extension PPU {
                     screenData[screenDataIndex] = pixelData
                 } else {
                     // If not rendering above background, then sprite can only show through where the background pixel colour id is 0.
-                    // NOTE: The window is currently being rendered before the sprites, so I am not sure if that affects this.
+                    // NOTE: The window is currently being rendered before the sprites, so I am not sure if that also affects this.
                     let backgroundPixelData = screenData[screenDataIndex]
                     if backgroundPixelData.id == 0 {
                         screenData[screenDataIndex] = pixelData
@@ -452,8 +457,8 @@ extension PPU {
     private static let bytesPerSprite: UInt16 = 4
     private static let spriteXOffset: UInt8 = 8
     private static let spriteYOffset: UInt8 = 16
-    private static let smallSpriteHeight: Int = 8
-    private static let largeSpriteHeight: Int = 16
+    private static let smallSpriteHeight: UInt8 = 8
+    private static let largeSpriteHeight: UInt8 = 16
     
     // Miscellaneous
     private static let windowXOffset: UInt8 = 7
