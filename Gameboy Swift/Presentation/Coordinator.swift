@@ -20,16 +20,19 @@ class Coordinator: NSObject {
     
     private override init() {
         super.init()
+        NSApplication.shared.mainMenu = MenuFactory.constructMenu()
         
         window.backgroundColor = .black
         window.center()
         window.delegate = self
+        window.contentViewController = ViewController()
         window.isReleasedWhenClosed = false
-        
-        NSApplication.shared.mainMenu = MenuFactory.constructMenu()
     }
     
     func presentFileSelector() {
+        stopGameBoy()
+        window.close()
+        
         let dialog = NSOpenPanel()
 
         dialog.title = "Select a Game Boy ROM"
@@ -45,7 +48,7 @@ class Coordinator: NSObject {
         }
         
         guard let url = dialog.url else {
-            // No idea
+            presentWarningModal(title: "Error", message: "Failed to access ROM file")
             return
         }
         
@@ -53,9 +56,13 @@ class Coordinator: NSObject {
     }
     
     func startGameBoy(romURL: URL) {
-        try! GameBoy.instance.loadCartridge(romURL: romURL, skipBootROM: true)
+        do {
+            try GameBoy.instance.loadCartridge(romURL: romURL, skipBootROM: true)
+        } catch {
+            presentWarningModal(title: "Error", message: "Failed to load cartridge. Got error: \(error).")
+            return
+        }
         
-        window.contentViewController = ViewController()
         window.title = romURL.deletingPathExtension().lastPathComponent
         window.makeKeyAndOrderFront(nil)
         

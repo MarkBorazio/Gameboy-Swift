@@ -25,6 +25,10 @@ enum MenuFactory {
     private static func constructFileMenu() -> NSMenuItem {
         let menu = NSMenu(title: "File")
         
+        let openRomItem = CommonMenuItem(title: "Open ROM") {
+            Coordinator.instance.presentFileSelector()
+        }
+        
         let openSavesFolderItem = CommonMenuItem(title: "Open Saves Folder") {
             do {
                 let url = try GameBoy.getSavesFolderURL()
@@ -35,6 +39,7 @@ enum MenuFactory {
         }
         
         menu.items = [
+            openRomItem,
             openSavesFolderItem
         ]
         

@@ -8,7 +8,6 @@
 import Cocoa
 
 // TODO:
-// - Add something to PPU/MasterClock to make sure that frame is drawn only when it completes
 // - Continue updating APU to pass more tests
 // - Move to Metal rendering?
 // - Update README
@@ -21,9 +20,5 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ aNotification: Notification) {
         Coordinator.instance.stopGameBoy()
-    }
-    
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        true
     }
 }
