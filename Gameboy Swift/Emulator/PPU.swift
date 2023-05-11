@@ -66,6 +66,7 @@ class PPU {
         
         scanlineTimer += tCycles
         if scanlineTimer >= Self.tCyclesPerScanline {
+            GameBoy.instance.notifyScreenRenderNotReady()
             scanlineTimer -= Self.tCyclesPerScanline
             
             if currentScanlineIndex <= lastVisibleScanlineIndex {
@@ -88,6 +89,7 @@ class PPU {
                 }
                 
                 currentScanlineIndex = 0
+                GameBoy.instance.notifyScreenRenderReady()
             }
         }
     }

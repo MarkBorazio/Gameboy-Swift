@@ -50,7 +50,7 @@ class MasterClock {
                 let now = Date()
                 if now >= nextRenderDate {
                     nextRenderDate = now.addingTimeInterval(Self.frameDuration)
-                    GameBoy.instance.renderScreen()
+                    GameBoy.instance.requestScreenRender()
                 }
             }
         }

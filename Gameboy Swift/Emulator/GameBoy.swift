@@ -21,6 +21,9 @@ class GameBoy {
     private(set) var joypad = Joypad()
     
     var debugProperties = DebugProperties()
+    
+    private var screenRenderRequested = false // Has clock requested screen render?
+    private var screenRenderReady = false // Had PPU signalled that screen is ready to render?
     weak var screenRenderDelegate: ScreenRenderDelegate?
     
     private var periodicSaveTimer: Timer?
@@ -76,9 +79,39 @@ class GameBoy {
             print("Failed to save file.")
         }
     }
+}
+
+// MARK: - Screen Render Synchronisation
+
+// Since the clock is synchronised by audio, our video requires extra logic to
+// to make sure that we only render the frame once it is ready. Otherwise, we run
+// into bad screen tearing.
+extension GameBoy {
     
-    func renderScreen() {
+    func notifyScreenRenderNotReady() {
+        screenRenderReady = false
+    }
+    
+    func notifyScreenRenderReady() {
+        if screenRenderRequested {
+            renderScreen()
+        } else {
+            screenRenderReady = true
+        }
+    }
+    
+    func requestScreenRender() {
+        if screenRenderReady {
+            renderScreen()
+        } else {
+            screenRenderRequested = true
+        }
+    }
+    
+    private func renderScreen() {
         screenRenderDelegate?.renderScreen(screenData: ppu.screenData, isExtendedResolution: debugProperties.useExtendedResolution)
+        screenRenderRequested = false
+        screenRenderReady = false
     }
 }
 
