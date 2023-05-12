@@ -8,6 +8,7 @@
 import Cocoa
 
 // TODO:
+// - Add green colour pallete
 // - Continue updating APU to pass more tests
 // - Move to Metal rendering?
 // - Update README
