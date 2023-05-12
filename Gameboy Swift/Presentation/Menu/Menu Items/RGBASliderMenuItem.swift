@@ -60,20 +60,4 @@ class RGBASliderMenuItem: NSMenuItem {
         let newValue = UInt32(bytes: [red, green, blue, alpha])!
         onNewValue?(newValue)
     }
-    
-    private static func constructSliderWithTitleView(title: String, slider: NSSlider) -> NSView {
-        let titleLabel = NSTextField(labelWithString: title)
-        
-        NSLayoutConstraint.activate([
-            titleLabel.widthAnchor.constraint(equalToConstant: 50),
-        ])
-        
-        let stackView = NSStackView(views: [
-            titleLabel,
-            slider
-        ])
-        stackView.orientation = .horizontal
-        
-        return stackView
-    }
 }

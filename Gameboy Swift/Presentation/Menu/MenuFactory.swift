@@ -15,6 +15,7 @@ enum MenuFactory {
         appMenu.items = [
             NSMenuItem(), // It seems that the first item always corresponds to the main App Name item
             constructFileMenu(),
+            constructGameMenu(),
             constructVideoMenu(),
             constructAudioMenu()
         ]
@@ -41,6 +42,23 @@ enum MenuFactory {
         menu.items = [
             openRomItem,
             openSavesFolderItem
+        ]
+        
+        let menuItem = NSMenuItem()
+        menuItem.submenu = menu
+        
+        return menuItem
+    }
+    
+    private static func constructGameMenu() -> NSMenuItem {
+        let menu = NSMenu(title: "Game")
+        
+        let speedMultiplerSlider = SliderMenuItem(range: 1...8, initialValue: 1) { multiplier in
+            GameBoy.instance.debugProperties.clockMultiplier = multiplier
+        }
+        
+        menu.items = [
+            speedMultiplerSlider
         ]
         
         let menuItem = NSMenuItem()

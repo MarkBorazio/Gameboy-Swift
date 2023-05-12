@@ -8,6 +8,7 @@
 import Cocoa
 
 extension NSMenuItem {
+
     static func embedInContainerView(_ view: NSView) -> NSView {
         let containerView = NSView()
         containerView.addSubview(view)
@@ -20,5 +21,21 @@ extension NSMenuItem {
         ])
         containerView.translatesAutoresizingMaskIntoConstraints = false
         return containerView
+    }
+    
+    static func constructSliderWithTitleView(title: String, slider: NSSlider) -> NSView {
+        let titleLabel = NSTextField(labelWithString: title)
+        
+        NSLayoutConstraint.activate([
+            titleLabel.widthAnchor.constraint(equalToConstant: 50),
+        ])
+        
+        let stackView = NSStackView(views: [
+            titleLabel,
+            slider
+        ])
+        stackView.orientation = .horizontal
+        
+        return stackView
     }
 }

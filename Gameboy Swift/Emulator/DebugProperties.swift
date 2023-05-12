@@ -8,6 +8,8 @@
 import Foundation
 
 struct DebugProperties {
+    var clockMultiplier = 1.0
+    
     var useExtendedResolution = false
     
     var renderTiles = true

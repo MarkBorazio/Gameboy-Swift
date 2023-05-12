@@ -24,7 +24,10 @@ class APU {
     private let channel3 = SoundChannel3()
     private let channel4 = SoundChannel4()
     
-    private let tCyclesPerSample: Int
+    private var tCyclesPerSample: Int {
+        let doubleVal = Double(GameBoy.instance.clock.multipliedTCyclesHz) / synth.sampleRate
+        return Int(doubleVal.rounded(.awayFromZero))
+    }
     
     private var interleavedSampleBuffer: [Float] = [] // L/R
     private var sampleCounter = 0
@@ -36,8 +39,6 @@ class APU {
     var isDrainingSamples = false
     
     init() {
-        let tCyclesPerSampleDouble = Double(MasterClock.tCyclesHz) / synth.sampleRate
-        tCyclesPerSample = Int(tCyclesPerSampleDouble.rounded(.awayFromZero))
         
         #if RELEASE
         synth.volume = 0.1

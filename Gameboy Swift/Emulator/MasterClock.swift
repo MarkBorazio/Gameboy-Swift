@@ -13,11 +13,12 @@ class MasterClock {
     private var isTicking = false
     private let timerQueue = DispatchQueue(label: "timerQueue")
     
+    private static let tCyclesHz: Double = 4194304
     private static let framesPerSecond: UInt32 = 60
     
-    static let tCyclesHz: UInt32 = 4194304
-    private static let tCyclesCyclesPerFrame: UInt32 = tCyclesHz / framesPerSecond
-    private static let frameDuration: TimeInterval = 1.0 / Double(framesPerSecond)
+    var multipliedTCyclesHz: UInt32 { UInt32(Self.tCyclesHz * GameBoy.instance.debugProperties.clockMultiplier) }
+    private var tCyclesCyclesPerFrame: UInt32 { multipliedTCyclesHz / Self.framesPerSecond }
+    private var frameDuration: TimeInterval { 1.0 / Double(Self.framesPerSecond) }
     
     private var internalDivCounter: UInt8 = 0
     private(set) var divRegister: UInt8 = 0
@@ -28,11 +29,10 @@ class MasterClock {
     private(set) var tacRegister: UInt8 = 0
     
     // Game speed is synced by audio.
-    // This results in almost no audio pops, but more screen tearing than syncing via frame duration.
     func startTicking() {
         isTicking = true
         timerQueue.async {
-            var nextRenderDate = Date().addingTimeInterval(Self.frameDuration)
+            var nextRenderDate = Date().addingTimeInterval(self.frameDuration)
             while(self.isTicking) {
                 if !GameBoy.instance.apu.isDrainingSamples {
                     let cpuMCycles = GameBoy.instance.cpu.tickReturningMCycles()
@@ -49,7 +49,7 @@ class MasterClock {
                 
                 let now = Date()
                 if now >= nextRenderDate {
-                    nextRenderDate = now.addingTimeInterval(Self.frameDuration)
+                    nextRenderDate = now.addingTimeInterval(self.frameDuration)
                     GameBoy.instance.requestScreenRender()
                 }
             }
