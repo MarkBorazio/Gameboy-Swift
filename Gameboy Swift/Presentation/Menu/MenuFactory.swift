@@ -117,6 +117,9 @@ enum MenuFactory {
     }
     
     private static func constructAudioMenu() -> NSMenuItem {
+        let muteSwitch = SwitchMenuItem(title: "Mute", initialIsOnValue: false) { isOn in
+            GameBoy.instance.debugProperties.isMuted = isOn
+        }
         let channel1Switch = SwitchMenuItem(title: "Channel 1", initialIsOnValue: true) { isOn in
             GameBoy.instance.debugProperties.isChannel1Enabled = isOn
         }
@@ -132,6 +135,8 @@ enum MenuFactory {
         
         let menu = NSMenu(title: "Audio")
         menu.items = [
+            muteSwitch,
+            .separator(),
             channel1Switch,
             channel2Switch,
             channel3Switch,

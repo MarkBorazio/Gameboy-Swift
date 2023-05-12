@@ -39,14 +39,7 @@ class APU {
     var isDrainingSamples = false
     
     init() {
-        
-        #if RELEASE
         synth.volume = 0.1
-        #else
-        synth.volume = 0.0
-        print("Audio is disabled for the debug scheme. Use a release scheme if you want to hear audio.")
-        #endif
-
         synth.start()
     }
     
@@ -187,28 +180,37 @@ class APU {
 extension APU {
     
     private func collectSample() {
-        let channel1Sample = channel1.dacOutput()
-        let channel2Sample = channel2.dacOutput()
-        let channel3Sample = channel3.dacOutput()
-        let channel4Sample = channel4.dacOutput()
-        
         let debugProperties = GameBoy.instance.debugProperties
         
-        let leftChannelSamples: [Float] = [
-            channel1Left && debugProperties.isChannel1Enabled ? channel1Sample : 0,
-            channel2Left && debugProperties.isChannel2Enabled ? channel2Sample : 0,
-            channel3Left && debugProperties.isChannel3Enabled ? channel3Sample : 0,
-            channel4Left && debugProperties.isChannel4Enabled ? channel4Sample : 0,
-        ]
-        let leftSample = Self.mixChannelSamples(samples: leftChannelSamples, rawVolume: leftVolume)
+        let leftSample: Float
+        let rightSample: Float
         
-        let rightChannelSamples: [Float] = [
-            channel1Right && debugProperties.isChannel1Enabled ? channel1Sample : 0,
-            channel2Right && debugProperties.isChannel2Enabled ? channel2Sample : 0,
-            channel3Right && debugProperties.isChannel3Enabled ? channel3Sample : 0,
-            channel4Right && debugProperties.isChannel4Enabled ? channel4Sample : 0,
-        ]
-        let rightSample = Self.mixChannelSamples(samples: rightChannelSamples, rawVolume: rightVolume)
+        if !debugProperties.isMuted {
+            let channel1Sample = channel1.dacOutput()
+            let channel2Sample = channel2.dacOutput()
+            let channel3Sample = channel3.dacOutput()
+            let channel4Sample = channel4.dacOutput()
+            
+            let leftChannelSamples: [Float] = [
+                channel1Left && debugProperties.isChannel1Enabled ? channel1Sample : 0,
+                channel2Left && debugProperties.isChannel2Enabled ? channel2Sample : 0,
+                channel3Left && debugProperties.isChannel3Enabled ? channel3Sample : 0,
+                channel4Left && debugProperties.isChannel4Enabled ? channel4Sample : 0,
+            ]
+            
+            let rightChannelSamples: [Float] = [
+                channel1Right && debugProperties.isChannel1Enabled ? channel1Sample : 0,
+                channel2Right && debugProperties.isChannel2Enabled ? channel2Sample : 0,
+                channel3Right && debugProperties.isChannel3Enabled ? channel3Sample : 0,
+                channel4Right && debugProperties.isChannel4Enabled ? channel4Sample : 0,
+            ]
+            
+            leftSample = Self.mixChannelSamples(samples: leftChannelSamples, rawVolume: leftVolume)
+            rightSample = Self.mixChannelSamples(samples: rightChannelSamples, rawVolume: rightVolume)
+        } else {
+            leftSample = 0
+            rightSample = 0
+        }
         
         interleavedSampleBuffer.append(leftSample)
         interleavedSampleBuffer.append(rightSample)
