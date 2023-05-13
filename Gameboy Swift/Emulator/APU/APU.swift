@@ -226,8 +226,8 @@ extension APU {
     
     private static func mixChannelSamples(samples: [Float], rawVolume: UInt8) -> Float {
         let unmixedSample = samples.reduce(.zero, +) / 4
-        let volumeMultiplier = (rawVolume + 1) / 8 // Use volume percentage to ensure sample remains in range of -1.0...1.0
-        return unmixedSample * Float(volumeMultiplier)
+        let volumeMultiplier = Float(rawVolume + 1) / 8 // Use volume percentage to ensure sample remains in range of -1.0...1.0
+        return unmixedSample * volumeMultiplier
     }
 }
 
