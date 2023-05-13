@@ -1096,136 +1096,6 @@ extension CPU {
         default: Coordinator.instance.crash(message: "Unhandled opcode found. Got \(opcode).")
         }
     }
-}
-
-// MARK: - Convenience
-
-extension CPU {
-    
-    /// Parts of the opcode tables are organised in a way where the high nibble is the function
-    /// and the low nibble is the register parameter.
-    private func getRegisterByte(opcode: UInt8) -> UInt8 {
-        switch opcode.lowNibble {
-        case 0x0, 0x8: return b
-        case 0x1, 0x9: return c
-        case 0x2, 0xA: return d
-        case 0x3, 0xB: return e
-        case 0x4, 0xC: return h
-        case 0x5, 0xD: return l
-        case 0x6, 0xE: return GameBoy.instance.mmu.safeReadValue(globalAddress: hl)
-        case 0x7, 0xF: return a
-        default: Coordinator.instance.crash(message: "Failed to get byte register for opcode: \(opcode)")
-        }
-    }
-    
-    /// Parts of the opcode tables are organised in a way where the high nibble is the function
-    /// and the low nibble is the register parameter.
-    private func setRegisterValueForOpcode(_ opcode: UInt8, value: UInt8) {
-        switch opcode.lowNibble {
-        case 0x0, 0x8: b = value
-        case 0x1, 0x9: c = value
-        case 0x2, 0xA: d = value
-        case 0x3, 0xB: e = value
-        case 0x4, 0xC: h = value
-        case 0x5, 0xD: l = value
-        case 0x6, 0xE: GameBoy.instance.mmu.safeWriteValue(value, globalAddress: hl)
-        case 0x7, 0xF: a = value
-        default: Coordinator.instance.crash(message: "Failed to set byte register for opcode: \(opcode)")
-        }
-    }
-}
-
-// MARK: - Arithmetic, Boolean Logic, and Control
-
-extension CPU {
-    
-    private func popStack() -> UInt16 {
-        let lowerByte = GameBoy.instance.mmu.safeReadValue(globalAddress: sp)
-        sp &+= 1
-        let upperByte = GameBoy.instance.mmu.safeReadValue(globalAddress: sp)
-        sp &+= 1
-        return UInt16(bytes: [lowerByte, upperByte])!
-    }
-
-    
-    private func incrementOperation(_ value: UInt8) -> UInt8 {
-        let incrementedValue = value &+ 1
-        let halfCarry = calculateHalfCarryFromAddition(lhs: value, rhs: 1, carry: false)
-        
-        zFlag = incrementedValue == 0
-        nFlag = false
-        hFlag = halfCarry
-        
-        return incrementedValue
-    }
-    
-    private func decrementOperation(_ value: UInt8) -> UInt8 {
-        let decrementedValue = value &- 1
-        let halfCarry = calculateHalfCarryFromSubtraction(lhs: value, rhs: 1, carry: false)
-
-        zFlag = decrementedValue == 0
-        nFlag = true
-        hFlag = halfCarry
-        
-        return decrementedValue
-    }
-    
-    // Ref: https://stackoverflow.com/a/57978555
-    private func addOperation(lhs: UInt16, rhs: Int8) -> UInt16 {
-        // Carry and Half-Carry flags are calculated on lower byte as if it were an 8-bit operation.
-        let unsignedRhs = UInt8(bitPattern: rhs)
-        let (_, carry) = lhs.getByte(0).addingReportingOverflow(unsignedRhs)
-        let halfCarry = calculateHalfCarryFromAddition(lhs: lhs.getByte(0), rhs: unsignedRhs, carry: false)
-        
-        // Flag are calculated by this point, so we calculate result normally
-        let value = lhs &+ UInt16(bitPattern: Int16(rhs))
-        
-        zFlag = false
-        nFlag = false
-        hFlag = halfCarry
-        cFlag = carry
-        
-        return value
-    }
-    
-    private func calculateHalfCarryFromAddition(lhs: UInt8, rhs: UInt8, carry: Bool) -> Bool {
-        let carryValue: UInt8 = carry ? 1 : 0
-        let result = (lhs.lowNibble &+ rhs.lowNibble &+ carryValue) & 0x10
-        return result == 0x10
-    }
-     
-    // Ref: https://www.reddit.com/r/EmuDev/comments/knm196/gameboy_half_carry_flag_during_subtract_operation/
-    private func calculateHalfCarryFromSubtraction(lhs: UInt8, rhs: UInt8, carry: Bool) -> Bool {
-        let carryValue: UInt8 = carry ? 1 : 0
-        let result = (lhs.lowNibble &- rhs.lowNibble &- carryValue) & 0x10
-        return result == 0x10
-    }
-}
-
-// MARK: - HL Operation Convenience
-
-extension CPU {
-    
-    // Some functions require the HL pair to be incremented or decremented after the instruction has been executed.
-    // This is a convenience enum to allow us to not have to create custom functions just for the HL pair.
-    // Maybe not the most intuitive way to do this, but it works.
-    private enum HLOperation {
-        case nothing
-        case increment
-        case decrement
-    }
-    
-
-    private func executeHLOperation(_ operation: HLOperation) {
-        switch operation {
-        case .nothing: break
-        case .increment: hl &+= 1
-        case .decrement: hl &-= 1
-        }
-    }
-}
-
-extension CPU {
     
     private func rotateLeftWithCarry(opcode: UInt8) {
         let oldRegisterValue = getRegisterByte(opcode: opcode)
@@ -1343,5 +1213,132 @@ extension CPU {
         var registerValue = getRegisterByte(opcode: opcode)
         registerValue.setBit(bitIndex)
         setRegisterValueForOpcode(opcode, value: registerValue)
+    }
+}
+
+// MARK: - Register Convenience
+
+extension CPU {
+    
+    /// Parts of the opcode tables are organised in a way where the high nibble is the function
+    /// and the low nibble is the register parameter.
+    private func getRegisterByte(opcode: UInt8) -> UInt8 {
+        switch opcode.lowNibble {
+        case 0x0, 0x8: return b
+        case 0x1, 0x9: return c
+        case 0x2, 0xA: return d
+        case 0x3, 0xB: return e
+        case 0x4, 0xC: return h
+        case 0x5, 0xD: return l
+        case 0x6, 0xE: return GameBoy.instance.mmu.safeReadValue(globalAddress: hl)
+        case 0x7, 0xF: return a
+        default: Coordinator.instance.crash(message: "Failed to get byte register for opcode: \(opcode)")
+        }
+    }
+    
+    /// Parts of the opcode tables are organised in a way where the high nibble is the function
+    /// and the low nibble is the register parameter.
+    private func setRegisterValueForOpcode(_ opcode: UInt8, value: UInt8) {
+        switch opcode.lowNibble {
+        case 0x0, 0x8: b = value
+        case 0x1, 0x9: c = value
+        case 0x2, 0xA: d = value
+        case 0x3, 0xB: e = value
+        case 0x4, 0xC: h = value
+        case 0x5, 0xD: l = value
+        case 0x6, 0xE: GameBoy.instance.mmu.safeWriteValue(value, globalAddress: hl)
+        case 0x7, 0xF: a = value
+        default: Coordinator.instance.crash(message: "Failed to set byte register for opcode: \(opcode)")
+        }
+    }
+}
+
+// MARK: - Common Arithmetic, Boolean Logic, and Control Operations
+
+extension CPU {
+    
+    private func popStack() -> UInt16 {
+        let lowerByte = GameBoy.instance.mmu.safeReadValue(globalAddress: sp)
+        sp &+= 1
+        let upperByte = GameBoy.instance.mmu.safeReadValue(globalAddress: sp)
+        sp &+= 1
+        return UInt16(bytes: [lowerByte, upperByte])!
+    }
+
+    
+    private func incrementOperation(_ value: UInt8) -> UInt8 {
+        let incrementedValue = value &+ 1
+        let halfCarry = calculateHalfCarryFromAddition(lhs: value, rhs: 1, carry: false)
+        
+        zFlag = incrementedValue == 0
+        nFlag = false
+        hFlag = halfCarry
+        
+        return incrementedValue
+    }
+    
+    private func decrementOperation(_ value: UInt8) -> UInt8 {
+        let decrementedValue = value &- 1
+        let halfCarry = calculateHalfCarryFromSubtraction(lhs: value, rhs: 1, carry: false)
+
+        zFlag = decrementedValue == 0
+        nFlag = true
+        hFlag = halfCarry
+        
+        return decrementedValue
+    }
+    
+    // Ref: https://stackoverflow.com/a/57978555
+    private func addOperation(lhs: UInt16, rhs: Int8) -> UInt16 {
+        // Carry and Half-Carry flags are calculated on lower byte as if it were an 8-bit operation.
+        let unsignedRhs = UInt8(bitPattern: rhs)
+        let (_, carry) = lhs.getByte(0).addingReportingOverflow(unsignedRhs)
+        let halfCarry = calculateHalfCarryFromAddition(lhs: lhs.getByte(0), rhs: unsignedRhs, carry: false)
+        
+        // Flag are calculated by this point, so we calculate result normally
+        let value = lhs &+ UInt16(bitPattern: Int16(rhs))
+        
+        zFlag = false
+        nFlag = false
+        hFlag = halfCarry
+        cFlag = carry
+        
+        return value
+    }
+    
+    private func calculateHalfCarryFromAddition(lhs: UInt8, rhs: UInt8, carry: Bool) -> Bool {
+        let carryValue: UInt8 = carry ? 1 : 0
+        let result = (lhs.lowNibble &+ rhs.lowNibble &+ carryValue) & 0x10
+        return result == 0x10
+    }
+     
+    // Ref: https://www.reddit.com/r/EmuDev/comments/knm196/gameboy_half_carry_flag_during_subtract_operation/
+    private func calculateHalfCarryFromSubtraction(lhs: UInt8, rhs: UInt8, carry: Bool) -> Bool {
+        let carryValue: UInt8 = carry ? 1 : 0
+        let result = (lhs.lowNibble &- rhs.lowNibble &- carryValue) & 0x10
+        return result == 0x10
+    }
+}
+
+// MARK: - HL Operation Convenience
+
+extension CPU {
+    
+    // Some functions require the HL pair to be incremented or decremented after the instruction has been executed.
+    // This is a convenience enum to allow us to not have to create custom functions just for the HL pair.
+    // Maybe not the most intuitive way to do this, but it works.
+    private enum HLOperation {
+        case nothing
+        case increment
+        case decrement
+    }
+    
+
+    private func executeHLOperation(_ operation: HLOperation) {
+        switch operation {
+        case .nothing: break
+        case .increment: hl &+= 1
+        case .decrement: hl &-= 1
+        }
     }
 }
