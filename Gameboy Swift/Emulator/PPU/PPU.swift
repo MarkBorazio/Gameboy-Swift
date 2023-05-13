@@ -15,14 +15,22 @@ class PPU {
     // Registers
     private var scanlineTimer = 0
     var currentScanlineIndex: UInt8 = 0 // LY
-    var coincidenceRegister: UInt8 = 0 // LYC
+    var coincidenceRegister: UInt8 = 0 { // LYC
+        didSet {
+            checkForCoincidenceInterrupt()
+        }
+    }
     var statusRegister: UInt8 = 0 // LCDS
-    var controlRegister: UInt8 = 0 // LCDC
+    var controlRegister: UInt8 = 0 { // LCDC
+        didSet {
+            checkIfLCDTurnedOn(previousControlRegister: oldValue)
+        }
+    }
     
     // Standard/Extended Resolution Properties
     private var isUsingExtendedResolution = false
     private var pixelWidth: Int {
-        isUsingExtendedResolution ? GameBoy.extendedPixelHeight : GameBoy.pixelWidth
+        isUsingExtendedResolution ? GameBoy.extendedPixelWidth : GameBoy.pixelWidth
     }
     private var visibleScanlinePixelsRange: ClosedRange<Int> {
         isUsingExtendedResolution ? Self.extendedVisibleScanlinePixelsRange : Self.standardVisibleScanlinePixelsRange
@@ -66,18 +74,19 @@ class PPU {
         
         scanlineTimer += tCycles
         if scanlineTimer >= Self.tCyclesPerScanline {
-            GameBoy.instance.notifyScreenRenderNotReady()
             scanlineTimer -= Self.tCyclesPerScanline
+            
+            GameBoy.instance.notifyScreenRenderNotReady()
             
             if currentScanlineIndex <= lastVisibleScanlineIndex {
                 drawScanline()
             }
+            currentScanlineIndex &+= 1
             
             if currentScanlineIndex == Self.vBlankScanline {
                 GameBoy.instance.mmu.requestVBlankInterrupt()
             }
             
-            currentScanlineIndex &+= 1
             if currentScanlineIndex > Self.lastAbsoluteScanlineIndex {
                 // If in extended mode, we should render the rest of the scanlines all in one go once we pass `lastAbsoluteScanlineIndex` in order to preserve timing.
                 if isUsingExtendedResolution {
@@ -91,6 +100,8 @@ class PPU {
                 currentScanlineIndex = 0
                 GameBoy.instance.notifyScreenRenderReady()
             }
+            
+            checkForCoincidenceInterrupt() // Check for interrupt since `currentScanlineIndex` has changed
         }
     }
     
@@ -113,7 +124,7 @@ class PPU {
         // Clear the current mode
         statusRegister &= ~Self.lcdModeMask
         
-        if currentScanlineIndex > lastVisibleScanlineIndex {
+        if currentScanlineIndex > Self.vBlankScanline {
             newLCDMode = Self.vBlankMode
             statusRegister |= newLCDMode
             interruptRequired = statusRegister.checkBit(Memory.vBlankInterruptEnabledBitIndex)
@@ -140,7 +151,19 @@ class PPU {
         if interruptRequired && (newLCDMode != currentLCDMode) {
             GameBoy.instance.mmu.requestLCDInterrupt()
         }
+    }
+    
+    private func checkIfLCDTurnedOn(previousControlRegister: UInt8) {
+        let oldIsLcdOn = previousControlRegister.checkBit(Memory.lcdAndPpuEnabledBitIndex)
+        let newIsLcdOn = controlRegister.checkBit(Memory.lcdAndPpuEnabledBitIndex)
         
+        let lcdWasTurnedOn = !oldIsLcdOn && newIsLcdOn
+        if lcdWasTurnedOn {
+            checkForCoincidenceInterrupt()
+        }
+    }
+    
+    private func checkForCoincidenceInterrupt() {
         // Check the conicidence flag
         if currentScanlineIndex == coincidenceRegister {
             statusRegister.setBit(Memory.coincidenceBitIndex)
@@ -328,11 +351,16 @@ extension PPU {
             
             var spriteRowIndex = currentScanlineIndex &- yCo
             if flipY {
-                spriteRowIndex = 7 - spriteRowIndex
+                spriteRowIndex = (spriteHeight - 1) - spriteRowIndex
             }
 
             spriteRowIndex &*= Self.bytesPerPixelRow
-            let tileIndex = GameBoy.instance.mmu.safeReadValue(globalAddress: spriteDataTileIndexAddress)
+            var tileIndex = GameBoy.instance.mmu.safeReadValue(globalAddress: spriteDataTileIndexAddress)
+            
+            if areLargeSprites {
+                tileIndex.clearBit(0)
+            }
+            
             let tileIndexAddress = Memory.addressTileArea1 &+ (UInt16(tileIndex) &* Self.bytesPerTile)
             let dataAddress = tileIndexAddress &+ UInt16(spriteRowIndex)
             let rowData1 = readVRAM(globalAddress: dataAddress)
