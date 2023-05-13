@@ -97,7 +97,7 @@ extension MasterClock {
         tacRegister.checkBit(2)
     }
     
-    private var tCyclesPerTimaCycle: UInt32 {
+    private var tCyclesPerTimaCycle: Int {
         let rawValue = tacRegister & 0b11
         switch rawValue {
         case 0b00: return 1024 // 4096 Hz
@@ -114,15 +114,18 @@ extension MasterClock {
         guard isTimaClockEnabled else { return }
         
         internalTimaCounter += tCycles
+        
         if internalTimaCounter >= tCyclesPerTimaCycle {
-            internalTimaCounter -= Int(tCyclesPerTimaCycle)
             
-            if timaRegister == .max {
-                // TODO: The following actually needs to be done after 1 cycle from this point.
-                timaRegister = tmaRegister
+            // Under specific conditions, `tCycles` can be large enough to increment `timaRegister` multiple times over
+            let timaIncrements = UInt8(internalTimaCounter / tCyclesPerTimaCycle)
+            internalTimaCounter = internalTimaCounter % tCyclesPerTimaCycle
+            
+            let (newValue, overflow) = timaRegister.addingReportingOverflow(timaIncrements)
+            timaRegister = newValue
+            if overflow {
+                timaRegister += tmaRegister
                 GameBoy.instance.mmu.requestTimerInterrupt()
-            } else {
-                timaRegister &+= 1
             }
         }
     }
