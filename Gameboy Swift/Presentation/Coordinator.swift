@@ -17,10 +17,11 @@ class Coordinator: NSObject {
         backing: .buffered,
         defer: false
     )
+    let menu = MainMenu()
     
     private override init() {
         super.init()
-        NSApplication.shared.mainMenu = MenuFactory.constructMenu()
+        NSApplication.shared.mainMenu = menu
         
         window.backgroundColor = .black
         window.center()
@@ -78,6 +79,11 @@ class Coordinator: NSObject {
         stopGameBoy()
         presentWarningModal(title: "Error", message: message)
         objc_terminate()
+    }
+    
+    func quit() {
+        stopGameBoy()
+        NSApp.terminate(self)
     }
     
     func presentWarningModal(title: String, message: String?) {

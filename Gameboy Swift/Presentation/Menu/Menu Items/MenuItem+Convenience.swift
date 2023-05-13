@@ -8,6 +8,12 @@
 import Cocoa
 
 extension NSMenuItem {
+    
+    convenience init(menu: NSMenu, autoEnablesItems: Bool = true) {
+        self.init()
+        submenu = menu
+        menu.autoenablesItems = autoEnablesItems
+    }
 
     static func embedInContainerView(_ view: NSView) -> NSView {
         let containerView = NSView()

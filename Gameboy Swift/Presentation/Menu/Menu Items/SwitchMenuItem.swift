@@ -10,7 +10,15 @@ import Cocoa
 class SwitchMenuItem: NSMenuItem {
     
     private var onTap: ((Bool) -> Void)?
-    private let switchView = NSSwitch()
+    let switchView = NSSwitch()
+    
+    override var isEnabled: Bool {
+        get { super.isEnabled }
+        set {
+            super.isEnabled = newValue
+            switchView.isEnabled = newValue
+        }
+    }
     
     convenience init(title: String, initialIsOnValue: Bool, onTap: @escaping ((Bool) -> Void)) {
         self.init()

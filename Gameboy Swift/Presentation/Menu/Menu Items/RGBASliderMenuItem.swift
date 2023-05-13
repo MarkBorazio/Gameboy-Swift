@@ -16,6 +16,32 @@ class RGBASliderMenuItem: NSMenuItem {
     private let blueSliderView = NSSlider()
     private let alphaSliderView = NSSlider()
     
+    override var isEnabled: Bool {
+        get { super.isEnabled }
+        set {
+            super.isEnabled = newValue
+            [redSliderView, greenSliderView, blueSliderView, alphaSliderView].forEach {
+                $0.isEnabled = newValue
+            }
+        }
+    }
+    
+    var argbValue: UInt32 {
+        get {
+            let alpha = UInt8(alphaSliderView.doubleValue)
+            let red = UInt8(redSliderView.doubleValue)
+            let green = UInt8(greenSliderView.doubleValue)
+            let blue = UInt8(blueSliderView.doubleValue)
+            return UInt32(bytes: [red, green, blue, alpha])!
+        }
+        set {
+            alphaSliderView.doubleValue = Double((newValue >> 24) & 0xFF)
+            blueSliderView.doubleValue = Double((newValue >> 16) & 0xFF)
+            greenSliderView.doubleValue = Double((newValue >> 8) & 0xFF)
+            redSliderView.doubleValue = Double((newValue) & 0xFF)
+        }
+    }
+    
     convenience init(title: String, initialRGBAValue: UInt32, onNewValue: @escaping ((UInt32) -> Void)) {
         self.init()
         
@@ -33,10 +59,7 @@ class RGBASliderMenuItem: NSMenuItem {
         greenSliderView.trackFillColor = .green
         blueSliderView.trackFillColor = .blue
         
-        alphaSliderView.doubleValue = Double((initialRGBAValue >> 24) & 0xFF)
-        blueSliderView.doubleValue = Double((initialRGBAValue >> 16) & 0xFF)
-        greenSliderView.doubleValue = Double((initialRGBAValue >> 8) & 0xFF)
-        redSliderView.doubleValue = Double((initialRGBAValue) & 0xFF)
+        argbValue = initialRGBAValue
         
         let stackView = NSStackView(views: [
             NSTextField(labelWithString: title),
@@ -52,12 +75,6 @@ class RGBASliderMenuItem: NSMenuItem {
     }
     
     @objc private func onNewValueReceived() {
-        let alpha = UInt8(alphaSliderView.doubleValue)
-        let red = UInt8(redSliderView.doubleValue)
-        let green = UInt8(greenSliderView.doubleValue)
-        let blue = UInt8(blueSliderView.doubleValue)
-        
-        let newValue = UInt32(bytes: [red, green, blue, alpha])!
-        onNewValue?(newValue)
+        onNewValue?(argbValue)
     }
 }

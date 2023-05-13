@@ -11,7 +11,15 @@ class SliderMenuItem: NSMenuItem {
     
     private var onNewValue: ((Double) -> Void)?
     
-    private let sliderView = NSSlider()
+    let sliderView = NSSlider()
+    
+    override var isEnabled: Bool {
+        get { super.isEnabled }
+        set {
+            super.isEnabled = newValue
+            sliderView.isEnabled = newValue
+        }
+    }
     
     convenience init(
         range: ClosedRange<Double>,

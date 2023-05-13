@@ -11,8 +11,8 @@ class CommonMenuItem: NSMenuItem {
     
     private var onTap: (() -> Void)?
     
-    convenience init(title: String, onTap: @escaping (() -> Void)) {
-        self.init(title: title, action: #selector(onTapWrapper), keyEquivalent: "")
+    convenience init(title: String, keyEquivalent: String = "", onTap: @escaping (() -> Void)) {
+        self.init(title: title, action: #selector(onTapWrapper), keyEquivalent: keyEquivalent)
         target = self
         self.onTap = onTap
     }
