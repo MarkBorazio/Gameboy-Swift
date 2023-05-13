@@ -1,3 +1,7 @@
+<p align="center">
+  <img width="256" src="res/app_icon.png" alt="App Icon">
+</p>
+
 # Gameboy-Swift
 GameBoy-Swift is a DMG Gameboy emulator for MacOS written in Swift.
 
@@ -50,6 +54,8 @@ Gameboy-Swift supports the following user-settings:
 - Custom ARGB sliders for each colour ID
 - Individual toggles for each sound channel
 
+![reference image](res/settings_demo.gif)
+
 ## Accuracy
 The emulator is decently accurate, however some of the finer details of the PPU and APU have not been implemented, resulting in some audio and visual bugs.
 
@@ -67,9 +73,6 @@ The CPU instructions and instruction timing tests pass, however the rest fail in
 | mem_timing      | ❌     |
 | mem_timing-2    | ❌     |
 | oam_bug         | ❌     |
-
-
-
 
 ## References
 A collection of references that helped me build this app:
