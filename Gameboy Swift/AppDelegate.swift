@@ -8,7 +8,7 @@
 import Cocoa
 
 // TODO:
-// - Add green colour pallete
+// - Window internal line counter (will break extended resolution mode)
 // - Continue updating APU to pass more tests
 // - Move to Metal rendering?
 // - Update README

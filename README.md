@@ -11,6 +11,7 @@ A Gameboy emulator written in Swift.
 [Cycle-Accurate GameBoy Docs](https://github.com/AntonioND/giibiiadvance/blob/master/docs/TCAGBD.pdf)
 [Gekkio GameBoy: Complete Techinal Reference](https://gekkio.fi/files/gb-docs/gbctr.pdf)
 [GameBoy CPU Manual](http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf)
+[PPU Tests](https://github.com/mattcurrie/dmg-acid2)
 
 Misc:
 - https://blog.tigris.fr/2019/09/15/writing-an-emulator-the-first-pixel/
