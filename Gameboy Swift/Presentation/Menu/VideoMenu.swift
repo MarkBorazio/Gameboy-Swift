@@ -22,52 +22,65 @@ class VideoMenu: NSMenu {
     private func reloadItems() {
         let extendedResolutionSwitch = SwitchMenuItem(
             title: "Extended Resolution",
-            initialIsOnValue: GameBoy.instance.debugProperties.useExtendedResolution
+            initialIsOnValue: GameBoy.instance.settings.useExtendedResolution
         ) { isOn in
-            GameBoy.instance.debugProperties.useExtendedResolution = isOn
+            GameBoy.instance.settings.useExtendedResolution = isOn
         }
         let renderTilesSwitch = SwitchMenuItem(
             title: "Render Tiles",
-            initialIsOnValue: GameBoy.instance.debugProperties.renderTiles
+            initialIsOnValue: GameBoy.instance.settings.renderTiles
         ) { isOn in
-            GameBoy.instance.debugProperties.renderTiles = isOn
+            GameBoy.instance.settings.renderTiles = isOn
         }
         let renderWindowSwitch = SwitchMenuItem(
             title: "Render Window",
-            initialIsOnValue: GameBoy.instance.debugProperties.renderWindow
+            initialIsOnValue: GameBoy.instance.settings.renderWindow
         ) { isOn in
-            GameBoy.instance.debugProperties.renderWindow = isOn
+            GameBoy.instance.settings.renderWindow = isOn
         }
         let renderSpritesSwitch = SwitchMenuItem(
             title: "Render Sprites",
-            initialIsOnValue: GameBoy.instance.debugProperties.renderSprites
+            initialIsOnValue: GameBoy.instance.settings.renderSprites
         ) { isOn in
-            GameBoy.instance.debugProperties.renderSprites = isOn
+            GameBoy.instance.settings.renderSprites = isOn
+        }
+        
+        let blackAndWhitePaletteButton = CommonMenuItem(title: "Black And White") { [weak self] in
+            GameBoy.instance.settings.colourPalette = .blackAndWhite
+            self?.reloadItems()
+        }
+        let dmgPaletteButton = CommonMenuItem(title: "DMG") { [weak self] in
+            GameBoy.instance.settings.colourPalette = .dmg
+            self?.reloadItems()
+        }
+        let pocketPaletteButton = CommonMenuItem(title: "Pocket") { [weak self] in
+            GameBoy.instance.settings.colourPalette = .pocket
+            self?.reloadItems()
         }
         
         let colour1Slider = RGBASliderMenuItem(
             title: "Colour ID 0",
-            initialRGBAValue: ColourPalette.white
+            initialRGBAValue: GameBoy.instance.settings.colourPalette.colour0
         ) { newValue in
-            GameBoy.instance.debugProperties.colour1 = newValue
+            GameBoy.instance.settings.colourPalette.colour0 = newValue
         }
         let colour2Slider = RGBASliderMenuItem(
             title: "Colour ID 1",
-            initialRGBAValue: ColourPalette.lightGrey
+            initialRGBAValue: GameBoy.instance.settings.colourPalette.colour1
         ) { newValue in
-            GameBoy.instance.debugProperties.colour2 = newValue
+            GameBoy.instance.settings.colourPalette.colour1 = newValue
         }
         let colour3Slider = RGBASliderMenuItem(
             title: "Colour ID 2",
-            initialRGBAValue: ColourPalette.darkGrey
+            initialRGBAValue: GameBoy.instance.settings.colourPalette.colour2
         ) { newValue in
-            GameBoy.instance.debugProperties.colour3 = newValue
+            GameBoy.instance.settings.colourPalette.colour2 = newValue
         }
         let colour4Slider = RGBASliderMenuItem(
             title: "Colour ID 3",
-            initialRGBAValue: ColourPalette.black
+            initialRGBAValue: GameBoy.instance.settings.colourPalette.colour3
         ) { newValue in
-            GameBoy.instance.debugProperties.colour4 = newValue
+            GameBoy.instance.settings.colourPalette.colour3 = newValue
         }
         
         items = [
@@ -75,6 +88,10 @@ class VideoMenu: NSMenu {
             renderTilesSwitch,
             renderWindowSwitch,
             renderSpritesSwitch,
+            .separator(),
+            blackAndWhitePaletteButton,
+            dmgPaletteButton,
+            pocketPaletteButton,
             .separator(),
             colour1Slider,
             .separator(),

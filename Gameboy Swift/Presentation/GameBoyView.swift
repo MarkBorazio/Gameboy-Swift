@@ -46,25 +46,27 @@ class GameBoyView: NSView {
 
 extension GameBoyView: ScreenRenderDelegate {
     
-    func renderScreen(screenData: [ColourPalette.PixelData], isExtendedResolution: Bool) {
+    func renderScreen(screenData: [PixelData], isExtendedResolution: Bool) {
         let width = isExtendedResolution ? GameBoy.extendedPixelWidth : GameBoy.pixelWidth
         let height = isExtendedResolution ? GameBoy.extendedPixelHeight : GameBoy.pixelHeight
         
-        DispatchQueue.main.async { [unowned self] in
-            aspectRatioConstraint.isActive = !isExtendedResolution
-            extendedAspectRatioConstraint.isActive = isExtendedResolution
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
             
-            var mutableColours = screenData.map(ColourPalette.getColour)
+            self.aspectRatioConstraint.isActive = !isExtendedResolution
+            self.extendedAspectRatioConstraint.isActive = isExtendedResolution
+            
+            var mutableColours = screenData.map(GameBoy.instance.settings.colourPalette.getColour)
             let someContext = CGContext(
                 data: &mutableColours,
                 width: width,
                 height: height,
                 bitsPerComponent: UInt8.bitWidth,
                 bytesPerRow: width * MemoryLayout<UInt32>.size,
-                space: colourSpace,
-                bitmapInfo: bitmapInfo.rawValue
+                space: self.colourSpace,
+                bitmapInfo: self.bitmapInfo.rawValue
             )!
-            layer?.contents = someContext.makeImage()
+            self.layer?.contents = someContext.makeImage()
         }
     }
 }

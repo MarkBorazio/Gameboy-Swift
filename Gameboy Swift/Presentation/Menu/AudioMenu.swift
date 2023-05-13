@@ -22,33 +22,33 @@ class AudioMenu: NSMenu {
     private func reloadItems() {
         let muteSwitch = SwitchMenuItem(
             title: "Mute",
-            initialIsOnValue: GameBoy.instance.debugProperties.isMuted
+            initialIsOnValue: GameBoy.instance.settings.isMuted
         ) { isOn in
-            GameBoy.instance.debugProperties.isMuted = isOn
+            GameBoy.instance.settings.isMuted = isOn
         }
         let channel1Switch = SwitchMenuItem(
             title: "Channel 1",
-            initialIsOnValue: GameBoy.instance.debugProperties.isChannel1Enabled
+            initialIsOnValue: GameBoy.instance.settings.isChannel1Enabled
         ) { isOn in
-            GameBoy.instance.debugProperties.isChannel1Enabled = isOn
+            GameBoy.instance.settings.isChannel1Enabled = isOn
         }
         let channel2Switch = SwitchMenuItem(
             title: "Channel 2",
-            initialIsOnValue: GameBoy.instance.debugProperties.isChannel2Enabled
+            initialIsOnValue: GameBoy.instance.settings.isChannel2Enabled
         ) { isOn in
-            GameBoy.instance.debugProperties.isChannel2Enabled = isOn
+            GameBoy.instance.settings.isChannel2Enabled = isOn
         }
         let channel3Switch = SwitchMenuItem(
             title: "Channel 3",
-            initialIsOnValue: GameBoy.instance.debugProperties.isChannel3Enabled
+            initialIsOnValue: GameBoy.instance.settings.isChannel3Enabled
         ) { isOn in
-            GameBoy.instance.debugProperties.isChannel3Enabled = isOn
+            GameBoy.instance.settings.isChannel3Enabled = isOn
         }
         let channel4Switch = SwitchMenuItem(
             title: "Channel 4",
-            initialIsOnValue: GameBoy.instance.debugProperties.isChannel4Enabled
+            initialIsOnValue: GameBoy.instance.settings.isChannel4Enabled
         ) { isOn in
-            GameBoy.instance.debugProperties.isChannel4Enabled = isOn
+            GameBoy.instance.settings.isChannel4Enabled = isOn
         }
         
         items = [

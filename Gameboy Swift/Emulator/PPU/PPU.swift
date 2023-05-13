@@ -35,7 +35,7 @@ class PPU {
     }
     
     // Screen Data
-    var screenData: [ColourPalette.PixelData] = emptyScreenData
+    var screenData: [PixelData] = emptyScreenData
     
     func readVRAM(globalAddress: UInt16) -> UInt8 {
         let vRamAddress = globalAddress &- Memory.videoRamAddressRange.lowerBound
@@ -51,8 +51,8 @@ class PPU {
         
         // Only adjust flag at the start of each tick.
         // That way, we avoid changing the value mid-scanline which could result in an OOB array access.
-        if isUsingExtendedResolution != GameBoy.instance.debugProperties.useExtendedResolution {
-            isUsingExtendedResolution = GameBoy.instance.debugProperties.useExtendedResolution
+        if isUsingExtendedResolution != GameBoy.instance.settings.useExtendedResolution {
+            isUsingExtendedResolution = GameBoy.instance.settings.useExtendedResolution
             screenData = isUsingExtendedResolution ? Self.extendedEmptyScreenData : Self.emptyScreenData
         }
         
@@ -163,21 +163,21 @@ extension PPU {
         
         clearCurrentSpriteRow()
         
-        if renderTilesAndWindowEnabled && GameBoy.instance.debugProperties.renderTiles {
+        if renderTilesAndWindowEnabled && GameBoy.instance.settings.renderTiles {
             renderBackground()
         }
         
-        if renderTilesAndWindowEnabled && GameBoy.instance.debugProperties.renderWindow {
+        if renderTilesAndWindowEnabled && GameBoy.instance.settings.renderWindow {
             renderWindow()
         }
         
-        if renderSpritesEnabled && GameBoy.instance.debugProperties.renderSprites {
+        if renderSpritesEnabled && GameBoy.instance.settings.renderSprites {
             renderSprites()
         }
     }
     
     private func clearCurrentSpriteRow() {
-        let pixelData = ColourPalette.PixelData(id: 0, palette: 0)
+        let pixelData = PixelData(id: 0, palette: 0)
         visibleScanlinePixelsRange.forEach { scanlinePixelIndex in
             let globalPixelIndex = Int(currentScanlineIndex) * pixelWidth + scanlinePixelIndex
             screenData[globalPixelIndex] = pixelData
@@ -227,7 +227,7 @@ extension PPU {
                 // Use colour ID to get colour from palette
                 let colourID = getColourId(pixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2, flipX: false)
                 
-                let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
+                let pixelData = PixelData(id: colourID, palette: palette)
                 let globalPixelIndex = Int(currentScanlineIndex) * pixelWidth + scanlinePixelIndex
                 screenData[globalPixelIndex] = pixelData
             }
@@ -279,7 +279,7 @@ extension PPU {
                 
                 // Use colour ID to get colour from palette
                 let colourID = getColourId(pixelIndex: pixelIndex, rowData1: rowData1, rowData2: rowData2, flipX: false)
-                let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
+                let pixelData = PixelData(id: colourID, palette: palette)
                 let globalPixelIndex = Int(currentScanlineIndex) * pixelWidth + scanlinePixelIndex
                 screenData[globalPixelIndex] = pixelData
             }
@@ -351,7 +351,7 @@ extension PPU {
                 
                 guard screenDataIndex < screenData.count else { return }
                 
-                let pixelData = ColourPalette.PixelData(id: colourID, palette: palette)
+                let pixelData = PixelData(id: colourID, palette: palette)
                 
                 if renderAboveBackground {
                     screenData[screenDataIndex] = pixelData
@@ -412,11 +412,11 @@ extension PPU {
     private static let vRamSize = 8 * 1024 // 8KB
     
     // Empty Screen Data
-    private static let emptyScreenData: [ColourPalette.PixelData] = Array(
+    private static let emptyScreenData: [PixelData] = Array(
         repeating: .init(id: 0, palette: 0xFF),
         count: GameBoy.pixelHeight * GameBoy.pixelWidth
     )
-    private static let extendedEmptyScreenData: [ColourPalette.PixelData] = Array(
+    private static let extendedEmptyScreenData: [PixelData] = Array(
         repeating: .init(id: 0, palette: 0xFF),
         count: GameBoy.extendedPixelWidth * GameBoy.extendedPixelHeight
     )

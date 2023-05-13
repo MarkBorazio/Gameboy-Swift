@@ -180,29 +180,29 @@ class APU {
 extension APU {
     
     private func collectSample() {
-        let debugProperties = GameBoy.instance.debugProperties
+        let settings = GameBoy.instance.settings
         
         let leftSample: Float
         let rightSample: Float
         
-        if !debugProperties.isMuted {
+        if !settings.isMuted {
             let channel1Sample = channel1.dacOutput()
             let channel2Sample = channel2.dacOutput()
             let channel3Sample = channel3.dacOutput()
             let channel4Sample = channel4.dacOutput()
             
             let leftChannelSamples: [Float] = [
-                channel1Left && debugProperties.isChannel1Enabled ? channel1Sample : 0,
-                channel2Left && debugProperties.isChannel2Enabled ? channel2Sample : 0,
-                channel3Left && debugProperties.isChannel3Enabled ? channel3Sample : 0,
-                channel4Left && debugProperties.isChannel4Enabled ? channel4Sample : 0,
+                channel1Left && settings.isChannel1Enabled ? channel1Sample : 0,
+                channel2Left && settings.isChannel2Enabled ? channel2Sample : 0,
+                channel3Left && settings.isChannel3Enabled ? channel3Sample : 0,
+                channel4Left && settings.isChannel4Enabled ? channel4Sample : 0,
             ]
             
             let rightChannelSamples: [Float] = [
-                channel1Right && debugProperties.isChannel1Enabled ? channel1Sample : 0,
-                channel2Right && debugProperties.isChannel2Enabled ? channel2Sample : 0,
-                channel3Right && debugProperties.isChannel3Enabled ? channel3Sample : 0,
-                channel4Right && debugProperties.isChannel4Enabled ? channel4Sample : 0,
+                channel1Right && settings.isChannel1Enabled ? channel1Sample : 0,
+                channel2Right && settings.isChannel2Enabled ? channel2Sample : 0,
+                channel3Right && settings.isChannel3Enabled ? channel3Sample : 0,
+                channel4Right && settings.isChannel4Enabled ? channel4Sample : 0,
             ]
             
             leftSample = Self.mixChannelSamples(samples: leftChannelSamples, rawVolume: leftVolume)

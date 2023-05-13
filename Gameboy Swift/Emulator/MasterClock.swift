@@ -16,7 +16,7 @@ class MasterClock {
     private static let tCyclesHz: Double = 4194304
     private static let framesPerSecond: UInt32 = 60
     
-    var multipliedTCyclesHz: UInt32 { UInt32(Self.tCyclesHz * GameBoy.instance.debugProperties.clockMultiplier) }
+    var multipliedTCyclesHz: UInt32 { UInt32(Self.tCyclesHz * GameBoy.instance.settings.clockMultiplier) }
     private var tCyclesCyclesPerFrame: UInt32 { multipliedTCyclesHz / Self.framesPerSecond }
     private var frameDuration: TimeInterval { 1.0 / Double(Self.framesPerSecond) }
     

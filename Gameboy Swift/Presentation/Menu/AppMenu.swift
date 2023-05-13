@@ -12,8 +12,8 @@ class AppMenu: NSMenu {
     init() {
         super.init(title: PlistValues.appName)
         
-        let resetDebugMenuItem = CommonMenuItem(title: "Reset debug overrides") {
-            GameBoy.instance.debugProperties = .init()
+        let resetDebugMenuItem = CommonMenuItem(title: "Reset settings") {
+            GameBoy.instance.settings = .init()
         }
         
         let quitMenuItem = CommonMenuItem(title: "Quit \(PlistValues.appName)", keyEquivalent: "q") {

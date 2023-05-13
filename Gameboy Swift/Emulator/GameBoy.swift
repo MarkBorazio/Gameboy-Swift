@@ -20,7 +20,7 @@ class GameBoy {
     private(set) var apu = APU()
     private(set) var joypad = Joypad()
     
-    var debugProperties = DebugProperties()
+    var settings = Settings()
     
     private var screenRenderRequested = false // Has clock requested screen render?
     private var screenRenderReady = false // Had PPU signalled that screen is ready to render?
@@ -109,7 +109,7 @@ extension GameBoy {
     }
     
     private func renderScreen() {
-        screenRenderDelegate?.renderScreen(screenData: ppu.screenData, isExtendedResolution: debugProperties.useExtendedResolution)
+        screenRenderDelegate?.renderScreen(screenData: ppu.screenData, isExtendedResolution: settings.useExtendedResolution)
         screenRenderRequested = false
         screenRenderReady = false
     }
@@ -137,5 +137,5 @@ extension GameBoy {
 // MARK: - ScreenRenderDelegate
 
 protocol ScreenRenderDelegate: AnyObject {
-    func renderScreen(screenData: [ColourPalette.PixelData], isExtendedResolution: Bool)
+    func renderScreen(screenData: [PixelData], isExtendedResolution: Bool)
 }

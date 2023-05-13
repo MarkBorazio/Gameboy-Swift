@@ -17,11 +17,10 @@ class Coordinator: NSObject {
         backing: .buffered,
         defer: false
     )
-    let menu = MainMenu()
     
     private override init() {
         super.init()
-        NSApplication.shared.mainMenu = menu
+        NSApplication.shared.mainMenu = MainMenu()
         
         window.backgroundColor = .black
         window.center()

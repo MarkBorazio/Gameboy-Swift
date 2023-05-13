@@ -21,10 +21,10 @@ class GameMenu: NSMenu {
     
     private func reloadItems() {
         let speedMultiplerSlider = SliderMenuItem(
-            range: 1...8,
-            initialValue: GameBoy.instance.debugProperties.clockMultiplier
+            range: 0...8,
+            initialValue: GameBoy.instance.settings.clockMultiplier
         ) { multiplier in
-            GameBoy.instance.debugProperties.clockMultiplier = multiplier
+            GameBoy.instance.settings.clockMultiplier = multiplier
         }
         
         items = [
